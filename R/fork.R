@@ -1,0 +1,143 @@
+#' Split nodes of a classification tree.
+#'
+#' This function is used to split a leaf node of a classification tree,
+#'   given a set of sequences.
+#'
+#' @param node an object of class \code{"insect"}.
+#' @param x an object of class \code{"DNAbin"}.
+#' @inheritParams learn
+#' @return an object of class \code{"insect"}.
+#' @details Note that seqweights argument should have the same length as x.
+#' @author Shaun Wilkinson
+#' @references TBA
+#' @seealso \code{\link{learn}} (parent function),
+#'   \code{\link{partition}} (child function).
+#' @examples
+#'   ## TBA
+################################################################################
+fork <- function(node, x, refine = "Viterbi", iterations = 50,
+                 minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
+                 resize = TRUE, seqweights = "Gerstein", quiet = FALSE, ...){
+  if(!is.list(node)){ # fork leaves only
+    seqs <- x[attr(node, "sequences")]
+    nseq <- length(seqs)
+    if(is.null(seqweights)){
+      seqweights <- rep(1, nseq)
+    }else if(identical(seqweights, "Gerstein")){
+      seqweights <- aphid::weight(x, method = "Gerstein")
+    }else if(length(seqweights) != length(x)) stop("Invalid seqweights argument")
+    wgts <- seqweights[attr(node, "sequences")]
+    wgts <- wgts/mean(wgts) # scale weights to average 1
+    if(minK == 1) return(node)
+    if(nseq < minK) return(node)
+    if(nseq < maxK) maxK <- nseq
+    if(!quiet) cat("\nAttempting to split clade", attr(node, "clade"), "\n")
+    if(is.null(attr(node, "phmm"))){ # should only happen at top level
+      mod <- NULL
+    }else{
+      mod <- attr(node, "phmm")
+      if(resize){
+        if(!quiet) cat("Retraining parent model\n")
+        # model is allowed to change size here
+        mod <- aphid::train(mod, seqs, method = "Viterbi", seqweights = wgts, ... = ...)
+        if(!quiet) cat("New model size :", mod$size, "\n")
+        if(refine == "BaumWelch") mod <- aphid::train(mod, seqs, method = "BaumWelch",
+                                                      seqweights = wgts, ... = ...)
+      }
+    }
+    split_node <- FALSE
+    nclades <- minK
+    repeat{
+      seqsplit <- partition(seqs, model = mod, needs_training = FALSE, refine = refine,
+                            K = nclades, iterations = iterations, seqweights = wgts,
+                            quiet = quiet, ... = ...)
+      if(is.null(seqsplit)){
+        if(!quiet) cat("Sequence splitting failed, returning unsplit node\n")
+        return(node)
+      }
+      if(is.null(attr(node, "phmm"))){ # should only be TRUE at top level
+        if(!quiet) cat("Assigning top-level model\n")
+        attr(node, "phmm") <- seqsplit$phmm0
+      }
+      if(is.null(attr(node, "scores"))){ # should only be TRUE at top level
+        if(!quiet) cat("Calculating top-level scores\n")
+        scores <- numeric(nseq)
+        for(i in 1:nseq){
+          scores[i] <- aphid::forward(seqsplit$phmm0, seqs[[i]],
+                                      odds = FALSE, ... = ...)$score
+        }
+        attr(node, "scores") <- scores
+      }
+      membership <- seqsplit$membership
+      scores <- seqsplit$scores
+      total_scores <- apply(scores, 2, aphid::logsum)
+      akwgts <- t(exp(t(scores) - total_scores))
+      performances <- numeric(nseq)
+      for(i in 1:nseq) performances[i] <- akwgts[membership[i], i]
+      if(!quiet) cat("Akaike weights:", performances, "\n")
+      minperfs <- numeric(nclades)
+      for(i in 1:nclades){
+        minperfs[i] <- quantile(performances[membership == i], probs = probs)
+        if(!quiet){
+          cat("Group", i, "size =", sum(membership == i), "\n")
+          cat(sum(performances[membership == i] > minscore), "of",
+              sum(membership == i), "correctly predicted with Akaike weight >", minscore, "\n")
+          cat(sum(performances[membership == i] > 0.5), "of",
+              sum(membership == i), "correctly predicted with Akaike weight > 0.5\n")
+          cat("Lower", probs, "quantile of Akaike weights:", minperfs[i], "\n")
+          cat("Minimum Akaike weight:", min(performances[membership == i]), "\n")
+        }
+      }
+      if(all(minperfs > minscore)){
+        split_node <- TRUE
+        break
+      }else if(nclades == maxK){
+        if(!quiet) cat("Minimum performance criteria not reached, unable to split clade\n")
+        split_node <- FALSE
+        break
+      }else{
+        nclades <- nclades + 1
+        if(!quiet) cat("Minimum performance criteria not reached, attempting", nclades, "way split\n")
+      }
+    }
+    # Akaike weights should all be close to 1
+    # now decorate the node (if disc ability is > a certain threshold?)
+    # splitfun <- function(s) strsplit(s, split = ";")[[1]]
+    if(split_node){# placeholder for discriminant thresholding
+      # change from leaf to inner node
+      if(!quiet) cat("Creating new node\n")
+      tmpattr <- attributes(node)
+      node <- vector(mode = "list", length = nclades)
+      attributes(node) <- tmpattr
+      attr(node, "leaf") <- NULL
+      # attr(node, "Akaike") <- akwgts #(nclades x nseq matrix of Akaike weights for the new sub-models)
+      for(i in 1:nclades){
+        node[[i]] <- 1
+        attr(node[[i]], "height") <- attr(node, "height") - 1
+        attr(node[[i]], "leaf") <- TRUE
+        #attr(node[[i]], "label") <- paste0(attr(node, "label"), i)
+        attr(node[[i]], "clade") <- paste0(attr(node, "clade"), i)
+        attr(node[[i]], "sequences") <- attr(node, "sequences")[membership == i]
+        attr(node[[i]], "scores") <- scores[i, membership == i]
+        attr(node[[i]], "Akweights") <- performances[membership == i]
+        attr(node[[i]], "phmm") <- seqsplit[[paste0("phmm", i)]]
+        # lineages <- lapply(attr(x, "lineage")[attr(node[[i]], "sequences")], splitfun)
+        # linlengths <- sapply(lineages, length)
+        # whichminlen <- which.min(linlengths)
+        # minlen <- linlengths[whichminlen]
+        # minlin <- lineages[[whichminlen]]
+        # lineage <- ""
+        # for(l in 1:minlen){
+        #   inminlin <- sapply(lineages, function(e) minlin[l] %in% e)
+        #   if(all(inminlin)){
+        #     lineage <- paste0(lineage, lineages[[whichminlen]][l], ";")
+        #   }
+        # }
+        # lineage <- gsub(";$", "\\.", lineage)
+        # attr(node[[i]], "lineage") <- lineage
+      }
+    }
+  }
+  return(node)
+}
+################################################################################
