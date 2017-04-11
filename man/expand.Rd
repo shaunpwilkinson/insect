@@ -81,7 +81,7 @@ TBA
 TBA
 }
 \seealso{
-\code{\link{contract}}, \code{\link{learn}}
+\code{\link{contract}}, \code{\link{learn}}, \code{\link{purge}}
 }
 \author{
 Shaun Wilkinson

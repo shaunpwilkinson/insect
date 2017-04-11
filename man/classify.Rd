@@ -19,9 +19,9 @@ to continue toward the leaves of the tree.}
 a character string giving the lineage of the input sequence
 }
 \description{
-\code{"classify"} takes a DNA barcode or other taxonomically-informative
-  sequence and probabilistically assigns it to a node of a classification
-  tree using nested profile hidden Markov models.
+\code{"classify"} probabilistically assigns a DNA barcode or other
+  taxonomically-informative sequence to a node of a classification
+  tree using a series of nested profile hidden Markov models.
 }
 \details{
 TBA
