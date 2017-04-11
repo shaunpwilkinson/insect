@@ -1,4 +1,4 @@
-#' Taxonomic classification for DNA barcodes.
+#' Taxonomic classification for DNA barcode sequences.
 #'
 #' \code{"classify"} takes a DNA barcode or other taxonomically-informative
 #'   sequence and probabilistically assigns it to a node of a classification

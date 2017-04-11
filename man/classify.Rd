@@ -2,7 +2,7 @@
 % Please edit documentation in R/classify.R
 \name{classify}
 \alias{classify}
-\title{Taxonomic classification for DNA barcodes.}
+\title{Taxonomic classification for DNA barcode sequences.}
 \usage{
 classify(x, tree, threshold = 0.9)
 }
