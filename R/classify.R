@@ -1,8 +1,8 @@
 #' Taxonomic classification for DNA barcode sequences.
 #'
-#' \code{"classify"} takes a DNA barcode or other taxonomically-informative
-#'   sequence and probabilistically assigns it to a node of a classification
-#'   tree using nested profile hidden Markov models.
+#' \code{"classify"} probabilistically assigns a DNA barcode or other
+#'   taxonomically-informative sequence to a node of a classification
+#'   tree using a series of nested profile hidden Markov models.
 #'
 #' @param x a \code{"DNAbin"} object, either as a vector or a list of vectors.
 #' @param tree an object of class \code{"insect"}.
@@ -19,14 +19,14 @@
 ################################################################################
 classify <- function(x, tree, threshold = 0.9){
   classify1 <- function(x, tree, threshold = 0.9){
-    res <- data.frame(Path = integer(100), Akaike_weight = numeric(100),
-                      Score = numeric(100), stringsAsFactors = FALSE)
+    # res <- data.frame(Path = integer(100), Akaike_weight = numeric(100),
+    #                   Score = numeric(100), stringsAsFactors = FALSE)
     path <- integer(100)
     Akweights <- numeric(100)
     scores = numeric(100)
     counter <- 1
-    seqs <- attr(tree, "sequences") # a DNAbin object
-    seqattr <- attributes(seqs)
+    seqhash <- paste(openssl::md5(as.vector(x)))
+    hashmatch <- match(seqhash, attr(tree, "hashes"))
     while(is.list(tree)){
       no_mods <- length(tree)
       sc <- numeric(no_mods)
@@ -51,7 +51,7 @@ classify <- function(x, tree, threshold = 0.9){
       tree <- tree[[best_model]]
       counter <- counter + 1
     }
-    if(res[counter, 1] == 0) res <- res[1:(counter - 1), ]
+    # if(res[counter, 1] == 0) res <- res[1:(counter - 1), ]
     if(path[counter] == 0){
       path <- path[1:(counter - 1)]
       Akweights <- Akweights[1:(counter - 1)]

@@ -73,3 +73,22 @@
                                      seqweights = seqweights, quiet = quiet, ... = ...)
   return(tree)
 }
+
+
+
+.reindex <- function(tree){
+  #indices <- character(length(attr(tree, "sequences")))
+  fun <- function(node){
+    if(is.leaf(node)){
+      newnode <- attr(node, "sequences")
+      names(newnode) <- rep(attr(node, "clade"), length(newnode))
+      node <- newnode
+    }
+    return(node)
+  }
+  tmp <- dendrapply(tree, fun)
+  indices <- unlist(tmp, use.names = TRUE)
+  indices <- sort(indices)
+  return(names(indices))
+}
+

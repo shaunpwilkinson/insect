@@ -123,7 +123,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   }
   has_duplicates <- any(duplicates)
   if(has_duplicates){
-    if(!quiet) cat("Duplicates detected, temporarily subsetting unique sequences\n")
+    if(!quiet) cat("Duplicates detected, temporarily subsetting uniques\n")
     fullseqset <- x #includes attributes
     # x <- x[!duplicates]
     x <- subset(x, subset = !duplicates)  #includes attributes
@@ -141,15 +141,18 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "phmm") <- model
   attr(tree, "height") <- 0
   if(recursive){
-    tree <- .learn1(tree, x = x, refine = refine, iterations = iterations, minK = minK,
-                    maxK = maxK, minscore = minscore, probs = probs, resize = resize,
+    tree <- .learn1(tree, x = x, refine = refine, iterations = iterations,
+                    minK = minK, maxK = maxK, minscore = minscore,
+                    probs = probs, resize = resize,
                     seqweights = seqweights, quiet = quiet, ... = ...)
   }else{
-    tree <- fork(tree, x = x, refine = refine, iterations = iterations, minK = minK,
-                 maxK = maxK, minscore = minscore, probs = probs, resize = resize,
+    tree <- fork(tree, x = x, refine = refine, iterations = iterations,
+                 minK = minK, maxK = maxK, minscore = minscore,
+                 probs = probs, resize = resize,
                  seqweights = seqweights, quiet = quiet, ... = ...)
   }
   ### fix midpoints, members, heights and leaf integers
+  ### note changes here also apply to 'expand' function
   if(!quiet) cat("Setting midpoints and members attributes\n")
   #tree <- settreeattr(tree)
   tree <- phylogram::remidpoint(tree)
@@ -172,55 +175,38 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     return(node)
   }
   if(!quiet) cat("Repatriating duplicate sequences with tree\n")
-  tree <- dendrapply(tree, add_duplicates, pointers = attr(duplicates, "pointers"))
+  tree <- dendrapply(tree, add_duplicates,
+                     pointers = attr(duplicates, "pointers"))
   if(has_duplicates) x <- fullseqset
-  # fix heights
   if(!quiet) cat("Resetting node heights\n")
   tree <- phylogram::reposition(tree)
-  # make ultrametric
   if(!quiet) cat("Making tree ultrametric\n")
   tree <- phylogram::ultrametricize(tree)
-  label <- function(node, x){ # node is dendro, x is DNAbin
-    if(is.leaf(node)){
-      if(length(attr(node, "sequences")) > 1){
-        attr(node, "label") <- paste0(names(x)[attr(node, "sequences")[1]],
-                                      "...(", attr(node, "nunique"), ",",
-                                      attr(node, "ntotal"), ")")
-      }else{
-        attr(node, "label") <- names(x)[attr(node, "sequences")]
-      }
+  if(!quiet) cat("Labelling nodes\n")
+  lineages <- gsub("\\.", "", attr(x, "lineage"))
+  lineages <- paste0(lineages, "; ", attr(x, "species"))
+  attachlins <- function(node, lineages){
+    splitfun <- function(s) strsplit(s, split = "; ")[[1]]
+    linvecs <- lapply(lineages[attr(node, "sequences")], splitfun)
+    guide <- linvecs[[which.min(sapply(linvecs, length))]]
+    counter <- 0
+    for(l in guide){
+      if(all(sapply(linvecs, function(e) l %in% e))) counter <- counter + 1
     }
-    return(node)
-  }
-  if(!quiet) cat("Labeling leaf nodes\n")
-  #tree <- dendrapply(tree, label, x = if(has_duplicates) fullseqset else x)
-  tree <- dendrapply(tree, label, x)
-  attachlins <- function(node, x){
-    splitfun <- function(s) strsplit(s, split = ";")[[1]]
-    lineages <- lapply(attr(x, "lineage")[attr(node, "sequences")], splitfun)
-    linlengths <- sapply(lineages, length)
-    whichminlen <- which.min(linlengths)
-    minlen <- linlengths[whichminlen]
-    minlin <- lineages[[whichminlen]]
-    lineage <- ""
-    for(l in 1:minlen){
-      inminlin <- sapply(lineages, function(e) minlin[l] %in% e)
-      if(all(inminlin)){
-        lineage <- paste0(lineage, lineages[[whichminlen]][l], ";")
-      }
-    }
-    # lineage <- gsub(";$", "\\.", lineage)
-    lineage <- gsub(";$", "", lineage)
+    guide <- if(counter > 0) guide[1:counter] else character(0)
+    lineage <- paste(guide, collapse = "; ")
     attr(node, "lineage") <- lineage
+    attr(node, "label") <- paste0(guide[length(guide)], " (",
+                                  attr(node, "nunique"), ",",
+                                  attr(node, "ntotal"), ")")
     return(node)
   }
-  if(!quiet) cat("Attaching lineage information to nodes\n")
-  #tree <- dendrapply(tree, attachlins, x = if(has_duplicates) fullseqset else x)
-  tree <- dendrapply(tree, attachlins, x)
-  # attr(tree, "sequences") <- if(has_duplicates) fullseqset else x
-  attr(tree, "sequences") <- x
+  tree <- dendrapply(tree, attachlins, lineages)
+  attr(tree, "sequences") <- x # must happen after attaching lineages
   attr(tree, "duplicates") <- duplicates
   attr(tree, "pointers") <- attr(duplicates, "pointers")
+  attr(tree, "hashes") <- sapply(x, function(e) paste(openssl::md5(as.vector(e))))
+  attr(tree, "indices") <- .reindex(tree)
   if(!quiet) cat("Done\n")
   class(tree) <- c("insect", "dendrogram")
   return(tree)
@@ -231,7 +217,41 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
 
 
 
-
+# label <- function(node, x){ # node is dendro, x is DNAbin
+#   if(is.leaf(node)){
+#     if(length(attr(node, "sequences")) > 1){
+#       attr(node, "label") <- paste0(names(x)[attr(node, "sequences")[1]],
+#                                     "...(", attr(node, "nunique"), ",",
+#                                     attr(node, "ntotal"), ")")
+#     }else{
+#       attr(node, "label") <- names(x)[attr(node, "sequences")]
+#     }
+#   }
+#   return(node)
+# }
+# if(!quiet) cat("Labeling leaf nodes\n")
+# #tree <- dendrapply(tree, label, x = if(has_duplicates) fullseqset else x)
+# tree <- dendrapply(tree, label, x)
+# attachlins <- function(node, x){
+#   splitfun <- function(s) strsplit(s, split = ";")[[1]]
+#   lineages <- lapply(attr(x, "lineage")[attr(node, "sequences")], splitfun)
+#   linlengths <- sapply(lineages, length)
+#   whichminlen <- which.min(linlengths)
+#   minlen <- linlengths[whichminlen]
+#   minlin <- lineages[[whichminlen]]
+#   lineage <- ""
+#   for(l in 1:minlen){
+#     inminlin <- sapply(lineages, function(e) minlin[l] %in% e)
+#     if(all(inminlin)){
+#       lineage <- paste0(lineage, lineages[[whichminlen]][l], ";")
+#     }
+#   }
+#   # lineage <- gsub(";$", "\\.", lineage)
+#   lineage <- gsub(";$", "", lineage)
+#   attr(node, "lineage") <- lineage
+#   return(node)
+# }
+#
 
 
 # if(newK == 1){
