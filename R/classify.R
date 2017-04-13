@@ -26,7 +26,9 @@ classify <- function(x, tree, threshold = 0.9){
     scores = numeric(100)
     counter <- 1
     seqhash <- paste(openssl::md5(as.vector(x)))
-    hashmatch <- match(seqhash, attr(tree, "hashes"))
+    matches <- which(attr(tree, "hashes") == seqhash)
+    if(length(matches) == 0) matches <- NA
+    res <- "" # lineage above the root node
     while(is.list(tree)){
       no_mods <- length(tree)
       sc <- numeric(no_mods)
@@ -48,6 +50,7 @@ classify <- function(x, tree, threshold = 0.9){
         # res <- res[1:counter, ]
         break
       }
+      res <- attr(tree, "lineage")
       tree <- tree[[best_model]]
       counter <- counter + 1
     }
@@ -57,12 +60,17 @@ classify <- function(x, tree, threshold = 0.9){
       Akweights <- Akweights[1:(counter - 1)]
       scores <- scores[1:(counter - 1)]
     }
-    res <- attr(tree, "lineage")
+    if(counter > 1){
+      if(matches[1] %in% attr(tree, "sequences")){
+        res <- attr(tree, "lineage") # exact match -> can confidently drop 1 level
+      }
+    }
     attr(res, "path") <- path
     attr(res, "scores") <- scores
     attr(res, "weights") <- Akweights
     attr(res, "threshold") <- threshold_met
     attr(res, "minscore") <- minscore_met
+    attr(res, "matches") <- matches
     return(res)
   }
   if(is.list(x)){

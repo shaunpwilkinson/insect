@@ -1,4 +1,4 @@
-#' Read FASTQ files into R.
+#' Read and filter FASTQ files.
 #'
 #' \code{readFASTQ} is a text parser/filter that reads file in the FASTQ
 #'   format into R, during which it optionally applies various sequence
@@ -47,7 +47,7 @@
 #'   function in the \code{\link[ape]{ape}} package (defaults to TRUE;
 #'   recommended for memory and speed efficiency). If set to FALSE, the
 #'   function returns a list of character vectors containing residues from the
-#'   set{ACGTN} with an associated character vector of "quality"
+#'   set {ACGTN} with an associated character vector of "quality"
 #'   attributes in the same ASCII coding scheme used in the FASTQ file format.
 #' @param nlines integer, the maximum number of text lines to be read and
 #'   analysed in one batch. This may be reduced if importing large files and

@@ -1,6 +1,6 @@
 #' Informatic sequence classification tree learning.
 #'
-#' This function creates classification trees via recursive
+#' This function creates classification trees using recursive
 #'   partitioning and nested profile hidden Markov models.
 #'
 #' @param x an object of class\code{"DNAbin"} representing a list of
@@ -206,7 +206,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "duplicates") <- duplicates
   attr(tree, "pointers") <- attr(duplicates, "pointers")
   attr(tree, "hashes") <- sapply(x, function(e) paste(openssl::md5(as.vector(e))))
-  attr(tree, "indices") <- .reindex(tree)
+  #attr(tree, "indices") <- .reindex(tree)
   if(!quiet) cat("Done\n")
   class(tree) <- c("insect", "dendrogram")
   return(tree)
