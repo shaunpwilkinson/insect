@@ -2,7 +2,7 @@
 % Please edit documentation in R/read.R
 \name{readFASTQ}
 \alias{readFASTQ}
-\title{Read FASTQ files into R.}
+\title{Read and filter FASTQ files.}
 \usage{
 readFASTQ(path, sheet = NULL, filter = TRUE, minlength = 50,
   minqual = 30, maxambigs = 0, mincount = 2, DNA = TRUE,
@@ -56,7 +56,7 @@ class \code{"DNAbin"} as output by the \code{\link[ape]{as.DNAbin}}
 function in the \code{\link[ape]{ape}} package (defaults to TRUE;
 recommended for memory and speed efficiency). If set to FALSE, the
 function returns a list of character vectors containing residues from the
-set{ACGTN} with an associated character vector of "quality"
+set {ACGTN} with an associated character vector of "quality"
 attributes in the same ASCII coding scheme used in the FASTQ file format.}
 
 \item{nlines}{integer, the maximum number of text lines to be read and

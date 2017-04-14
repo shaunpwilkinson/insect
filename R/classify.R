@@ -43,7 +43,7 @@ classify <- function(x, tree, threshold = 0.9){
       scores[counter] <- sc[best_model]
       threshold_met <- akwgts[best_model] >= threshold
       minscore_met <- sc[best_model] >= min(attr(tree[[best_model]], "scores"))
-      if(!threshold_met){# | !minscore_met){# | best_model == no_mods + 1){
+      if(!(threshold_met & minscore_met)){# | best_model == no_mods + 1){
         path <- path[1:counter]
         Akweights <- Akweights[1:counter]
         scores <- scores[1:counter]

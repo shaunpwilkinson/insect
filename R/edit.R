@@ -166,13 +166,15 @@ contract <- function(tree, clades = "", quiet = FALSE){
   # tree is a hphmm
   # clades is a character vector eg c("22111", "22112")
   if(identical(clades, "")){
-    tmpattr <- attributes(tree)
-    tree <- 1
-    attributes(tree) <- tmpattr
-    attr(tree, "height") <- 0
-    attr(tree, "members") <- 1L
-    attr(tree, "midpoint") <- 0
-    attr(tree, "leaf") <- TRUE
+    if(!is.leaf(tree)){
+      tmpattr <- attributes(tree)
+      tree <- 1
+      attributes(tree) <- tmpattr
+      attr(tree, "height") <- 0
+      attr(tree, "members") <- 1L
+      attr(tree, "midpoint") <- 0
+      attr(tree, "leaf") <- TRUE
+    }
   }else{
     for(i in seq_along(clades)){
       clade_i <- as.numeric(strsplit(clades[i], split = "")[[1]])
@@ -227,11 +229,13 @@ purge <- function(tree, quiet = FALSE){
     if(is.list(node)){
       nodelins <- lineages[attr(node, "sequences")]
       if(all(nodelins == nodelins[1])){
-        node <- contract(node)
+        for(i in seq_along(node)) node[[i]] <- contract(node[[i]])
+        #node <- contract(node)
       }
     }
     return(node)
   }
+
   purge2 <- function(node, lineages){
     node <- purge1(node, lineages)
     if(is.list(node)) node[] <- lapply(node, purge2, lineages)
@@ -240,12 +244,16 @@ purge <- function(tree, quiet = FALSE){
   x <- attr(tree, "sequences")
   attr(tree, "sequences") <- seq_along(x)
   if(!quiet) cat("Collapsing over-extended nodes\n")
-  lineages <- attr(x, "lineage")
+  # lineages <- attr(x, "lineage")
+  lineages <- gsub("\\.", "", attr(x, "lineage"))
+  lineages <- paste0(lineages, "; ", attr(x, "species"))
+  if(!(length(x) == length(lineages))) stop("Error 1")
   tree <- purge2(tree, lineages)
+  if(all(lineages == lineages[1])) tree <- contract(tree)
   if(!quiet) cat("Setting midpoints and members attributes\n")
   tree <- phylogram::remidpoint(tree)
-  cat(class(tree), "\n") ##############
-  #class(tree) <- "dendrogram"
+  #cat(class(tree), "\n") ##############
+  class(tree) <- "dendrogram"
   if(!quiet) cat("Resetting node heights\n")
   tree <- phylogram::reposition(tree)
   if(!quiet) cat("Making tree ultrametric\n")
@@ -256,9 +264,50 @@ purge <- function(tree, quiet = FALSE){
 ################################################################################
 
 
+# purge1 <- function(node, lineages){
+#   if(is.list(node)){
+#     for(i in seq_along(node)){
+#       if(is.list(node[[i]])){
+#         nodelinsi <- lineages[attr(node[[i]], "sequences")]
+#         if(all(nodelinsi == nodelinsi[1])) node[[i]] <- contract(node[[i]])
+#       }
+#     }
+#   }
+#   return(node)
+# }
 
-
-
+# purge <- function(tree, quiet = FALSE){
+  # purge1 <- function(node, lineages){
+  #   if(is.list(node)){
+  #     nodelins <- lineages[attr(node, "sequences")]
+  #     if(all(nodelins == nodelins[1])){
+  #       #for(i in seq_along(node)) node[[i]] <- contract(node[[i]])
+  #       node <- contract(node)
+  #     }
+  #   }
+  #   return(node)
+  # }
+#   purge2 <- function(node, lineages){
+#     node <- purge1(node, lineages)
+#     if(is.list(node)) node[] <- lapply(node, purge2, lineages)
+#     return(node)
+#   }
+#   x <- attr(tree, "sequences")
+#   attr(tree, "sequences") <- seq_along(x)
+#   if(!quiet) cat("Collapsing over-extended nodes\n")
+#   lineages <- attr(x, "lineage")
+#   tree <- purge2(tree, lineages)
+#   if(!quiet) cat("Setting midpoints and members attributes\n")
+#   tree <- phylogram::remidpoint(tree)
+#   cat(class(tree), "\n") ##############
+#   #class(tree) <- "dendrogram"
+#   if(!quiet) cat("Resetting node heights\n")
+#   tree <- phylogram::reposition(tree)
+#   if(!quiet) cat("Making tree ultrametric\n")
+#   tree <- phylogram::ultrametricize(tree)
+#   attr(tree, "sequences") <- x
+#   return(tree)
+# }
 
 
 

@@ -160,17 +160,19 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   add_duplicates <- function(node, pointers){
     seqs <- attr(node, "sequences")
     akws <- attr(node, "Akweights")
+    scrs <- attr(node, "scores")
     attr(node, "nunique") <- length(seqs)
     #newseqs <- which(pointers %in% seqs)
-    newseqs <- vector(mode = "list", length = length(seqs))
-    newakws <- vector(mode = "list", length = length(seqs))
+    newseqs <- newakws <- newscrs <- vector(mode = "list", length = length(seqs))
     for(i in seq_along(seqs)){
       newseqs[[i]] <- which(pointers == seqs[i])
       if(!is.null(akws)) newakws[[i]] <- rep(akws[i], length(newseqs[[i]]))
+      if(!is.null(scrs)) newscrs[[i]] <- rep(scrs[i], length(newseqs[[i]]))
       # newakweights[newseqs == seqs[i]] <- akweights[i]
     }
     attr(node, "sequences") <- unlist(newseqs, use.names = FALSE)
     if(!is.null(akws)) attr(node, "Akweights") <- unlist(akws, use.names = FALSE)
+    if(!is.null(scrs)) attr(node, "scores") <- unlist(scrs, use.names = FALSE)
     attr(node, "ntotal") <- length(newseqs)
     return(node)
   }

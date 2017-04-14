@@ -106,7 +106,7 @@ an object of class \code{"insect"}. This object is a
   \code{1:length(x)}.
 }
 \description{
-This function creates classification trees via recursive
+This function creates classification trees using recursive
   partitioning and nested profile hidden Markov models.
 }
 \details{
