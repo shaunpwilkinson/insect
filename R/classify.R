@@ -9,6 +9,10 @@
 #' @param threshold numeric value between 0 and 1 giving the minimum
 #'   Akaike weight for the recursive classification procedure
 #'   to continue toward the leaves of the tree.
+#' @param ncores integer giving the number of CPUs to parallelize the operation
+#'   over. Defaults to 1, and reverts to 1 if x is not a list.
+#'   The string 'autodetect' is also accepted, in which case the number of cores
+#'   used is one less than the total number of cores available.
 #' @return a character string giving the lineage of the input sequence
 #' @details TBA
 #' @author Shaun Wilkinson
@@ -17,18 +21,18 @@
 #' @examples
 #'   ##TBA
 ################################################################################
-classify <- function(x, tree, threshold = 0.9){
+classify <- function(x, tree, threshold = 0.999, ncores = 1){
   classify1 <- function(x, tree, threshold = 0.9){
-    # res <- data.frame(Path = integer(100), Akaike_weight = numeric(100),
-    #                   Score = numeric(100), stringsAsFactors = FALSE)
     path <- integer(100)
     Akweights <- numeric(100)
-    scores = numeric(100)
+    scores = numeric(100) # log probs of seq given best model
+    cAkweights <- numeric(100) # cumulative product of akaike weights
     counter <- 1
     seqhash <- paste(openssl::md5(as.vector(x)))
     matches <- which(attr(tree, "hashes") == seqhash)
     if(length(matches) == 0) matches <- NA
     res <- "" # lineage above the root node
+    reachedleaf <- TRUE
     while(is.list(tree)){
       no_mods <- length(tree)
       sc <- numeric(no_mods)
@@ -40,14 +44,19 @@ classify <- function(x, tree, threshold = 0.9){
       best_model <- which.max(akwgts)
       path[counter] <- best_model
       Akweights[counter] <- akwgts[best_model]
+      cAkweights[counter] <- akwgts[best_model] * if(counter == 1) 1 else cAkweights[counter - 1]
       scores[counter] <- sc[best_model]
-      threshold_met <- akwgts[best_model] >= threshold
+      #threshold_met <- akwgts[best_model] >= threshold
+      threshold_met <- cAkweights[counter] >= threshold
       minscore_met <- sc[best_model] >= min(attr(tree[[best_model]], "scores"))
-      if(!(threshold_met & minscore_met)){# | best_model == no_mods + 1){
-        path <- path[1:counter]
+      if(!(threshold_met)){# & minscore_met)){# | best_model == no_mods + 1){
+        #path <- path[1:counter]
+        # path vector should be 2 shorter than scores & weights
+        path <- if(counter < 3) integer(0) else path[1:(counter - 2)] ###TODO what if counter = 1?
         Akweights <- Akweights[1:counter]
+        cAkweights <- cAkweights[1:counter]
         scores <- scores[1:counter]
-        # res <- res[1:counter, ]
+        reachedleaf <- FALSE
         break
       }
       res <- attr(tree, "lineage")
@@ -55,28 +64,51 @@ classify <- function(x, tree, threshold = 0.9){
       counter <- counter + 1
     }
     # if(res[counter, 1] == 0) res <- res[1:(counter - 1), ]
-    if(path[counter] == 0){
-      path <- path[1:(counter - 1)]
-      Akweights <- Akweights[1:(counter - 1)]
-      scores <- scores[1:(counter - 1)]
-    }
-    if(counter > 1){
-      if(matches[1] %in% attr(tree, "sequences")){
-        res <- attr(tree, "lineage") # exact match -> can confidently drop 1 level
+    # if(path[counter] == 0){# i.e. reached leaf node
+    if(reachedleaf){# i.e. reached leaf node
+      if(matches[1] %in% attr(tree, "sequences")){ # i.e. there is an exact match
+        res <- attr(tree, "lineage") # can confidently drop 1 level
+        # path <- path[1:(counter - 1)]
+        path <- if(counter < 2) integer(0) else path[1:(counter - 1)]
+        ## just a backup,  counter would therefore have to be > 1
+        ## unlesss tree is a single leaf
+      }else{ # reached leaf but no exact match
+        # path <- path[1:(counter - 1)]
+        path <- if(counter < 3) integer(0) else path[1:(counter - 2)]
+        reachedleaf <- FALSE
+      }
+      if(counter > 1){
+        Akweights <- Akweights[1:(counter - 1)]
+        cAkweights <- cAkweights[1:(counter - 1)]
+        scores <- scores[1:(counter - 1)]
+      }else{
+        Akweights <- cAkweights <- scores <- numeric(0)
       }
     }
     attr(res, "path") <- path
     attr(res, "scores") <- scores
     attr(res, "weights") <- Akweights
+    attr(res, "cweights") <- cAkweights
     attr(res, "threshold") <- threshold_met
     attr(res, "minscore") <- minscore_met
     attr(res, "matches") <- matches
+    attr(res, "reachedleaf") <- reachedleaf
     return(res)
   }
   if(is.list(x)){
-    lapply(x, classify1, tree, threshold)
+    if(ncores == 1){
+      return(lapply(x, classify1, tree, threshold))
+    }else{
+      navailcores <- parallel::detectCores()
+      if(identical(ncores, "autodetect")) ncores <- navailcores - 1
+      if(ncores > navailcores) stop("Number of cores is more than the number available")
+      cl <- parallel::makeCluster(ncores)
+      res <- parallel::parLapply(cl, x, classify1, tree = tree, threshold = threshold)
+      parallel::stopCluster(cl)
+      return(res)
+    }
   }else{
-    classify1(x, tree, threshold)
+    return(classify1(x, tree, threshold))
   }
 }
 

@@ -4,7 +4,7 @@
 \alias{classify}
 \title{Taxonomic classification for DNA barcode sequences.}
 \usage{
-classify(x, tree, threshold = 0.9)
+classify(x, tree, threshold = 0.999, ncores = 1)
 }
 \arguments{
 \item{x}{a \code{"DNAbin"} object, either as a vector or a list of vectors.}
@@ -14,6 +14,11 @@ classify(x, tree, threshold = 0.9)
 \item{threshold}{numeric value between 0 and 1 giving the minimum
 Akaike weight for the recursive classification procedure
 to continue toward the leaves of the tree.}
+
+\item{ncores}{integer giving the number of CPUs to parallelize the operation
+over. Defaults to 1, and reverts to 1 if x is not a list.
+The string 'autodetect' is also accepted, in which case the number of cores
+used is one less than the total number of cores available.}
 }
 \value{
 a character string giving the lineage of the input sequence
