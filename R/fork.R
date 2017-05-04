@@ -17,7 +17,8 @@
 ################################################################################
 fork <- function(node, x, refine = "Viterbi", iterations = 50,
                  minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
-                 resize = TRUE, seqweights = "Gerstein", quiet = FALSE, ...){
+                 resize = TRUE, seqweights = "Gerstein", maxcores = 1,
+                 quiet = FALSE, ...){
   if(!is.list(node)){ # fork leaves only
     seqs <- x[attr(node, "sequences")]
     nseq <- length(seqs)
@@ -39,7 +40,13 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
       if(resize){
         if(!quiet) cat("Retraining parent model\n")
         # model is allowed to change size here
-        mod <- aphid::train(mod, seqs, method = "Viterbi", seqweights = wgts, ... = ...)
+        optncores <- .optcores(maxcores, nseq)
+        para <- optncores > 1
+        if(para & !quiet) cat("Multithreading Viterbi training over", optncores, "cores\n")
+        cores <- if(para) parallel::makeCluster(optncores) else 1
+        mod <- aphid::train(mod, seqs, method = "Viterbi", seqweights = wgts,
+                            cores = cores, quiet = quiet, ... = ...)
+        if(para) parallel::stopCluster(cores)
         if(!quiet) cat("New model size :", mod$size, "\n")
         if(refine == "BaumWelch") mod <- aphid::train(mod, seqs, method = "BaumWelch",
                                                       seqweights = wgts, ... = ...)
@@ -50,7 +57,7 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
     repeat{
       seqsplit <- partition(seqs, model = mod, needs_training = FALSE, refine = refine,
                             K = nclades, iterations = iterations, seqweights = wgts,
-                            quiet = quiet, ... = ...)
+                            maxcores = maxcores, quiet = quiet, ... = ...)
       if(is.null(seqsplit)){
         if(!quiet) cat("Sequence splitting failed, returning unsplit node\n")
         return(node)
@@ -62,6 +69,7 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
       if(is.null(attr(node, "scores"))){ # should only be TRUE at top level
         if(!quiet) cat("Calculating top-level scores\n")
         scores <- numeric(nseq)
+        ##TODO could parallelize this:
         for(i in 1:nseq){
           scores[i] <- aphid::forward(seqsplit$phmm0, seqs[[i]],
                                       odds = FALSE, ... = ...)$score
@@ -97,7 +105,10 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
         break
       }else{
         nclades <- nclades + 1
-        if(!quiet) cat("Minimum performance criteria not reached, attempting", nclades, "way split\n")
+        if(!quiet){
+          cat("Minimum performance criteria not reached\n")
+          cat("Attempting", nclades, "way split\n")
+        }
       }
     }
     # Akaike weights should all be close to 1

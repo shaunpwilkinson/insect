@@ -6,7 +6,7 @@
 \usage{
 partition(x, model = NULL, needs_training = FALSE, K = 2,
   allocation = "cluster", refine = "Viterbi", iterations = 50,
-  seqweights = "Gerstein", quiet = FALSE, ...)
+  seqweights = "Gerstein", maxcores = 1, quiet = FALSE, ...)
 }
 \arguments{
 \item{x}{a \code{"DNAbin"} object containing multiple sequences in a list.}
@@ -53,11 +53,17 @@ to the number of sequences in the alignment (so that mean(seqweights) = 1;
 Note this does not need to be the case if providing weights as a numeric
 vector).}
 
+\item{maxcores}{integer giving the maximum number of CPUs to be used
+when training the models (only applicable if
+\code{refine = 'Viterbi'}). Note that the number of cores used may
+be less than the number given if the sequence training set is small
+or there are fewer cores available.}
+
 \item{quiet}{logical indicating whether the progress should be printed to
 the console.}
 
 \item{...}{further arguments to be passed to \code{"aphid::train"} (not
-including 'inserts').}
+including 'inserts' or 'cores').}
 }
 \value{
 an object of class \code{split}. #############################TODO

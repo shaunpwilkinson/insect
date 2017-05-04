@@ -62,6 +62,11 @@
 #'   should continue recursively until the discrimination criteria
 #'   are not met (TRUE; default), or whether a single split should
 #'   take place at the root node.
+#' @param maxcores integer giving the maximum number of CPUs to be used
+#'   when training the models (only applicable if
+#'   \code{refine = 'Viterbi'}). Note that the number of cores used may
+#'   be less than the number given if the sequence training set is small
+#'   or there are fewer cores available.
 #' @param quiet logical indicating whether feedback should be printed
 #'   to the console. Note that the output can be rather verbose for
 #'   larger trees.
@@ -106,7 +111,7 @@
 learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                   minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
                   resize = TRUE, duplicates = NULL, seqweights = "Gerstein",
-                  recursive = TRUE, quiet = FALSE, ...){
+                  recursive = TRUE, maxcores = 1, quiet = FALSE, ...){
   # x is a "DNAbin" object
   # First initialize the tree
   tree <- 1
@@ -144,12 +149,14 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     tree <- .learn1(tree, x = x, refine = refine, iterations = iterations,
                     minK = minK, maxK = maxK, minscore = minscore,
                     probs = probs, resize = resize,
-                    seqweights = seqweights, quiet = quiet, ... = ...)
+                    seqweights = seqweights, maxcores = maxcores,
+                    quiet = quiet, ... = ...)
   }else{
     tree <- fork(tree, x = x, refine = refine, iterations = iterations,
                  minK = minK, maxK = maxK, minscore = minscore,
                  probs = probs, resize = resize,
-                 seqweights = seqweights, quiet = quiet, ... = ...)
+                 seqweights = seqweights, maxcores = maxcores,
+                 quiet = quiet, ... = ...)
   }
   ### fix midpoints, members, heights and leaf integers
   ### note changes here also apply to 'expand' function

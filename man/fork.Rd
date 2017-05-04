@@ -6,7 +6,7 @@
 \usage{
 fork(node, x, refine = "Viterbi", iterations = 50, minK = 2, maxK = 2,
   minscore = 0.9, probs = 0.05, resize = TRUE, seqweights = "Gerstein",
-  quiet = FALSE, ...)
+  maxcores = 1, quiet = FALSE, ...)
 }
 \arguments{
 \item{node}{an object of class \code{"insect"}.}
@@ -61,6 +61,12 @@ the \code{\link[aphid]{weight}} function in the
 \code{\link[aphid]{aphid}} package to derive the weights using the
 algorithm of Gerstein et al. 1994.
 If NULL, all sequences are given weights of 1.}
+
+\item{maxcores}{integer giving the maximum number of CPUs to be used
+when training the models (only applicable if
+\code{refine = 'Viterbi'}). Note that the number of cores used may
+be less than the number given if the sequence training set is small
+or there are fewer cores available.}
 
 \item{quiet}{logical indicating whether feedback should be printed
 to the console. Note that the output can be rather verbose for

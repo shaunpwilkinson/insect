@@ -42,10 +42,15 @@
 #'   to the number of sequences in the alignment (so that mean(seqweights) = 1;
 #'   Note this does not need to be the case if providing weights as a numeric
 #'   vector).
+#' @param maxcores integer giving the maximum number of CPUs to be used
+#'   when training the models (only applicable if
+#'   \code{refine = 'Viterbi'}). Note that the number of cores used may
+#'   be less than the number given if the sequence training set is small
+#'   or there are fewer cores available.
 #' @param quiet logical indicating whether the progress should be printed to
 #'   the console.
 #' @param ... further arguments to be passed to \code{"aphid::train"} (not
-#'   including 'inserts').
+#'   including 'inserts' or 'cores').
 #' @return an object of class \code{split}. #############################TODO
 #' @details TBA.
 #' @author Shaun Wilkinson
@@ -63,7 +68,7 @@
 partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
                       allocation = "cluster", refine = "Viterbi",
                       iterations = 50, seqweights = "Gerstein",
-                      quiet = FALSE, ...){
+                      maxcores = 1, quiet = FALSE, ...){
   ### x is a DNAbin object
   # model is a starting model to be trained on each side
   # assumes all seqs are unique
@@ -118,12 +123,32 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
   colnames(scores) <- names(x)
   if(is.null(model)){
     if(!quiet) cat("Deriving parent model\n")
-    model <- aphid::derivePHMM.list(x, refine = refine,
-                                    seqweights = seqweights, ... = ...)
+    nseeds <- ceiling(log(nseq, 2)^2)
+    seeds <- sample(1:nseq, size = nseeds)
+    #seedsTF <- 1:nseq %in% seeds
+    model <- aphid::derivePHMM.list(x, refine = "none", seeds = seeds,
+                                    seqweights = seqweights)
+    ## just a progressive multiple alignment of seed seqs only
+    ## now train the model
+    if(!quiet) cat("Training parent model\n")
+    optncores <- .optcores(maxcores, nseq)
+    para <- optncores > 1
+    if(para & !quiet) cat("Multithreading model training over", optncores, "cores\n")
+    cores <- if(para) parallel::makeCluster(optncores) else 1
+    model <- aphid::train(model, x, method = refine, seqweights = seqweights,
+                        cores = cores, quiet = quiet, ... = ...)
+    if(para) parallel::stopCluster(cores)
+    # model <- aphid::derivePHMM.list(x, refine = refine,
+    #                                 seqweights = seqweights, ... = ...)
   }else if(needs_training){
     if(!quiet) cat("Training parent model\n")  # model can change size here
-    model <- aphid::train(model, x, method = refine,
-                          seqweights = seqweights, ... = ...)
+    optncores <- .optcores(maxcores, nseq)
+    para <- optncores > 1
+    if(para & !quiet) cat("Multithreading model training over", optncores, "cores\n")
+    cores <- if(para) parallel::makeCluster(optncores) else 1
+    model <- aphid::train(model, x, method = refine, seqweights = seqweights,
+                          cores = cores, quiet = quiet, ... = ...)
+    if(para) parallel::stopCluster(cores)
   }
   res[["phmm0"]] <- model
   for(j in 1:K) res[[pnms[j]]] <- model
@@ -149,23 +174,20 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
       #                         method = refine, seqweights = seqweightsj,
       #                         inserts = if(refine == "Viterbi") "inherited" else "map",
       #                         ... = ...)
-
+      optncores <- .optcores(maxcores, nseq = seq_numbers[j])
+      para <- optncores > 1
+      if(para & !quiet) cat("Multithreading model training over", optncores, "cores\n")
+      cores <- if(para) parallel::makeCluster(optncores) else 1
       res[[pnms[j]]] <- aphid::train(if(finetune) res[[pnms[j]]] else model,
                                      x[membership == j], #model
                                      method = refine, seqweights = seqweightsj,
                                      inserts = if(refine == "Viterbi") "inherited" else "map",
-                                     ... = ...)
-
+                                     cores = cores, quiet = quiet, ... = ...)
+      if(para) parallel::stopCluster(cores)
       # res[[pnms[j]]] <- aphid::train(model, x[membership == j], #model
       #                         method = refine, seqweights = seqweightsj,
       #                         inserts = if(refine == "Viterbi") "inherited" else "map",
       #                         ... = ...)
-
-      # plot(res[[pnms[j]]], from = "start", to = 10)
-      # plot(res[[pnms[j]]], from = 11, to = 20)
-      # plot(res[[pnms[j]]], from = 21, to = 30)
-      # plot(res[[pnms[j]]], from = 31, to = "end")
-
       if(!quiet) cat("Calculating sequence probabilities for child model", j, "\n")
       for(l in 1:nseq){
         scores[j, l] <- aphid::forward(res[[pnms[j]]], x[[l]], odds = FALSE)$score

@@ -61,16 +61,17 @@
 
 .learn1 <- function(tree, x, refine = "Viterbi", iterations = 50, minK = 2, maxK = 2,
                     minscore = 0.9, probs = 0.05, resize = TRUE, seqweights = "Gerstein",
-                    quiet = FALSE, ...){
+                    maxcores = 1, quiet = FALSE, ...){
   #tree is a "dendrogram" object (can be a node)
   # x is a DNAbin object - should not contain duplicates
   tree <- fork(tree, x = x, refine = refine, iterations = iterations, minK = minK,
                maxK = maxK, minscore = minscore, probs = probs, resize = resize,
-               seqweights = seqweights, quiet = quiet, ... = ...)
+               seqweights = seqweights, maxcores = maxcores, quiet = quiet, ... = ...)
   if(is.list(tree)) tree[] <- lapply(tree, .learn1, x = x, refine = refine,
                                      iterations = iterations, minK = minK, maxK = maxK,
                                      probs = probs, resize = resize, minscore = minscore,
-                                     seqweights = seqweights, quiet = quiet, ... = ...)
+                                     seqweights = seqweights, maxcores = maxcores,
+                                     quiet = quiet, ... = ...)
   return(tree)
 }
 
@@ -90,5 +91,14 @@
   indices <- unlist(tmp, use.names = TRUE)
   indices <- sort(indices)
   return(names(indices))
+}
+
+# find the optimum number of cores to use
+.optcores <- function(maxcores, nseq){
+  if(maxcores == 1) return(1)
+  navailcores <- parallel::detectCores()
+  ocores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
+  ncores <- min(navailcores, maxcores, ocores)
+  return(ncores)
 }
 
