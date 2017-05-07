@@ -6,7 +6,7 @@
 \usage{
 virtualPCR(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   minfsc = 70, minrevsc = 70, minamplen = 50, maxamplen = 2000,
-  partialbind = TRUE, reversecheck = TRUE, reversethresh = 80,
+  partialbind = TRUE, reversecheck = TRUE, reversethresh = 90,
   rm.duplicates = FALSE, cores = 1, quiet = FALSE)
 }
 \arguments{
@@ -58,6 +58,19 @@ if \code{reversecheck = TRUE}.}
 \item{rm.duplicates}{logical indicating whether amplicon sequences that
 have identical nucleotide composition to one that is already in the
 dataset should be removed (TRUE) or retained (FALSE; default).}
+
+\item{cores}{integer giving the number of CPUs to parallelize the operation
+over. Defaults to 1, and reverts to 1 if 'sequences' is not a list.
+This argument may alternatively be a 'cluster' object,
+in which case it is the user's responsibility to close the socket
+connection at the conclusion of the operation,
+for example by running \code{parallel::stopCluster(cores)}.
+The string 'autodetect' is also accepted, in which case the maximum
+number of cores to use is one less than the total number of cores available.
+Note that in this case there
+may be a tradeoff in terms of speed depending on the number and size
+of sequences to be aligned, due to the extra time required to initialize
+the cluster.}
 
 \item{quiet}{logical indicating whether progress should be printed to
 the console.}
