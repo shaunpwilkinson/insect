@@ -153,10 +153,9 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
   res[["phmm0"]] <- model
   for(j in 1:K) res[[pnms[j]]] <- model
   seq_numbers <- integer(K)
-  #seq_proportions <- rep(0, K)
   finetune <- FALSE
   md5s <- paste(openssl::md5(as.raw(tmp)))
-  #md5s <- paste(openssl::md5(paste0(tmp, collapse = "")))
+  fscore <- function(seq, mod) aphid::forward(mod, seq, odds = FALSE)$score
   for(i in 1:iterations){
     if(!quiet) cat("HPHMM iteration", i, "\n")
     membership <- tmp
@@ -183,15 +182,23 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
                                      method = refine, seqweights = seqweightsj,
                                      inserts = if(refine == "Viterbi") "inherited" else "map",
                                      cores = cores, quiet = quiet, ... = ...)
-      if(para) parallel::stopCluster(cores)
+      if(!quiet) cat("Calculating sequence probabilities for child model", j, "\n")
+      if(para){
+        scores[j, ] <- parallel::parSapply(cl = cores, x, fscore, mod = res[[pnms[j]]])
+        parallel::stopCluster(cores)
+      }else{
+        #if(!quiet) cat("Calculating sequence probabilities for child model", j, "\n")
+        scores[j, ] <- sapply(x, fscore, mod = res[[pnms[j]]])
+      }
       # res[[pnms[j]]] <- aphid::train(model, x[membership == j], #model
       #                         method = refine, seqweights = seqweightsj,
       #                         inserts = if(refine == "Viterbi") "inherited" else "map",
       #                         ... = ...)
-      if(!quiet) cat("Calculating sequence probabilities for child model", j, "\n")
-      for(l in 1:nseq){
-        scores[j, l] <- aphid::forward(res[[pnms[j]]], x[[l]], odds = FALSE)$score
-      }
+      # if(!quiet) cat("Calculating sequence probabilities for child model", j, "\n")
+      ###TODO paralellize:
+      # for(l in 1:nseq){
+      #   scores[j, l] <- aphid::forward(res[[pnms[j]]], x[[l]], odds = FALSE)$score
+      # }
     }
     tmp <- apply(scores, 2, which.max)
     finetune <- sum(tmp == membership)/nseq > 0.95

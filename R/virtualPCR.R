@@ -54,125 +54,249 @@
 virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
                        minfsc = 70, minrevsc = 70, minamplen = 50,
                        maxamplen = 2000, partialbind = TRUE, reversecheck = TRUE,
-                       reversethresh = 80, rm.duplicates = FALSE, quiet = FALSE){
-
+                       reversethresh = 80, rm.duplicates = FALSE, cores = 1,
+                       quiet = FALSE){
   nseq <- length(x)
   if(nseq == 0) stop("No sequences provided\n")
   if(!quiet) cat("Started with", nseq, "sequences\n")
-  if(reversecheck){
-    forscoresRC <- numeric(nseq)
-    for(i in 1:nseq) {
-      forscoresRC[i] <- aphid::Viterbi(up, ape::complement(x[i]),
-                                       type = "semiglobal")$score
+  if(inherits(cores, "cluster")){
+    para <- TRUE
+    stopclustr <- FALSE
+  }else if(cores == 1){
+    para <- FALSE
+    stopclustr <- FALSE
+  }else{
+    navailcores <- parallel::detectCores()
+    if(identical(cores, "autodetect")){
+      maxcores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
+      cores <- min(navailcores - 1, maxcores)
     }
-    numreversed <- sum(forscoresRC > reversethresh)
+    if(cores > 1){
+      if(cores > navailcores) stop("Number of cores is more than number available")
+      if(!quiet) cat("Multithreading over", cores, "cores\n")
+      cores <- parallel::makeCluster(cores)
+      para <- TRUE
+      stopclustr <- TRUE
+    }else{
+      para <- FALSE
+      stopclustr <- FALSE
+    }
+  }
+  if(reversecheck){
+    if(!quiet) cat("Checking for reversed sequences\n")
+    #forscoresRC <- numeric(nseq)
+    revx <- ape::complement(x)
+    revfun <- function(rs, up) aphid::Viterbi(up, rs, type = "semiglobal")$score
+    if(para){
+      forscoresRC <- parallel::parSapply(cores, revx, revfun, up = up)
+    }else{
+      forscoresRC <- sapply(revx, revfun, up = up)
+    }
+    # for(i in 1:nseq) {
+    #   forscoresRC[i] <- aphid::Viterbi(up, ape::complement(x[i]),
+    #                                    type = "semiglobal")$score
+    # }
+    revxTF <- forscoresRC > reversethresh
+    numreversed <- sum(revxTF)
     if(!quiet) cat("Detected", numreversed, "reversed sequences\n")
     if(numreversed > 0){
-      if(!quiet & numreversed > 0) {
-        cat("Applying reverse complement function to",
-            numreversed, "sequences\n")
-      }
+      if(!quiet) cat("Reverse complementing", numreversed, "sequences\n")
       tmpattr <- attributes(x)
-      x[forscoresRC > minfsc] <- lapply(x[forscoresRC > minfsc], ape::complement)
+      # x[forscoresRC > minfsc] <- lapply(x[forscoresRC > minfsc], ape::complement)
+      x[revxTF] <- revx[revxTF] #ape::complement(x[forscoresRC > minfsc])
       attributes(x) <- tmpattr
       # test forward primer against seqs and select positive hits (eg >70)
-      if(!quiet & numreversed > 0) {
-        cat(numreversed, "sequences successfully reverse-complemented\n")
-      }
+      if(!quiet) cat("Reverse complementing complete\n")
     }
   }
   # trim all nucleotides to left of forward primer bind site, including primer if specified
-  x1 <- list()
-  included <- logical(nseq)
-  counter <- 1
-  for(i in 1:nseq){
-    vit_i <- aphid::Viterbi(up, x[i], type = "semiglobal")
-    if(vit_i$score > minfsc){
-      pl <- length(vit_i$path)
-      if(partialbind | vit_i$path[1] != 0){
-        tmp <- x[[i]]
-        zeroonestarts <- match(0:1, vit_i$path)
+  forfun <- function(s, up, trimprimers, minfsc, partialbind, minamplen){
+    vit <- aphid::Viterbi(up, s, type = "semiglobal")
+    if(vit$score > minfsc){
+      pl <- length(vit$path)
+      if(partialbind | vit$path[1] != 0){
+        zeroonestarts <- match(0:1, vit$path)
         zeroonestarts <- zeroonestarts[!is.na(zeroonestarts)]
         overhang <- min(zeroonestarts) - 1
-        if(overhang > 0) tmp <- tmp[-(1:overhang)]
+        if(overhang > 0) s <- s[-(1:overhang)]
         if(trimprimers){
-          zeroonestarts2 <- match(0:1, rev(vit_i$path))
+          zeroonestarts2 <- match(0:1, rev(vit$path))
           zeroonestarts2 <- zeroonestarts2[!is.na(zeroonestarts2)]
           tokeep <- min(zeroonestarts2) - 1
-          if(tokeep == 0){
-            tmp <- raw(0)
-          }else{
-            tmp <- rev(rev(tmp)[1:tokeep])
-          }
+          s <- if(tokeep > 0) rev(rev(s)[1:tokeep]) else raw(0) #empty sequence
         }
-        if(length(tmp) >= minamplen){
-          x1[[counter]] <- tmp
-          counter <- counter + 1
-          included[i] <- TRUE
-        }
-      }
-    }
+        if(length(s) >= minamplen) attr(s, "flag") <- TRUE
+      }else s <- raw(0)
+    }else s <- raw(0)
+    return(s)
   }
-  nseq <- length(x1)
+  tmpattr <- attributes(x)
+  if(!quiet) cat("Forward trimming sequences\n")
+  x <- if(para){
+    parallel::parLapply(cores, x, forfun, up, trimprimers, minfsc, partialbind, minamplen)
+  }else{
+    lapply(x, forfun, up, trimprimers, minfsc, partialbind, minamplen)
+  }
+  discards <- sapply(x, function(s) is.null(attr(s, "flag")))
+  deflag <- function(s){
+    attr(s, "flag") <- NULL
+    return(s)
+  }
+  x <- lapply(x, deflag)
+  nseq <- sum(!discards)
   if(!quiet) cat("Retained", nseq, "sequences after forward trim\n")
-  if(nseq == 0) stop("None of the sequences met forward primer specificity criteria\n")
-  names(x1) <- names(x)[included]
-  attr(x1, "species") <- attr(x, "species")[included]
-  attr(x1, "definition") <- attr(x, "definition")[included]
-  attr(x1, "lineage") <- attr(x, "lineage")[included]
-  class(x1) <- "DNAbin"
+  if(nseq > 0){
+    x <- x[!discards]
+    attr(x, "species") <- attr(x, "species")[!discards]
+    attr(x, "definition") <- attr(x, "definition")[!discards]
+    attr(x, "lineage") <- attr(x, "lineage")[!discards]
+    class(x) <- "DNAbin"
+  }else{
+    cat("None of the sequences met forward primer specificity criteria\n")
+    return(NULL)
+  }
+  # trim all nucleotides to right of reverse primer bind site, including primer if specified
   if(!is.null(down)){
     if(rcdown) down <- ape::complement(down)
-    # trim all nucleotides to right of reverse primer bind site, including primer if specified
-    x2 <- list()
-    included <- logical(nseq)
-    counter <- 1
-    for(i in 1:nseq){
-      vit_i <- aphid::Viterbi(down, x1[i], type = "semiglobal")
-      if(vit_i$score > minrevsc){
-        pl <- length(vit_i$path)
-        if(partialbind | vit_i$path[pl] != 0){
-          tmp <- x1[[i]]
-          zeroonestarts <- match(0:1, rev(vit_i$path))
+    revfun <- function(s, down, trimprimers, minrevsc, partialbind, minamplen, maxamplen){
+      vit <- aphid::Viterbi(down, s, type = "semiglobal")
+      if(vit$score > minrevsc){
+        pl <- length(vit$path)
+        if(partialbind | vit$path[pl] != 0){
+          zeroonestarts <- match(0:1, rev(vit$path))
           zeroonestarts <- zeroonestarts[!is.na(zeroonestarts)]
           overhang <- min(zeroonestarts) - 1
-          if(overhang > 0) tmp <- rev(rev(tmp)[-(1:overhang)])
+          if(overhang > 0) s <- rev(rev(s)[-(1:overhang)])
           if(trimprimers){
-            zeroonestarts2 <- match(0:1, vit_i$path)
+            zeroonestarts2 <- match(0:1, vit$path)
             zeroonestarts2 <- zeroonestarts2[!is.na(zeroonestarts2)]
             tokeep <- min(zeroonestarts2) - 1
-            if(tokeep == 0){
-              tmp <- raw(0)
-            }else{
-              tmp <- tmp[1:tokeep]
-            }
+            s <- if(tokeep > 0) s[1:tokeep] else raw(0)
           }
-          if(length(tmp) >= minamplen & length(tmp) <= maxamplen){
-            x2[[counter]] <- tmp
-            counter <- counter + 1
-            included[i] <- TRUE
-          }
-        }
-      }
+          if(length(s) >= minamplen & length(s) <= maxamplen) attr(s, "flag") <- TRUE
+        }else s <- raw(0)
+      }else s <- raw(0)
+      return(s)
     }
-    nseq <- length(x2)
+    tmpattr <- attributes(x)
+    if(!quiet) cat("Reverse trimming sequences\n")
+    x <- if(para){
+      parallel::parLapply(cores, x, revfun, down, trimprimers, minrevsc, partialbind, minamplen, maxamplen)
+    }else{
+      lapply(x, revfun, down, trimprimers, minrevsc, partialbind, minamplen, maxamplen)
+    }
+    discards <- sapply(x, function(s) is.null(attr(s, "flag")))
+    x <- lapply(x, deflag)
+    nseq <- sum(!discards)
     if(!quiet) cat("Retained", nseq, "sequences after reverse trim\n")
-    if(nseq == 0) stop("None of the sequences met reverse primer specificity criteria\n")
-    names(x2) <- names(x1)[included]
-    attr(x2, "species") <- attr(x1, "species")[included]
-    attr(x2, "definition") <- attr(x1, "definition")[included]
-    attr(x2, "lineage") <- attr(x1, "lineage")[included]
-    class(x2) <- "DNAbin"
-  }else{
-    x2 <- x1
+    if(nseq > 0){
+      x <- x[!discards]
+      attr(x, "species") <- attr(x, "species")[!discards]
+      attr(x, "definition") <- attr(x, "definition")[!discards]
+      attr(x, "lineage") <- attr(x, "lineage")[!discards]
+      class(x) <- "DNAbin"
+    }else{
+      cat("None of the sequences met reverse primer specificity criteria\n")
+      return(NULL)
+    }
   }
-  if(nseq == 0) stop("None of the sequences met primer specificity criteria\n")
+  if(para & stopclustr) parallel::stopCluster(cores)
   #### remove duplicate sequences
   if(rm.duplicates){
-    x2 <- unique.DNAbin(x2)
-    if(!quiet) cat("Retained", length(x2), "sequences after duplicate analysis\n")
+    x <- unique.DNAbin(x)
+    if(!quiet) cat("Retained", length(x), "sequences after duplicate analysis\n")
   }
   if(!quiet) cat("Done\n")
-  return(x2)
+  return(x)
 }
 ################################################################################
+
+
+
+# x1 <- list()
+# included <- logical(nseq)
+# counter <- 1
+# for(i in 1:nseq){
+#   vit_i <- aphid::Viterbi(up, x[i], type = "semiglobal")
+#   if(vit_i$score > minfsc){
+#     pl <- length(vit_i$path)
+#     if(partialbind | vit_i$path[1] != 0){
+#       tmp <- x[[i]]
+#       zeroonestarts <- match(0:1, vit_i$path)
+#       zeroonestarts <- zeroonestarts[!is.na(zeroonestarts)]
+#       overhang <- min(zeroonestarts) - 1
+#       if(overhang > 0) tmp <- tmp[-(1:overhang)]
+#       if(trimprimers){
+#         zeroonestarts2 <- match(0:1, rev(vit_i$path))
+#         zeroonestarts2 <- zeroonestarts2[!is.na(zeroonestarts2)]
+#         tokeep <- min(zeroonestarts2) - 1
+#         if(tokeep == 0){
+#           tmp <- raw(0)
+#         }else{
+#           tmp <- rev(rev(tmp)[1:tokeep])
+#         }
+#       }
+#       if(length(tmp) >= minamplen){
+#         x1[[counter]] <- tmp
+#         counter <- counter + 1
+#         included[i] <- TRUE
+#       }
+#     }
+#   }
+# }
+# nseq <- length(x1)
+# if(!quiet) cat("Retained", nseq, "sequences after forward trim\n")
+# if(nseq == 0) stop("None of the sequences met forward primer specificity criteria\n")
+# names(x1) <- names(x)[included]
+# attr(x1, "species") <- attr(x, "species")[included]
+# attr(x1, "definition") <- attr(x, "definition")[included]
+# attr(x1, "lineage") <- attr(x, "lineage")[included]
+# class(x1) <- "DNAbin"
+
+
+# if(!is.null(down)){
+#   if(rcdown) down <- ape::complement(down)
+#
+#   x2 <- list()
+#   included <- logical(nseq)
+#   counter <- 1
+#   for(i in 1:nseq){
+#     vit_i <- aphid::Viterbi(down, x1[i], type = "semiglobal")
+#     if(vit_i$score > minrevsc){
+#       pl <- length(vit_i$path)
+#       if(partialbind | vit_i$path[pl] != 0){
+#         tmp <- x1[[i]]
+#         zeroonestarts <- match(0:1, rev(vit_i$path))
+#         zeroonestarts <- zeroonestarts[!is.na(zeroonestarts)]
+#         overhang <- min(zeroonestarts) - 1
+#         if(overhang > 0) tmp <- rev(rev(tmp)[-(1:overhang)])
+#         if(trimprimers){
+#           zeroonestarts2 <- match(0:1, vit_i$path)
+#           zeroonestarts2 <- zeroonestarts2[!is.na(zeroonestarts2)]
+#           tokeep <- min(zeroonestarts2) - 1
+#           if(tokeep == 0){
+#             tmp <- raw(0)
+#           }else{
+#             tmp <- tmp[1:tokeep]
+#           }
+#         }
+#         if(length(tmp) >= minamplen & length(tmp) <= maxamplen){
+#           x2[[counter]] <- tmp
+#           counter <- counter + 1
+#           included[i] <- TRUE
+#         }
+#       }
+#     }
+#   }
+#   nseq <- length(x2)
+#   if(!quiet) cat("Retained", nseq, "sequences after reverse trim\n")
+#   if(nseq == 0) stop("None of the sequences met reverse primer specificity criteria\n")
+#   names(x2) <- names(x1)[included]
+#   attr(x2, "species") <- attr(x1, "species")[included]
+#   attr(x2, "definition") <- attr(x1, "definition")[included]
+#   attr(x2, "lineage") <- attr(x1, "lineage")[included]
+#   class(x2) <- "DNAbin"
+# }else{
+#   x2 <- x1
+# }
+# if(nseq == 0) stop("None of the sequences met primer specificity criteria\n")

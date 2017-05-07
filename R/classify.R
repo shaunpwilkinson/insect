@@ -9,10 +9,18 @@
 #' @param threshold numeric value between 0 and 1 giving the minimum
 #'   Akaike weight for the recursive classification procedure
 #'   to continue toward the leaves of the tree.
-#' @param ncores integer giving the number of CPUs to parallelize the operation
-#'   over. Defaults to 1, and reverts to 1 if x is not a list.
-#'   The string 'autodetect' is also accepted, in which case the number of cores
-#'   used is one less than the total number of cores available.
+#' @param cores integer giving the number of CPUs to parallelize the operation
+#'   over. Defaults to 1, and reverts to 1 if 'sequences' is not a list.
+#'   This argument may alternatively be a 'cluster' object,
+#'   in which case it is the user's responsibility to close the socket
+#'   connection at the conclusion of the operation,
+#'   for example by running \code{parallel::stopCluster(cores)}.
+#'   The string 'autodetect' is also accepted, in which case the maximum
+#'   number of cores to use is one less than the total number of cores available.
+#'   Note that in this case there
+#'   may be a tradeoff in terms of speed depending on the number and size
+#'   of sequences to be aligned, due to the extra time required to initialize
+#'   the cluster.
 #' @return a character string giving the lineage of the input sequence
 #' @details TBA
 #' @author Shaun Wilkinson
@@ -21,7 +29,7 @@
 #' @examples
 #'   ##TBA
 ################################################################################
-classify <- function(x, tree, threshold = 0.999, ncores = 1){
+classify <- function(x, tree, threshold = 0.999, cores = 1){
   classify1 <- function(x, tree, threshold = 0.9){
     path <- integer(100)
     Akweights <- numeric(100)
@@ -96,17 +104,29 @@ classify <- function(x, tree, threshold = 0.999, ncores = 1){
     return(res)
   }
   if(is.list(x)){
-    if(ncores == 1){
-      return(lapply(x, classify1, tree, threshold))
+    if(inherits(cores, "cluster")){
+      #paths <- parallel::parLapply(cores, sequences, pathfinder, model = model, ...)
+      res <- parallel::parLapply(cores, x, classify1, tree, threshold)
+    }else if(cores == 1){
+      res <- lapply(x, classify1, tree, threshold)
     }else{
+      nseq <- length(x)
       navailcores <- parallel::detectCores()
-      if(identical(ncores, "autodetect")) ncores <- navailcores - 1
-      if(ncores > navailcores) stop("Number of cores is more than the number available")
-      cl <- parallel::makeCluster(ncores)
-      res <- parallel::parLapply(cl, x, classify1, tree = tree, threshold = threshold)
-      parallel::stopCluster(cl)
-      return(res)
+      if(identical(cores, "autodetect")){
+        maxcores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
+        cores <- min(navailcores - 1, maxcores)
+      }
+      if(cores > navailcores) stop("Number of cores to use is more than number available")
+      if(cores > 1){
+        cl <- parallel::makeCluster(cores)
+        # paths <- parallel::parLapply(cl, sequences, pathfinder, model = model, ...)
+        res <- parallel::parLapply(cl, x, classify1, tree, threshold)
+        parallel::stopCluster(cl)
+      }else{
+        res <- lapply(x, classify1, tree, threshold)
+      }
     }
+    return(res)
   }else{
     return(classify1(x, tree, threshold))
   }

@@ -183,7 +183,7 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
           }
         }else{
           discards[counter] <- TRUE
-          if(!quiet) cat("Sequence", counter, "is invalid and will be discarded\n")
+          #if(!quiet) cat("Sequence", counter, "is invalid and will be discarded\n")
         }
         counter <- counter + 1
       }
@@ -199,6 +199,14 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
     attr(obj, "definition") <- objdef[!discards]
     attr(obj, "lineage") <- objlineage[!discards]
     if(DNA) class(obj) <- "DNAbin"
+  }
+  if(!quiet){
+    if(any(discards)){
+      cat("The following sequences are invalid and were discarded:\n")
+      for(i in which(discards)){
+        cat(i, "\n")
+      }
+    }
   }
   return(obj)
 }

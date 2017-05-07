@@ -4,7 +4,7 @@
 \alias{classify}
 \title{Taxonomic classification for DNA barcode sequences.}
 \usage{
-classify(x, tree, threshold = 0.999, ncores = 1)
+classify(x, tree, threshold = 0.999, cores = 1)
 }
 \arguments{
 \item{x}{a \code{"DNAbin"} object, either as a vector or a list of vectors.}
@@ -15,10 +15,18 @@ classify(x, tree, threshold = 0.999, ncores = 1)
 Akaike weight for the recursive classification procedure
 to continue toward the leaves of the tree.}
 
-\item{ncores}{integer giving the number of CPUs to parallelize the operation
-over. Defaults to 1, and reverts to 1 if x is not a list.
-The string 'autodetect' is also accepted, in which case the number of cores
-used is one less than the total number of cores available.}
+\item{cores}{integer giving the number of CPUs to parallelize the operation
+over. Defaults to 1, and reverts to 1 if 'sequences' is not a list.
+This argument may alternatively be a 'cluster' object,
+in which case it is the user's responsibility to close the socket
+connection at the conclusion of the operation,
+for example by running \code{parallel::stopCluster(cores)}.
+The string 'autodetect' is also accepted, in which case the maximum
+number of cores to use is one less than the total number of cores available.
+Note that in this case there
+may be a tradeoff in terms of speed depending on the number and size
+of sequences to be aligned, due to the extra time required to initialize
+the cluster.}
 }
 \value{
 a character string giving the lineage of the input sequence

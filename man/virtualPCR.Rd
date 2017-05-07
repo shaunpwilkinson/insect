@@ -7,7 +7,7 @@
 virtualPCR(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   minfsc = 70, minrevsc = 70, minamplen = 50, maxamplen = 2000,
   partialbind = TRUE, reversecheck = TRUE, reversethresh = 80,
-  rm.duplicates = FALSE, quiet = FALSE)
+  rm.duplicates = FALSE, cores = 1, quiet = FALSE)
 }
 \arguments{
 \item{x}{a list of DNA sequences in \code{DNAbin} format.}
