@@ -66,7 +66,7 @@
 virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
                        minfsc = 70, minrevsc = 70, minamplen = 50,
                        maxamplen = 2000, partialbind = TRUE, reversecheck = TRUE,
-                       reversethresh = 80, rm.duplicates = FALSE, cores = 1,
+                       reversethresh = 90, rm.duplicates = FALSE, cores = 1,
                        quiet = FALSE){
   nseq <- length(x)
   if(nseq == 0) stop("No sequences provided\n")
