@@ -227,9 +227,7 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
     }
   }
   lengthcheck <- sapply(obj, length)
-  if(any(lengthcheck == 0)){
-    warning("Some sequences failed to download\n")
-  }
+  if(any(lengthcheck == 0)) warning("Some sequences failed to download\n")
   return(obj)
 }
 ################################################################################
