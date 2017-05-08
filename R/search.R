@@ -65,7 +65,7 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
                                "will be downloaded, continue? (y/n): "))
     if(decision == "n") stop("aborted") else if(!identical(decision, "y")) stop("invalid")
   }
-  nrequest <- N%/%500 + as.logical(N%%500)
+  nrequest <- N%/%500 + as.logical(N%%500) # 1 if remainder exists, 0 otherwise
   if(onlyID){
     obj <- character(N)
   }else{
@@ -146,16 +146,27 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
       # break long vector into list with 1 element for each sequence
       ends <- which(grepl("^//", tmp))
       starts <- c(1, ends[-length(ends)] + 1)
+      # if(length(ends) != (b - a + 1) | length(starts) != (b - a + 1)){
+      #   stop("Error in sequence download, check internet connection and try again\n")
+      # }
       runs <- mapply(":", starts, ends, SIMPLIFY = FALSE)
       tmp2 <- lapply(runs, function(e) tmp[e])
       for(j in seq_along(tmp2)){
-        acclines <- which(grepl("^ACCESSION", tmp2[[j]]))
-        deflines <- which(grepl("^DEFINITION", tmp2[[j]]))
-        orglines <- which(grepl("^  ORGANISM", tmp2[[j]]))
-        seqlines <- which(grepl("^ORIGIN", tmp2[[j]])) + 1
-        endlines <- which(grepl("^//", tmp2[[j]])) - 1
-        if(length(acclines) == 1 & length(deflines) == 1 & length(orglines) == 1 &
-           length(seqlines) == 1 & length(endlines) == 1){
+        seqok <- TRUE
+        deflines <- grep("^DEFINITION", tmp2[[j]])
+        if(length(deflines) != 1) seqok <- FALSE
+        acclines <- grep("^ACCESSION", tmp2[[j]])
+        if(length(acclines) != 1) seqok <- FALSE
+        # verlines <- acclines + 1 # can throw error if acclines is char(0)
+        orglines <- grep("^  ORGANISM", tmp2[[j]])
+        if(length(orglines) != 1) seqok <- FALSE
+        reflines <- grep("^REFERENCE", tmp2[[j]])
+        if(length(reflines) > 1) reflines <- reflines[1] else if(length(reflines) < 1) seqok <- FALSE
+        seqlines <- grep("^ORIGIN", tmp2[[j]])
+        if(length(seqlines) == 1) seqlines <- seqlines + 1 else seqok <- FALSE
+        endlines <- grep("^//", tmp2[[j]])
+        if(length(endlines) == 1) endlines <- endlines - 1 else seqok <- FALSE
+        if(seqok){
           seqj <- paste0(tmp2[[j]][seqlines:endlines], collapse = "")
           seqj <- gsub("[ 0123456789]", "", seqj)
           seqj <- strsplit(seqj, split = "")[[1]]
@@ -170,11 +181,20 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
           org <- tmp2[[j]][orglines]
           org <- gsub("  ORGANISM *", "", org)
           objorg[counter] <- org
-          if(grepl(";", tmp2[[j]][orglines + 1])){
-            linlines_s <- orglines + 1
-            linlines_e <- linlines_s
-            while(!grepl("\\.", tmp2[[j]][linlines_e])) linlines_e <- linlines_e + 1
-            lineage <- paste0(tmp2[[j]][linlines_s:linlines_e], collapse = "")
+          linseq <- seq(orglines + 1, reflines - 1)
+          for(l in linseq){
+            if(!(grepl("^ {12}Eukaryota", tmp2[[j]][l]) |
+                 grepl("^ {12}Bacteria", tmp2[[j]][l]) |
+                 grepl("^ {12}Archaea", tmp2[[j]][l]))){
+              linseq <- linseq[-1]
+            }else break
+          }
+          if(length(linseq) > 0){
+            # linlines_s <- orglines + 1
+            # linlines_e <- linlines_s
+            # while(!grepl("\\.", tmp2[[j]][linlines_e])) linlines_e <- linlines_e + 1
+            # lineage <- paste0(tmp2[[j]][linlines_s:linlines_e], collapse = "")
+            lineage <- paste0(tmp2[[j]][linseq], collapse = "")
             lineage <- gsub("^ +", "", lineage)
             lineage <- gsub("  +", " ", lineage)
             lineage <- gsub("\\(.+\\)", "", lineage)
@@ -203,10 +223,12 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
   if(!quiet){
     if(any(discards)){
       cat("The following sequences are invalid and were discarded:\n")
-      for(i in which(discards)){
-        cat(i, "\n")
-      }
+      for(i in which(discards)) cat(" ", i, ", ")
     }
+  }
+  lengthcheck <- sapply(obj, length)
+  if(any(lengthcheck == 0)){
+    warning("Some sequences failed to download\n")
   }
   return(obj)
 }
