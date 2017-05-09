@@ -222,8 +222,9 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
   }
   if(!quiet){
     if(any(discards)){
-      cat("The following sequences are invalid and were discarded:\n")
-      for(i in which(discards)) cat(" ", i, ", ")
+      cat("\n", sum(discards), "sequences are invalid and were discarded:\n ")
+      for(i in which(discards)) cat(i, " ")
+      cat("\n")
     }
   }
   lengthcheck <- sapply(obj, length)

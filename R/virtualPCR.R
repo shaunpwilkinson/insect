@@ -15,7 +15,7 @@
 #'   reverse-complemented prior to aligning with the input sequences. Set
 #'   to TRUE only if \code{down} is not NULL, is of class \code{DNAbin}, and
 #'   is the reverse complement of the target sequence (e.g. the sequence of
-#'   a reverse primer).
+#'   a reverse primer as would be ordered from an oligo supplier).
 #' @param trimprimers logical indicating whether the primer-binding sites
 #'   should be removed from the sequences in the returned list.
 #' @param minfsc numeric, giving the minimum specificity(log-odds score
@@ -98,7 +98,7 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
     if(!quiet) cat("Checking for reversed sequences\n")
     #forscoresRC <- numeric(nseq)
     revx <- ape::complement(x)
-    revfun <- function(rs, up) aphid::Viterbi(up, rs, type = "semiglobal")$score
+    revfun <- function(rs, up) aphid::Viterbi(up, rs, type = "semiglobal", odds = TRUE)$score
     if(para){
       forscoresRC <- parallel::parSapply(cores, revx, revfun, up = up)
     }else{
@@ -123,7 +123,7 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   }
   # trim all nucleotides to left of forward primer bind site, including primer if specified
   forfun <- function(s, up, trimprimers, minfsc, partialbind, minamplen){
-    vit <- aphid::Viterbi(up, s, type = "semiglobal")
+    vit <- aphid::Viterbi(up, s, type = "semiglobal", odds = TRUE)
     if(vit$score > minfsc){
       pl <- length(vit$path)
       if(partialbind | vit$path[1] != 0){
@@ -171,7 +171,7 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   if(!is.null(down)){
     if(rcdown) down <- ape::complement(down)
     revfun <- function(s, down, trimprimers, minrevsc, partialbind, minamplen, maxamplen){
-      vit <- aphid::Viterbi(down, s, type = "semiglobal")
+      vit <- aphid::Viterbi(down, s, type = "semiglobal", odds = TRUE)
       if(vit$score > minrevsc){
         pl <- length(vit$path)
         if(partialbind | vit$path[pl] != 0){
