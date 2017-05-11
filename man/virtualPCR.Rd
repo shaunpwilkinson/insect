@@ -23,7 +23,7 @@ the forward primer is used.}
 reverse-complemented prior to aligning with the input sequences. Set
 to TRUE only if \code{down} is not NULL, is of class \code{DNAbin}, and
 is the reverse complement of the target sequence (e.g. the sequence of
-a reverse primer).}
+a reverse primer as would be ordered from an oligo supplier).}
 
 \item{trimprimers}{logical indicating whether the primer-binding sites
 should be removed from the sequences in the returned list.}

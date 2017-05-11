@@ -135,40 +135,35 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
           zeroonestarts2 <- match(0:1, rev(vit$path))
           zeroonestarts2 <- zeroonestarts2[!is.na(zeroonestarts2)]
           tokeep <- min(zeroonestarts2) - 1
-          s <- if(tokeep > 0) rev(rev(s)[1:tokeep]) else raw(0) #empty sequence
+          if(tokeep > 0) s <- rev(rev(s)[1:tokeep]) else return(NULL)
         }
-        if(length(s) >= minamplen) attr(s, "flag") <- TRUE
-      }else s <- raw(0)
-    }else s <- raw(0)
-    return(s)
+        if(length(s) < minamplen) return(NULL)
+        return(s)
+      }
+    }
+    return(NULL)
   }
   tmpattr <- attributes(x)
+  whichattr <- which(sapply(tmpattr, length) == length(x))
   if(!quiet) cat("Forward trimming sequences\n")
   x <- if(para){
     parallel::parLapply(cores, x, forfun, up, trimprimers, minfsc, partialbind, minamplen)
   }else{
     lapply(x, forfun, up, trimprimers, minfsc, partialbind, minamplen)
   }
-  discards <- sapply(x, function(s) is.null(attr(s, "flag")))
-  deflag <- function(s){
-    attr(s, "flag") <- NULL
-    return(s)
-  }
-  x <- lapply(x, deflag)
+  discards <- sapply(x, is.null)
   nseq <- sum(!discards)
   if(!quiet) cat("Retained", nseq, "sequences after forward trim\n")
   if(nseq > 0){
     x <- x[!discards]
-    attr(x, "species") <- attr(x, "species")[!discards]
-    attr(x, "definition") <- attr(x, "definition")[!discards]
-    attr(x, "lineage") <- attr(x, "lineage")[!discards]
-    class(x) <- "DNAbin"
+    for(i in whichattr) tmpattr[[i]] <- tmpattr[[i]][!discards]
+    attributes(x) <- tmpattr
   }else{
     cat("None of the sequences met forward primer specificity criteria\n")
-    return(NULL)
+    x <- NULL # cant return yet since cluster is still open
   }
   # trim all nucleotides to right of reverse primer bind site, including primer if specified
-  if(!is.null(down)){
+  if(!is.null(down) & !is.null(x)){
     if(rcdown) down <- ape::complement(down)
     revfun <- function(s, down, trimprimers, minrevsc, partialbind, minamplen, maxamplen){
       vit <- aphid::Viterbi(down, s, type = "semiglobal", odds = TRUE)
@@ -183,36 +178,35 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
             zeroonestarts2 <- match(0:1, vit$path)
             zeroonestarts2 <- zeroonestarts2[!is.na(zeroonestarts2)]
             tokeep <- min(zeroonestarts2) - 1
-            s <- if(tokeep > 0) s[1:tokeep] else raw(0)
+            if(tokeep > 0) s <- s[1:tokeep] else return(NULL)
           }
-          if(length(s) >= minamplen & length(s) <= maxamplen) attr(s, "flag") <- TRUE
-        }else s <- raw(0)
-      }else s <- raw(0)
-      return(s)
+          if(length(s) >= minamplen & length(s) <= maxamplen) return(s)
+        }
+      }
+      return(NULL)
     }
     tmpattr <- attributes(x)
+    whichattr <- which(sapply(tmpattr, length) == length(x))
     if(!quiet) cat("Reverse trimming sequences\n")
     x <- if(para){
       parallel::parLapply(cores, x, revfun, down, trimprimers, minrevsc, partialbind, minamplen, maxamplen)
     }else{
       lapply(x, revfun, down, trimprimers, minrevsc, partialbind, minamplen, maxamplen)
     }
-    discards <- sapply(x, function(s) is.null(attr(s, "flag")))
-    x <- lapply(x, deflag)
+    discards <- sapply(x, is.null)
     nseq <- sum(!discards)
-    if(!quiet) cat("Retained", nseq, "sequences after reverse trim\n")
     if(nseq > 0){
+      if(!quiet) cat("Retained", nseq, "sequences after reverse trim\n")
       x <- x[!discards]
-      attr(x, "species") <- attr(x, "species")[!discards]
-      attr(x, "definition") <- attr(x, "definition")[!discards]
-      attr(x, "lineage") <- attr(x, "lineage")[!discards]
-      class(x) <- "DNAbin"
+      for(i in whichattr) tmpattr[[i]] <- tmpattr[[i]][!discards]
+      attributes(x) <- tmpattr
     }else{
       cat("None of the sequences met reverse primer specificity criteria\n")
-      return(NULL)
+      x <- NULL
     }
   }
   if(para & stopclustr) parallel::stopCluster(cores)
+  if(is.null(x)) return(x)
   #### remove duplicate sequences
   if(rm.duplicates){
     x <- unique.DNAbin(x)
