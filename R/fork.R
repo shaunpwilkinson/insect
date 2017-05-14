@@ -17,7 +17,7 @@
 ################################################################################
 fork <- function(node, x, refine = "Viterbi", iterations = 50,
                  minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
-                 resize = TRUE, seqweights = "Gerstein", maxcores = 1,
+                 resize = TRUE, seqweights = "Gerstein", cores = 1,
                  quiet = FALSE, ...){
   if(!is.list(node)){ # fork leaves only
     seqs <- x[attr(node, "sequences")]
@@ -32,6 +32,25 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
     if(minK == 1) return(node)
     if(nseq < minK) return(node)
     if(nseq < maxK) maxK <- nseq
+
+    ### set up multithread
+    if(inherits(cores, "cluster") | identical(cores, 1)){
+      stopclustr <- FALSE
+    }else{ # create cluster object
+      navailcores <- parallel::detectCores()
+      if(identical(cores, "autodetect")) cores <- navailcores - 1
+      if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
+      if(cores > navailcores) stop("Number of cores is more than the number available")
+      # if(!quiet) cat("Multithreading over", cores, "cores\n")
+      if(cores == 1){
+        stopclustr <- FALSE
+      }else{
+        if(!quiet) cat("Initializing cluster with", cores, "cores\n")
+        cores <- parallel::makeCluster(cores)
+        stopclustr <- TRUE
+      }
+    }
+
     if(!quiet) cat("\nAttempting to split clade", attr(node, "clade"), "\n")
     if(is.null(attr(node, "phmm"))){ # should only happen at top level
       mod <- NULL
@@ -39,14 +58,16 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
       mod <- attr(node, "phmm")
       if(resize){
         if(!quiet) cat("Retraining parent model\n")
-        # model is allowed to change size here
-        optncores <- .optcores(maxcores, nseq)
-        para <- optncores > 1
-        if(para & !quiet) cat("Multithreading Viterbi training over", optncores, "cores\n")
-        cores <- if(para) parallel::makeCluster(optncores) else 1
+        ### model is allowed to change size here
+
+        # optncores <- .optcores(maxcores, nseq)
+        # para <- optncores > 1
+        # if(para & !quiet) cat("Multithreading Viterbi training over", optncores, "cores\n")
+        # cores <- if(para) parallel::makeCluster(optncores) else 1
         mod <- aphid::train(mod, seqs, method = "Viterbi", seqweights = wgts,
                             cores = cores, quiet = quiet, ... = ...)
-        if(para) parallel::stopCluster(cores)
+
+        # if(para) parallel::stopCluster(cores)
         if(!quiet) cat("New model size :", mod$size, "\n")
         if(refine == "BaumWelch") mod <- aphid::train(mod, seqs, method = "BaumWelch",
                                                       seqweights = wgts, ... = ...)
@@ -57,9 +78,10 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
     repeat{
       seqsplit <- partition(seqs, model = mod, needs_training = FALSE, refine = refine,
                             K = nclades, iterations = iterations, seqweights = wgts,
-                            maxcores = maxcores, quiet = quiet, ... = ...)
+                            cores = cores, quiet = quiet, ... = ...)
       if(is.null(seqsplit)){
         if(!quiet) cat("Sequence splitting failed, returning unsplit node\n")
+        if(stopclustr) parallel::stopCluster(cores)
         return(node)
       }
       if(is.null(attr(node, "phmm"))){ # should only be TRUE at top level
@@ -68,13 +90,18 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
       }
       if(is.null(attr(node, "scores"))){ # should only be TRUE at top level
         if(!quiet) cat("Calculating top-level scores\n")
-        scores <- numeric(nseq)
-        ##TODO could parallelize this:
-        for(i in 1:nseq){
-          scores[i] <- aphid::forward(seqsplit$phmm0, seqs[[i]],
-                                      odds = FALSE, ... = ...)$score
+        fscore <- function(s, model) aphid::forward(model, s, odds = FALSE)$score
+        attr(node, "scores") <- if(inherits(cores, "cluster")){
+          parallel::parSapply(cores, seqs, fscore, model = seqsplit$phmm0)
+        }else{
+          sapply(seqs, fscore, model = seqsplit$phmm0)
         }
-        attr(node, "scores") <- scores
+        # scores <- numeric(nseq)
+        # ##TODO could parallelize this:
+        # for(i in 1:nseq){
+        #   scores[i] <- aphid::forward(seqsplit$phmm0, seqs[[i]],
+        #                               odds = FALSE, ... = ...)$score
+        # }
       }
       membership <- seqsplit$membership
       scores <- seqsplit$scores
@@ -111,6 +138,7 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
         }
       }
     }
+    if(stopclustr) parallel::stopCluster(cores) # not used if called from 'learn'
     # Akaike weights should all be close to 1
     # now decorate the node (if disc ability is > a certain threshold?)
     # splitfun <- function(s) strsplit(s, split = ";")[[1]]

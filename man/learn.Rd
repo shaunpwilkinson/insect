@@ -7,7 +7,7 @@
 learn(x, model = NULL, refine = "Viterbi", iterations = 50, minK = 2,
   maxK = 2, minscore = 0.9, probs = 0.05, resize = TRUE,
   duplicates = NULL, seqweights = "Gerstein", recursive = TRUE,
-  maxcores = 1, quiet = FALSE, ...)
+  cores = 1, quiet = FALSE, ...)
 }
 \arguments{
 \item{x}{an object of class\code{"DNAbin"} representing a list of
@@ -81,11 +81,16 @@ should continue recursively until the discrimination criteria
 are not met (TRUE; default), or whether a single split should
 take place at the root node.}
 
-\item{maxcores}{integer giving the maximum number of CPUs to be used
+\item{cores}{integer giving the number of CPUs to use
 when training the models (only applicable if
-\code{refine = 'Viterbi'}). Note that the number of cores used may
-be less than the number given if the sequence training set is small
-or there are fewer cores available.}
+\code{refine = 'Viterbi'}). Defaults to 1.
+This argument may alternatively be a 'cluster' object,
+in which case it is the user's responsibility to close the socket
+connection at the conclusion of the operation,
+e.g. by running \code{parallel::stopCluster(cores)}.
+The string 'autodetect' is also accepted, in which case the maximum
+number of cores to use is one less than the total number of cores
+available.}
 
 \item{quiet}{logical indicating whether feedback should be printed
 to the console. Note that the output can be rather verbose for

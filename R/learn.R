@@ -62,11 +62,16 @@
 #'   should continue recursively until the discrimination criteria
 #'   are not met (TRUE; default), or whether a single split should
 #'   take place at the root node.
-#' @param maxcores integer giving the maximum number of CPUs to be used
+#' @param cores integer giving the number of CPUs to use
 #'   when training the models (only applicable if
-#'   \code{refine = 'Viterbi'}). Note that the number of cores used may
-#'   be less than the number given if the sequence training set is small
-#'   or there are fewer cores available.
+#'   \code{refine = 'Viterbi'}). Defaults to 1.
+#'   This argument may alternatively be a 'cluster' object,
+#'   in which case it is the user's responsibility to close the socket
+#'   connection at the conclusion of the operation,
+#'   e.g. by running \code{parallel::stopCluster(cores)}.
+#'   The string 'autodetect' is also accepted, in which case the maximum
+#'   number of cores to use is one less than the total number of cores
+#'   available.
 #' @param quiet logical indicating whether feedback should be printed
 #'   to the console. Note that the output can be rather verbose for
 #'   larger trees.
@@ -111,7 +116,7 @@
 learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                   minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
                   resize = TRUE, duplicates = NULL, seqweights = "Gerstein",
-                  recursive = TRUE, maxcores = 1, quiet = FALSE, ...){
+                  recursive = TRUE, cores = 1, quiet = FALSE, ...){
   # x is a "DNAbin" object
   # First initialize the tree
   tree <- 1
@@ -141,23 +146,41 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "weights") <- seqweights
   attr(tree, "sequences") <- seq_along(x) # temporary - eventually replaced
   stopifnot(length(seqweights) == length(attr(tree, "sequences")))
-  # integer vector of indices pointing to x arg
+  ### integer vector of indices pointing to x arg
   # attr(tree, "phmm") <- derive.PHMM.list(x, refine = refine, ... = ...)
   attr(tree, "phmm") <- model
   attr(tree, "height") <- 0
+  ### set up multithread
+  if(inherits(cores, "cluster") | identical(cores, 1)){
+    stopclustr <- FALSE
+  }else{ # create cluster object
+    navailcores <- parallel::detectCores()
+    if(identical(cores, "autodetect")) cores <- navailcores - 1
+    if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
+    if(cores > navailcores) stop("Number of cores is more than the number available")
+    # if(!quiet) cat("Multithreading over", cores, "cores\n")
+    if(cores == 1){
+      stopclustr <- FALSE
+    }else{
+      if(!quiet) cat("Initializing cluster with", cores, "cores\n")
+      cores <- parallel::makeCluster(cores)
+      stopclustr <- TRUE
+    }
+  }
   if(recursive){
     tree <- .learn1(tree, x = x, refine = refine, iterations = iterations,
                     minK = minK, maxK = maxK, minscore = minscore,
                     probs = probs, resize = resize,
-                    seqweights = seqweights, maxcores = maxcores,
+                    seqweights = seqweights, cores = cores,
                     quiet = quiet, ... = ...)
   }else{
     tree <- fork(tree, x = x, refine = refine, iterations = iterations,
                  minK = minK, maxK = maxK, minscore = minscore,
                  probs = probs, resize = resize,
-                 seqweights = seqweights, maxcores = maxcores,
+                 seqweights = seqweights, cores = cores,
                  quiet = quiet, ... = ...)
   }
+  if(stopclustr) parallel::stopCluster(cores)
   ### fix midpoints, members, heights and leaf integers
   ### note changes here also apply to 'expand' function
   if(!quiet) cat("Setting midpoints and members attributes\n")

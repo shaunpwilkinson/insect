@@ -6,7 +6,7 @@
 \usage{
 partition(x, model = NULL, needs_training = FALSE, K = 2,
   allocation = "cluster", refine = "Viterbi", iterations = 50,
-  seqweights = "Gerstein", maxcores = 1, quiet = FALSE, ...)
+  seqweights = "Gerstein", cores = 1, quiet = FALSE, ...)
 }
 \arguments{
 \item{x}{a \code{"DNAbin"} object containing multiple sequences in a list.}
@@ -53,11 +53,16 @@ to the number of sequences in the alignment (so that mean(seqweights) = 1;
 Note this does not need to be the case if providing weights as a numeric
 vector).}
 
-\item{maxcores}{integer giving the maximum number of CPUs to be used
+\item{cores}{integer giving the number of CPUs to use
 when training the models (only applicable if
-\code{refine = 'Viterbi'}). Note that the number of cores used may
-be less than the number given if the sequence training set is small
-or there are fewer cores available.}
+\code{refine = 'Viterbi'}). Defaults to 1.
+This argument may alternatively be a 'cluster' object,
+in which case it is the user's responsibility to close the socket
+connection at the conclusion of the operation,
+e.g. by running \code{parallel::stopCluster(cores)}.
+The string 'autodetect' is also accepted, in which case the maximum
+number of cores to use is one less than the total number of cores
+available.}
 
 \item{quiet}{logical indicating whether the progress should be printed to
 the console.}

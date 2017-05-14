@@ -98,11 +98,11 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
     if(!quiet) cat("Checking for reversed sequences\n")
     #forscoresRC <- numeric(nseq)
     revx <- ape::complement(x)
-    revfun <- function(rs, up) aphid::Viterbi(up, rs, type = "semiglobal", odds = TRUE)$score
+    revcheck <- function(rs, up) aphid::Viterbi(up, rs, type = "semiglobal", odds = TRUE)$score
     if(para){
-      forscoresRC <- parallel::parSapply(cores, revx, revfun, up = up)
+      forscoresRC <- parallel::parSapply(cores, revx, revcheck, up = up)
     }else{
-      forscoresRC <- sapply(revx, revfun, up = up)
+      forscoresRC <- sapply(revx, revcheck, up = up)
     }
     # for(i in 1:nseq) {
     #   forscoresRC[i] <- aphid::Viterbi(up, ape::complement(x[i]),
