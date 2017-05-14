@@ -52,11 +52,13 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
     }
 
     if(!quiet) cat("\nAttempting to split clade", attr(node, "clade"), "\n")
-    if(is.null(attr(node, "phmm"))){ # should only happen at top level
+    if(is.null(attr(node, "phmm"))){
+      # should only happen at top level
+      # if a PHMM is not provided
       mod <- NULL
     }else{
       mod <- attr(node, "phmm")
-      if(resize){
+      if(resize & attr(node, "clade") != ""){ #don't want to retrain top level model
         if(!quiet) cat("Retraining parent model\n")
         ### model is allowed to change size here
 
