@@ -119,6 +119,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                   recursive = TRUE, cores = 1, quiet = FALSE, ...){
   # x is a "DNAbin" object
   # First initialize the tree
+  if(!quiet) cat("Learning tree\n")
   tree <- 1
   attr(tree, "clade") <- ""
   attr(tree, "leaf") <- TRUE
@@ -126,14 +127,14 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   # set duplicates aside until end
   if(is.null(duplicates)){
     duplicates <- duplicated.DNAbin(x, point = TRUE)
+    if(any(duplicates) & !quiet) cat("Duplicates detected, temporarily subsetting uniques\n")
   }else{
     if(is.null(attr(duplicates, "pointers"))){
-      stop("duplicates argument missing 'pointers' attribute")
+      stop("Duplicates argument missing 'pointers' attribute")
     }
   }
   has_duplicates <- any(duplicates)
   if(has_duplicates){
-    if(!quiet) cat("Duplicates detected, temporarily subsetting uniques\n")
     fullseqset <- x #includes attributes
     # x <- x[!duplicates]
     x <- subset(x, subset = !duplicates)  #includes attributes
@@ -141,10 +142,12 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
       attr(tree, "weights") <- seqweights[!duplicates]
     }
   }
-  if(!quiet) cat("Deriving sequence weights for unique sequences\n")
-  if(identical(seqweights, "Gerstein")) seqweights <- aphid::weight(x, "Gerstein")
+  if(identical(seqweights, "Gerstein")){
+    if(!quiet) cat("Deriving sequence weights for unique sequences\n")
+    seqweights <- aphid::weight(x, "Gerstein")
+  }
   attr(tree, "weights") <- seqweights
-  attr(tree, "sequences") <- seq_along(x) # temporary - eventually replaced
+  attr(tree, "sequences") <- seq_along(x) # temporary - eventually replaced by DNAbin
   stopifnot(length(seqweights) == length(attr(tree, "sequences")))
   ### integer vector of indices pointing to x arg
   # attr(tree, "phmm") <- derive.PHMM.list(x, refine = refine, ... = ...)

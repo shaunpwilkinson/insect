@@ -182,13 +182,13 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
   md5s <- paste(openssl::md5(as.raw(tmp)))
   fscore <- function(s, model) aphid::forward(model, s, odds = FALSE)$score #TODO dots?
   for(i in 1:iterations){
-    if(!quiet) cat("HPHMM iteration", i, "\n")
+    if(!quiet) cat("Insect iteration", i, "\n")
     membership <- tmp
     for(j in 1:K) seq_numbers[j] <- sum(membership == j)
     mcn <- min(seq_numbers)
     #if(mcn < 4) mcn <- 4
     for(j in 1:K){
-      # if(!quiet) cat("Calculating sequence weights for child model", j, "\n")
+      # if(!quiet) cat("Calculating sequence weights given child model", j, "\n")
       seqweightsj <- seqweights[membership == j]
       seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
       seqweightsj <- seqweightsj * mcn/seq_numbers[j] # scale so that weights reflect smallest clade size
@@ -207,7 +207,7 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
                                      method = refine, seqweights = seqweightsj,
                                      inserts = if(refine == "Viterbi") "inherited" else "map",
                                      cores = cores, quiet = quiet, ... = ...)
-      if(!quiet) cat("Calculating sequence probabilities for child model", j, "\n")
+      if(!quiet) cat("Calculating sequence probabilities given child model", j, "\n")
       scores[j, ] <- if(inherits(cores, "cluster")){
         parallel::parSapply(cores, x, fscore, model = res[[pnms[j]]])
       }else{
@@ -225,7 +225,7 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
       #                         method = refine, seqweights = seqweightsj,
       #                         inserts = if(refine == "Viterbi") "inherited" else "map",
       #                         ... = ...)
-      # if(!quiet) cat("Calculating sequence probabilities for child model", j, "\n")
+      # if(!quiet) cat("Calculating sequence probabilities given child model", j, "\n")
       ###TODO paralellize:
       # for(l in 1:nseq){
       #   scores[j, l] <- aphid::forward(res[[pnms[j]]], x[[l]], odds = FALSE)$score
