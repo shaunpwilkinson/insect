@@ -118,8 +118,8 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
     }else{
       cat("Initial membership: ", paste0(tmp, collapse = ""), "\n")
     }
-    cat("Group sizes ")
-    for(i in 1:K) cat(i, ":", sum(tmp == i), " ")
+    cat("Group sizes: ")
+    for(i in 1:K) cat(i, "=", sum(tmp == i), " ")
     cat("\n")
   }
   scores <- matrix(nrow = K, ncol = nseq)
@@ -255,7 +255,7 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
     }else if(length(unique(tmp)) < K){
       if(!quiet){
         cat("Unsuccessful split into", K, "groups\n")
-        cat("Unable to split clade\n")
+        cat("Unable to split node\n")
       }
       if(stopclustr) parallel::stopCluster(cores)
       return(NULL)

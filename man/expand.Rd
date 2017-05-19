@@ -6,7 +6,7 @@
 \usage{
 expand(tree, clades = "", refine = "Viterbi", iterations = 50, minK = 2,
   maxK = 2, minscore = 0.9, probs = 0.05, resize = TRUE,
-  recursive = TRUE, quiet = FALSE, ...)
+  recursive = TRUE, cores = 1, quiet = FALSE, ...)
 }
 \arguments{
 \item{tree}{an object of class \code{"insect"}.}
@@ -57,6 +57,17 @@ should be fixed. Defaults to TRUE. Only applicable if
 should continue recursively until the discrimination criteria
 are not met (TRUE; default), or whether a single split should
 take place at each of the nodes specified in \code{clades}.}
+
+\item{cores}{integer giving the number of CPUs to use
+when training the models (only applicable if
+\code{refine = 'Viterbi'}). Defaults to 1.
+This argument may alternatively be a 'cluster' object,
+in which case it is the user's responsibility to close the socket
+connection at the conclusion of the operation,
+e.g. by running \code{parallel::stopCluster(cores)}.
+The string 'autodetect' is also accepted, in which case the maximum
+number of cores to use is one less than the total number of cores
+available.}
 
 \item{quiet}{logical indicating whether feedback should be printed
 to the console. Note that the output can be rather verbose for

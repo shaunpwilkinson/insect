@@ -24,7 +24,8 @@
 ################################################################################
 expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                    minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
-                   resize = TRUE, recursive = TRUE, quiet = FALSE, ...){
+                   resize = TRUE, recursive = TRUE, cores = 1,
+                   quiet = FALSE, ...){
   x <- attr(tree, "sequences") #full sequence set
   attr(tree, "sequences") <- seq_along(x)
   seqweights <- attr(tree, "weights")
@@ -42,16 +43,33 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
     tree <- dendrapply(tree, rmduplicates, whchunq = which(!duplicates),
                        pointers = attr(duplicates, "pointers"))
   }
+  ### set up multithread
+  if(inherits(cores, "cluster") | identical(cores, 1)){
+    stopclustr <- FALSE
+  }else{ # create cluster object
+    navailcores <- parallel::detectCores()
+    if(identical(cores, "autodetect")) cores <- navailcores - 1
+    if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
+    if(cores > navailcores) stop("Number of cores is more than the number available")
+    # if(!quiet) cat("Multithreading over", cores, "cores\n")
+    if(cores == 1){
+      stopclustr <- FALSE
+    }else{
+      if(!quiet) cat("Initializing cluster with", cores, "cores\n")
+      cores <- parallel::makeCluster(cores)
+      stopclustr <- TRUE
+    }
+  }
   if(identical(clades, "")){
     if(recursive){
       tree <- .learn1(tree, x, refine = refine, iterations = iterations,
                       minK = minK, maxK = maxK, minscore = minscore, probs = probs,
-                      resize = resize, seqweights = seqweights,
+                      resize = resize, seqweights = seqweights, cores = cores,
                       quiet = quiet, ... = ...)
     }else{
       tree <- fork(tree, x, refine = refine, iterations = iterations,
                    minK = minK, maxK = maxK, minscore = minscore, probs = probs,
-                   resize = resize, seqweights = seqweights,
+                   resize = resize, seqweights = seqweights, cores = cores,
                    quiet = quiet, ... = ...)
     }
   }else{
@@ -62,10 +80,11 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                        index, ", x, refine = refine, ",
                        "iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, resize = resize, ",
-                       "seqweights = seqweights, quiet = quiet, ... = ...)")
+                       "seqweights = seqweights, cores = cores, quiet = quiet, ... = ...)")
       eval(parse(text = toeval))
     }
   }
+  if(stopclustr) parallel::stopCluster(cores)
   ### fix midpoints, members, heights and leaf integers
   ### note changes here also apply to 'learn' function
   if(!quiet) cat("Setting midpoints and members attributes\n")
@@ -92,6 +111,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   if(!quiet) cat("Repatriating duplicate sequences with tree\n")
   tree <- dendrapply(tree, add_duplicates,
                      pointers = attr(duplicates, "pointers"))
+  if(has_duplicates) x <- fullseqset
   if(!quiet) cat("Resetting node heights\n")
   tree <- phylogram::reposition(tree)
   if(!quiet) cat("Making tree ultrametric\n")
