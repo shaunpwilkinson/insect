@@ -19,7 +19,7 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
                  minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
                  resize = TRUE, seqweights = "Gerstein", cores = 1,
                  quiet = FALSE, ...){
-  if(!is.list(node)){ # fork leaves only
+  if(!is.list(node) & is.null(attr(node, "lock"))){ # fork leaves only
     seqs <- x[attr(node, "sequences")]
     nseq <- length(seqs)
     if(is.null(seqweights)){

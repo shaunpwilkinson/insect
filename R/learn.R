@@ -139,7 +139,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     # x <- x[!duplicates]
     x <- subset(x, subset = !duplicates)  #includes attributes
     if(length(seqweights) == length(fullseqset)){
-      attr(tree, "weights") <- seqweights[!duplicates]
+      seqweights <- seqweights[!duplicates]
     }
   }
   if(identical(seqweights, "Gerstein")){
@@ -150,32 +150,128 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "sequences") <- seq_along(x) # temporary - eventually replaced by DNAbin
   stopifnot(length(seqweights) == length(attr(tree, "sequences")))
   ### integer vector of indices pointing to x arg
-  # attr(tree, "phmm") <- derive.PHMM.list(x, refine = refine, ... = ...)
   attr(tree, "phmm") <- model
   attr(tree, "height") <- 0
   ### set up multithread
-  if(inherits(cores, "cluster") | identical(cores, 1)){
+  if(inherits(cores, "cluster")){
+    ncores <- length(cores)
+    stopclustr <- FALSE
+  }else if(identical(cores, 1)){
+    ncores <- 1
     stopclustr <- FALSE
   }else{ # create cluster object
-    navailcores <- parallel::detectCores()
+    navailcores <- parallel::detectCores() # relatively costly ~ 0.06s
     if(identical(cores, "autodetect")) cores <- navailcores - 1
     if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
     if(cores > navailcores) stop("Number of cores is more than the number available")
     # if(!quiet) cat("Multithreading over", cores, "cores\n")
     if(cores == 1){
+      ncores <- 1
       stopclustr <- FALSE
     }else{
-      if(!quiet) cat("Initializing cluster with", cores, "cores\n")
+      ncores <- cores
+      if(!quiet) cat("Initializing cluster with", ncores, "cores\n")
       cores <- parallel::makeCluster(cores)
       stopclustr <- TRUE
     }
   }
+
   if(recursive){
-    tree <- .learn1(tree, x = x, refine = refine, iterations = iterations,
-                    minK = minK, maxK = maxK, minscore = minscore,
-                    probs = probs, resize = resize,
-                    seqweights = seqweights, cores = cores,
-                    quiet = quiet, ... = ...)
+    if(ncores == 1){
+      tree <- .learn1(tree, x = x, refine = refine, iterations = iterations,
+                      minK = minK, maxK = maxK, minscore = minscore,
+                      probs = probs, resize = resize,
+                      seqweights = seqweights, cores = cores,
+                      quiet = quiet, ... = ...)
+    }else{
+      #clades <- ""
+      findnmembers <- function(node){
+        if(!is.list(node)){
+          numberofseqs <- length(attr(node, "sequences"))
+          names(numberofseqs) <- attr(node, "clade")
+          nmembers <<- c(nmembers, numberofseqs)
+          eligible <<- c(eligible, is.null(attr(node, "lock")))
+        }
+        return(node)
+      }
+      fm1 <- function(node){
+        node <- findnmembers(node)
+        if(is.list(node)) node[] <- lapply(node, fm1)
+        return(node)
+      }
+      if(!quiet) cat("Recursively partitioning basal tree branches")
+      repeat{
+        nmembers <- integer(0)
+        eligible <- logical(0)
+        tmp <- fm1(tree)
+        rm(tmp)
+        nmembers <- nmembers[eligible]
+        if(!any(eligible) | length(nmembers) >= ncores) break
+        whichclade <- names(nmembers)[which.max(nmembers)]
+        if(whichclade == ""){
+          index <- ""
+        }else{
+          whichcladei <- as.numeric(strsplit(whichclade, split = "")[[1]])
+          index <- paste0(paste0("[[", paste0(whichcladei, collapse = "]][["), "]]"))
+        }
+
+        toeval <- paste0("tree", index, "<- fork(tree",
+                         index, ", x, refine = refine, ",
+                         "iterations = iterations, minK = 2, maxK = 2, ",
+                         "minscore = minscore, probs = probs, resize = resize, ",
+                         "seqweights = seqweights, cores = cores, quiet = quiet, ... = ...)")
+        eval(parse(text = toeval))
+        toeval <- paste0("splitsuccess <- is.list(tree", index, ")")
+        splitsuccess <- FALSE # prevents build note due to lack of visible binding
+        eval(parse(text = toeval))
+        # prevent multiple attempts to split the same node
+        if(!splitsuccess){
+          toeval <- paste0("attr(tree", index, ", lock) <- TRUE")
+          eval(parse(text = toeval))
+        }
+      }
+      trees <- vector(mode = "list", length = length(nmembers))
+      lockleaves <- function(node, exceptions){
+        if(!is.list(node)){
+          if(!attr(node, "clade") %in% exceptions) attr(node, "lock") <- TRUE
+        }
+        return(node)
+      }
+      ll1 <- function(node, exceptions){
+        node <- lockleaves(node, exceptions)
+        if(is.list(node)) node[] <- lapply(node, ll1, exceptions)
+        return(node)
+      }
+      for(i in seq_along(trees)){
+        trees[[i]] <- ll1(tree, exceptions = names(nmembers)[i])
+      }
+      if(!quiet) {
+        cat("Recursively partitioning terminal tree branches\n")
+        cat("Feedback suppressed\n")
+        cat("This could take a while...\n")
+      }
+      trees <- parallel::parLapply(cores, trees, .learn1,
+                                   x, refine = refine, iterations = iterations,
+                                   minK = minK, maxK = maxK, minscore = minscore,
+                                   probs = probs, resize = resize,
+                                   seqweights = seqweights, cores = 1,
+                                   quiet = quiet, ... = ...)
+      for(i in seq_along(trees)){
+        whichclade <- names(nmembers)[i]
+        if(whichclade == ""){
+          index <- ""
+        }else{
+          whichcladei <- as.numeric(strsplit(whichclade, split = "")[[1]])
+          index <- paste0(paste0("[[", paste0(whichcladei, collapse = "]][["), "]]"))
+        }
+        toeval <- paste0("tree", index, "<- trees[[i]]", index)
+        eval(parse(text = toeval))
+        trees[[i]] <- NA
+        gc()
+      }
+      rm(nmembers)
+      rm(eligible)
+    }
   }else{
     tree <- fork(tree, x = x, refine = refine, iterations = iterations,
                  minK = minK, maxK = maxK, minscore = minscore,
@@ -190,6 +286,11 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   #tree <- settreeattr(tree)
   tree <- phylogram::remidpoint(tree)
   class(tree) <- "dendrogram"
+  rm_locks <- function(node){
+    attr(node, "lock") <- NULL
+    return(node)
+  }
+  tree <- dendrapply(tree, rm_locks)
   add_duplicates <- function(node, pointers){
     seqs <- attr(node, "sequences")
     akws <- attr(node, "Akweights")
