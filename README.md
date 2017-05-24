@@ -13,7 +13,7 @@ from GenBank, a "virtual PCR" tool, a new algorithm for tree learning,
 and a method for classifying DNA barcode sequences using pre-computed trees.
 
 ### Installation
-`insect` is currently only available as a development version, with a stable
+`insect` is currently available as a development version, with a stable
 release available on CRAN shortly. To download the package from 
 GitHub you will first need to ensure you have a C/C++ compliler and the 
 [devtools](https://github.com/hadley/devtools) R package installed. 

@@ -6,8 +6,8 @@
 \usage{
 learn(x, model = NULL, refine = "Viterbi", iterations = 50, minK = 2,
   maxK = 2, minscore = 0.9, probs = 0.05, resize = TRUE,
-  duplicates = NULL, seqweights = "Gerstein", recursive = TRUE,
-  cores = 1, quiet = FALSE, ...)
+  seqweights = "Gerstein", recursive = TRUE, cores = 1, quiet = FALSE,
+  ...)
 }
 \arguments{
 \item{x}{an object of class\code{"DNAbin"} representing a list of
@@ -59,12 +59,6 @@ to test against the minimum score threshold given in \code{"minscore"}.}
 change size during the training process or if the number of modules
 should be fixed. Defaults to TRUE. Only applicable if
 \code{refine = "Viterbi"}.}
-
-\item{duplicates}{an optional logical vector the same length as the
-sequence list, indicating which sequences are duplicated, and which
-ones they are duplicates of (provided as an attribute called
-'pointers'). If NULL, duplicates are automatically identified by
-calling the function \code{duplicated.DNAbin} with \code{point = TRUE}.}
 
 \item{seqweights}{an optional numeric vector the same length as the
 sequence list giving the weights to use when training the
@@ -127,7 +121,11 @@ TBA.
   ## TBA
 }
 \references{
-Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
+  for fast construction of guide trees for multiple sequence alignment.
+  \emph{Algorithms for Molecular Biology}, \strong{5}, 21.
+
+  Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   sequence analysis: probabilistic models of proteins and nucleic acids.
   Cambridge University Press, Cambridge, United Kingdom.
 

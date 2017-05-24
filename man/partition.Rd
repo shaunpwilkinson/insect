@@ -6,7 +6,8 @@
 \usage{
 partition(x, model = NULL, needs_training = FALSE, K = 2,
   allocation = "cluster", refine = "Viterbi", iterations = 50,
-  seqweights = "Gerstein", cores = 1, quiet = FALSE, ...)
+  distances = NULL, seqweights = "Gerstein", cores = 1, quiet = FALSE,
+  ...)
 }
 \arguments{
 \item{x}{a \code{"DNAbin"} object containing multiple sequences in a list.}
@@ -40,16 +41,26 @@ or Baum Welch iterations to be used in model training, which can be set
 using the argument \code{"maxiter"} (eventually passed to
 \code{\link[aphid]{train}} via the dots argument "...").}
 
+\item{distances}{an optional matrix of embedded distances from each sequence
+in x to a subset of 'seed' sequences.
+Defaults to NULL, in which case an object of class \code{"mbed"} is
+generated using the algorithm of Blacksheilds et al.
+(2010). For more information see documentation for the
+\code{\link[phylogram]{mbed}} function in the
+\code{\link[phylogram]{phylogram}} package.}
+
 \item{seqweights}{either NULL (default; all sequences are given an equal
 weight of 1), a numeric vector the same length as \code{x} representing
 the sequence weights used to derive the model, or a character string giving
 the method to derive the weights from the sequences. Currently only the
 \code{"Gerstein"} method is supported (the default). For this method, a
-tree is first created by k-mer counting (see
-\code{\link[phylogram]{kdistance}}),
+tree is first created by k-mer counting (see the
+\code{\link[phylogram]{topdown}} function in the
+\code{\link[phylogram]{phylogram}} package),
 and sequence weights are derived from the tree using the 'bottom up'
 algorithm of Gerstein et al. (1994). The sum of these weights are equal
-to the number of sequences in the alignment (so that mean(seqweights) = 1;
+to the number of sequences in the alignment (so that
+\code{mean(seqweights) = 1}.
 Note this does not need to be the case if providing weights as a numeric
 vector).}
 

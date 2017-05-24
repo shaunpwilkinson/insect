@@ -44,11 +44,6 @@
 #'   change size during the training process or if the number of modules
 #'   should be fixed. Defaults to TRUE. Only applicable if
 #'   \code{refine = "Viterbi"}.
-#' @param duplicates an optional logical vector the same length as the
-#'   sequence list, indicating which sequences are duplicated, and which
-#'   ones they are duplicates of (provided as an attribute called
-#'   'pointers'). If NULL, duplicates are automatically identified by
-#'   calling the function \code{duplicated.DNAbin} with \code{point = TRUE}.
 #' @param seqweights an optional numeric vector the same length as the
 #'   sequence list giving the weights to use when training the
 #'   PHMMs. Alternatively its length can be the same as the total number
@@ -97,6 +92,10 @@
 #'   TBA.
 #' @author Shaun Wilkinson
 #' @references
+#'   Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
+#'   for fast construction of guide trees for multiple sequence alignment.
+#'   \emph{Algorithms for Molecular Biology}, \strong{5}, 21.
+#'
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
@@ -115,40 +114,39 @@
 ################################################################################
 learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                   minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
-                  resize = TRUE, duplicates = NULL, seqweights = "Gerstein",
+                  resize = TRUE, seqweights = "Gerstein",
                   recursive = TRUE, cores = 1, quiet = FALSE, ...){
   # x is a "DNAbin" object
+  tmpxattr <- attributes(x)
+  nseq <- length(x)
+  x <- x[1:nseq]# removes attributes
   # First initialize the tree
-  if(!quiet) cat("Learning tree\n")
   tree <- 1
   attr(tree, "clade") <- ""
   attr(tree, "leaf") <- TRUE
+  if(!quiet) cat("Embedding sequences for k-means clustering\n")
+  ### could offer option to specify k here eventually
+  distances <- phylogram::mbed(x)
+  duplicates <- attr(distances, "duplicates")
+  pointers <- attr(distances, "pointers")
+  hashes <- attr(distances, "hashes")
+  distances <- distances[!duplicates, ]
   if(is.null(seqweights)) seqweights <- rep(1, length(x))
   # set duplicates aside until end
-  if(is.null(duplicates)){
-    duplicates <- duplicated.DNAbin(x, point = TRUE)
-    if(any(duplicates) & !quiet) cat("Duplicates detected, temporarily subsetting uniques\n")
-  }else{
-    if(is.null(attr(duplicates, "pointers"))){
-      stop("Duplicates argument missing 'pointers' attribute")
-    }
-  }
+  nuseq <- sum(!duplicates)
   has_duplicates <- any(duplicates)
   if(has_duplicates){
-    fullseqset <- x #includes attributes
+    fullseqset <- x #excludes attributes
     # x <- x[!duplicates]
-    x <- subset(x, subset = !duplicates)  #includes attributes
-    if(length(seqweights) == length(fullseqset)){
-      seqweights <- seqweights[!duplicates]
-    }
+    x <- x[!duplicates] #subset.DNAbin(x, subset = !duplicates)  #exc attributes
+    if(length(seqweights) == nseq) seqweights <- seqweights[!duplicates]
   }
   if(identical(seqweights, "Gerstein")){
     if(!quiet) cat("Deriving sequence weights for unique sequences\n")
     seqweights <- aphid::weight(x, "Gerstein")
   }
-  attr(tree, "weights") <- seqweights
-  attr(tree, "sequences") <- seq_along(x) # temporary - eventually replaced by DNAbin
-  stopifnot(length(seqweights) == length(attr(tree, "sequences")))
+  attr(tree, "sequences") <- seq_along(x) # tmp-eventually replaced by DNAbin
+  stopifnot(length(seqweights) == length(x))
   ### integer vector of indices pointing to x arg
   attr(tree, "phmm") <- model
   attr(tree, "height") <- 0
@@ -175,16 +173,15 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
       stopclustr <- TRUE
     }
   }
-
   if(recursive){
+    if(!quiet) cat("Learning tree\n")
     if(ncores == 1){
       tree <- .learn1(tree, x = x, refine = refine, iterations = iterations,
                       minK = minK, maxK = maxK, minscore = minscore,
-                      probs = probs, resize = resize,
+                      probs = probs, resize = resize, distances = distances,
                       seqweights = seqweights, cores = cores,
                       quiet = quiet, ... = ...)
     }else{
-      #clades <- ""
       findnmembers <- function(node){
         if(!is.list(node)){
           numberofseqs <- length(attr(node, "sequences"))
@@ -206,44 +203,28 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
         tmp <- fm1(tree)
         rm(tmp)
         nmembers <- nmembers[eligible]
-        if(!any(eligible) | length(nmembers) >= ncores) break
+        if(!any(eligible) | length(nmembers) >= 2 * ncores) break
         whichclade <- names(nmembers)[which.max(nmembers)]
-        if(whichclade == ""){
-          index <- ""
-        }else{
-          whichcladei <- as.numeric(strsplit(whichclade, split = "")[[1]])
-          index <- paste0(paste0("[[", paste0(whichcladei, collapse = "]][["), "]]"))
-        }
-
+        index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
         toeval <- paste0("tree", index, "<- fork(tree",
                          index, ", x, refine = refine, ",
                          "iterations = iterations, minK = 2, maxK = 2, ",
                          "minscore = minscore, probs = probs, resize = resize, ",
-                         "seqweights = seqweights, cores = cores, quiet = quiet, ... = ...)")
+                         "distances = distances, seqweights = seqweights, ",
+                         "cores = cores, quiet = quiet, ... = ...)")
         eval(parse(text = toeval))
-        toeval <- paste0("splitsuccess <- is.list(tree", index, ")")
-        splitsuccess <- FALSE # prevents build note due to lack of visible binding
-        eval(parse(text = toeval))
+        ss <- FALSE # split success; prevents build note due to lack of visible binding
+        eval(parse(text = paste0("ss <- is.list(tree", index, ")")))
         # prevent multiple attempts to split the same node
-        if(!splitsuccess){
-          toeval <- paste0("attr(tree", index, ", lock) <- TRUE")
-          eval(parse(text = toeval))
-        }
+        if(!ss) eval(parse(text = paste0("attr(tree", index, ", lock) <-TRUE")))
       }
-      trees <- vector(mode = "list", length = length(nmembers))
-      lockleaves <- function(node, exceptions){
-        if(!is.list(node)){
-          if(!attr(node, "clade") %in% exceptions) attr(node, "lock") <- TRUE
-        }
-        return(node)
-      }
-      ll1 <- function(node, exceptions){
-        node <- lockleaves(node, exceptions)
-        if(is.list(node)) node[] <- lapply(node, ll1, exceptions)
-        return(node)
-      }
-      for(i in seq_along(trees)){
-        trees[[i]] <- ll1(tree, exceptions = names(nmembers)[i])
+      clades <- names(nmembers)
+      indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
+      rm(nmembers)
+      rm(eligible)
+      trees <- vector(mode = "list", length = length(clades))
+      for(i in seq_along(indices)){
+        eval(parse(text = paste0("trees[[", i, "]] <- tree", indices[i])))
       }
       if(!quiet) {
         cat("Recursively partitioning terminal tree branches\n")
@@ -254,28 +235,18 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                                    x, refine = refine, iterations = iterations,
                                    minK = minK, maxK = maxK, minscore = minscore,
                                    probs = probs, resize = resize,
-                                   seqweights = seqweights, cores = 1,
-                                   quiet = quiet, ... = ...)
+                                   distances = distances, seqweights = seqweights,
+                                   cores = 1, quiet = TRUE, ... = ...)
       for(i in seq_along(trees)){
-        whichclade <- names(nmembers)[i]
-        if(whichclade == ""){
-          index <- ""
-        }else{
-          whichcladei <- as.numeric(strsplit(whichclade, split = "")[[1]])
-          index <- paste0(paste0("[[", paste0(whichcladei, collapse = "]][["), "]]"))
-        }
-        toeval <- paste0("tree", index, "<- trees[[i]]", index)
-        eval(parse(text = toeval))
+        eval(parse(text = paste0("tree", indices[i], "<- trees[[", i, "]]")))
         trees[[i]] <- NA
         gc()
       }
-      rm(nmembers)
-      rm(eligible)
     }
   }else{
     tree <- fork(tree, x = x, refine = refine, iterations = iterations,
                  minK = minK, maxK = maxK, minscore = minscore,
-                 probs = probs, resize = resize,
+                 probs = probs, resize = resize, distances = distances,
                  seqweights = seqweights, cores = cores,
                  quiet = quiet, ... = ...)
   }
@@ -291,7 +262,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     return(node)
   }
   tree <- dendrapply(tree, rm_locks)
-  add_duplicates <- function(node, pointers){
+  reduplicate <- function(node, pointers){
     seqs <- attr(node, "sequences")
     akws <- attr(node, "Akweights")
     scrs <- attr(node, "scores")
@@ -311,9 +282,9 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     return(node)
   }
   if(!quiet) cat("Repatriating duplicate sequences with tree\n")
-  tree <- dendrapply(tree, add_duplicates,
-                     pointers = attr(duplicates, "pointers"))
+  tree <- dendrapply(tree, reduplicate, pointers)
   if(has_duplicates) x <- fullseqset
+  attributes(x) <- tmpxattr
   if(!quiet) cat("Resetting node heights\n")
   tree <- phylogram::reposition(tree)
   if(!quiet) cat("Making tree ultrametric\n")
@@ -339,9 +310,11 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   }
   tree <- dendrapply(tree, attachlins, lineages)
   attr(tree, "sequences") <- x # must happen after attaching lineages
-  attr(tree, "duplicates") <- duplicates
-  attr(tree, "pointers") <- attr(duplicates, "pointers")
-  attr(tree, "hashes") <- sapply(x, function(e) paste(openssl::md5(as.vector(e))))
+  attr(tree, "duplicates") <- duplicates # length is length(x)
+  attr(tree, "pointers") <- pointers # length is length(x)
+  attr(tree, "distances") <- distances # number of rows is sum not duplicated
+  attr(tree, "weights") <- seqweights # length is sum not duplicated
+  attr(tree, "hashes") <- hashes # length is length(x)
   #attr(tree, "indices") <- .reindex(tree)
   if(!quiet) cat("Done\n")
   class(tree) <- c("insect", "dendrogram")
@@ -349,8 +322,36 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
 }
 ################################################################################
 
+# lockleaves <- function(node, exceptions){
+#   if(!is.list(node)){
+#     if(!attr(node, "clade") %in% exceptions) attr(node, "lock") <- TRUE
+#   }
+#   return(node)
+# }
+# ll1 <- function(node, exceptions){
+#   node <- lockleaves(node, exceptions)
+#   if(is.list(node)) node[] <- lapply(node, ll1, exceptions)
+#   return(node)
+# }
+# for(i in seq_along(trees)){
+#   trees[[i]] <- ll1(tree, exceptions = names(nmembers)[i])
+# }
 
-
+# for(i in seq_along(trees)){
+#   whichclade <- names(nmembers)[i]
+#   if(whichclade == ""){
+#     index <- ""
+#   }else{
+#     whichcladei <- as.numeric(strsplit(whichclade, split = "")[[1]])
+#     index <- paste0(paste0("[[", paste0(whichcladei, collapse = "]][["), "]]"))
+#   }
+#   toeval <- paste0("tree", index, "<- trees[[i]]", index)
+#   eval(parse(text = toeval))
+#   trees[[i]] <- NA
+#   gc()
+# }
+# rm(nmembers)
+# rm(eligible)
 
 
 # label <- function(node, x){ # node is dendro, x is DNAbin

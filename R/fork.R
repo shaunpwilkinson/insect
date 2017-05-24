@@ -5,11 +5,21 @@
 #'
 #' @param node an object of class \code{"insect"}.
 #' @param x an object of class \code{"DNAbin"}.
+#' @param distances an optional matrix of embedded distances from each sequence
+#'   in x to a subset of 'seed' sequences.
+#'   Defaults to NULL, in which case an object of class \code{"mbed"} is
+#'   generated using the algorithm of Blacksheilds et al.
+#'   (2010). For more information see documentation for the
+#'   \code{\link[phylogram]{mbed}} function in the
+#'   \code{\link[phylogram]{phylogram}} package.
 #' @inheritParams learn
 #' @return an object of class \code{"insect"}.
 #' @details Note that seqweights argument should have the same length as x.
 #' @author Shaun Wilkinson
-#' @references TBA
+#' @references
+#'   Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
+#'   for fast construction of guide trees for multiple sequence alignment.
+#'   \emph{Algorithms for Molecular Biology}, \strong{5}, 21.
 #' @seealso \code{\link{learn}} (parent function),
 #'   \code{\link{partition}} (child function).
 #' @examples
@@ -17,22 +27,28 @@
 ################################################################################
 fork <- function(node, x, refine = "Viterbi", iterations = 50,
                  minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
-                 resize = TRUE, seqweights = "Gerstein", cores = 1,
-                 quiet = FALSE, ...){
+                 resize = TRUE, distances = NULL, seqweights = "Gerstein",
+                 cores = 1, quiet = FALSE, ...){
   if(!is.list(node) & is.null(attr(node, "lock"))){ # fork leaves only
     seqs <- x[attr(node, "sequences")]
     nseq <- length(seqs)
-    if(is.null(seqweights)){
-      seqweights <- rep(1, nseq)
-    }else if(identical(seqweights, "Gerstein")){
-      seqweights <- aphid::weight(x, method = "Gerstein")
-    }else if(length(seqweights) != length(x)) stop("Invalid seqweights argument")
-    wgts <- seqweights[attr(node, "sequences")]
-    wgts <- wgts/mean(wgts) # scale weights to average 1
     if(minK == 1) return(node)
     if(nseq < minK) return(node)
     if(nseq < maxK) maxK <- nseq
-
+    if(is.null(seqweights)){
+      seqweights <- rep(1, nseq)
+    }else if(identical(seqweights, "Gerstein")){
+      seqweights <- aphid::weight(x[attr(node, "sequences")], method = "Gerstein")
+    }else if(length(seqweights) == length(x)){
+      seqweights <- seqweights[attr(node, "sequences")]
+      ### scale weights to average 1
+      seqweights <- seqweights/mean(seqweights)
+    }else stop("Invalid seqweights argument")
+    if(is.null(distances)){
+      distances <- phylogram::mbed(x[attr(node, "sequences")])
+    }else if(nrow(distances) == length(x)){
+      distances <- distances[attr(node, "sequences"), ]
+    }else stop("Invalid distances argument")
     ### set up multithread
     if(inherits(cores, "cluster") | identical(cores, 1)){
       stopclustr <- FALSE
@@ -40,7 +56,9 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
       navailcores <- parallel::detectCores()
       if(identical(cores, "autodetect")) cores <- navailcores - 1
       if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
-      if(cores > navailcores) stop("Number of cores is more than the number available")
+      if(cores > navailcores) {
+        stop("Number of cores is more than the number available")
+      }
       # if(!quiet) cat("Multithreading over", cores, "cores\n")
       if(cores == 1){
         stopclustr <- FALSE
@@ -50,37 +68,34 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
         stopclustr <- TRUE
       }
     }
-
+    ### Split clade
     if(!quiet) cat("\nAttempting to split clade", attr(node, "clade"), "\n")
     if(is.null(attr(node, "phmm"))){
-      # should only happen at top level
-      # if a PHMM is not provided
+      # should only happen at top level and if a PHMM is not provided
       mod <- NULL
     }else{
       mod <- attr(node, "phmm")
-      if(resize & attr(node, "clade") != ""){ #don't want to retrain top level model
+      if(resize & attr(node, "clade") != ""){ #don't need to retrain top level model
         if(!quiet) cat("Retraining parent model\n")
         ### model is allowed to change size here
-
-        # optncores <- .optcores(maxcores, nseq)
-        # para <- optncores > 1
-        # if(para & !quiet) cat("Multithreading Viterbi training over", optncores, "cores\n")
-        # cores <- if(para) parallel::makeCluster(optncores) else 1
-        mod <- aphid::train(mod, seqs, method = "Viterbi", seqweights = wgts,
+        mod <- aphid::train(mod, seqs, method = "Viterbi",
+                            seqweights = seqweights,
                             cores = cores, quiet = quiet, ... = ...)
-
-        # if(para) parallel::stopCluster(cores)
         if(!quiet) cat("New model size :", mod$size, "\n")
-        if(refine == "BaumWelch") mod <- aphid::train(mod, seqs, method = "BaumWelch",
-                                                      seqweights = wgts, ... = ...)
+        if(refine == "BaumWelch"){
+          mod <- aphid::train(mod, seqs, method = "BaumWelch",
+                              seqweights = seqweights, ... = ...)
+        }
       }
     }
     split_node <- FALSE
     nclades <- minK
     repeat{
-      seqsplit <- partition(seqs, model = mod, needs_training = FALSE, refine = refine,
-                            K = nclades, iterations = iterations, seqweights = wgts,
-                            cores = cores, quiet = quiet, ... = ...)
+      seqsplit <- partition(seqs, model = mod, needs_training = FALSE,
+                            refine = refine, K = nclades,
+                            iterations = iterations, distances = distances,
+                            seqweights = seqweights, cores = cores, quiet = quiet,
+                            ... = ...)
       if(is.null(seqsplit)){
         if(!quiet) cat("Sequence splitting failed, returning unsplit node\n")
         if(stopclustr) parallel::stopCluster(cores)
@@ -98,12 +113,6 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
         }else{
           sapply(seqs, fscore, model = seqsplit$phmm0)
         }
-        # scores <- numeric(nseq)
-        # ##TODO could parallelize this:
-        # for(i in 1:nseq){
-        #   scores[i] <- aphid::forward(seqsplit$phmm0, seqs[[i]],
-        #                               odds = FALSE, ... = ...)$score
-        # }
       }
       membership <- seqsplit$membership
       scores <- seqsplit$scores
@@ -118,7 +127,8 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
         if(!quiet){
           cat("Group", i, "size =", sum(membership == i), "\n")
           cat(sum(performances[membership == i] > minscore), "of",
-              sum(membership == i), "correctly predicted with Akaike weight >", minscore, "\n")
+              sum(membership == i), "correctly predicted with Akaike weight >",
+              minscore, "\n")
           cat(sum(performances[membership == i] > 0.5), "of",
               sum(membership == i), "correctly predicted with Akaike weight > 0.5\n")
           cat("Lower", probs, "quantile of Akaike weights:", minperfs[i], "\n")
@@ -162,20 +172,6 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
         attr(node[[i]], "scores") <- scores[i, membership == i]
         attr(node[[i]], "Akweights") <- performances[membership == i]
         attr(node[[i]], "phmm") <- seqsplit[[paste0("phmm", i)]]
-        # lineages <- lapply(attr(x, "lineage")[attr(node[[i]], "sequences")], splitfun)
-        # linlengths <- sapply(lineages, length)
-        # whichminlen <- which.min(linlengths)
-        # minlen <- linlengths[whichminlen]
-        # minlin <- lineages[[whichminlen]]
-        # lineage <- ""
-        # for(l in 1:minlen){
-        #   inminlin <- sapply(lineages, function(e) minlin[l] %in% e)
-        #   if(all(inminlin)){
-        #     lineage <- paste0(lineage, lineages[[whichminlen]][l], ";")
-        #   }
-        # }
-        # lineage <- gsub(";$", "\\.", lineage)
-        # attr(node[[i]], "lineage") <- lineage
       }
     }
   }

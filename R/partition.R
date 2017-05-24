@@ -30,16 +30,25 @@
 #'   or Baum Welch iterations to be used in model training, which can be set
 #'   using the argument \code{"maxiter"} (eventually passed to
 #'   \code{\link[aphid]{train}} via the dots argument "...").
+#' @param distances an optional matrix of embedded distances from each sequence
+#'   in x to a subset of 'seed' sequences.
+#'   Defaults to NULL, in which case an object of class \code{"mbed"} is
+#'   generated using the algorithm of Blacksheilds et al.
+#'   (2010). For more information see documentation for the
+#'   \code{\link[phylogram]{mbed}} function in the
+#'   \code{\link[phylogram]{phylogram}} package.
 #' @param seqweights either NULL (default; all sequences are given an equal
 #'   weight of 1), a numeric vector the same length as \code{x} representing
 #'   the sequence weights used to derive the model, or a character string giving
 #'   the method to derive the weights from the sequences. Currently only the
 #'   \code{"Gerstein"} method is supported (the default). For this method, a
-#'   tree is first created by k-mer counting (see
-#'   \code{\link[phylogram]{kdistance}}),
+#'   tree is first created by k-mer counting (see the
+#'   \code{\link[phylogram]{topdown}} function in the
+#'   \code{\link[phylogram]{phylogram}} package),
 #'   and sequence weights are derived from the tree using the 'bottom up'
 #'   algorithm of Gerstein et al. (1994). The sum of these weights are equal
-#'   to the number of sequences in the alignment (so that mean(seqweights) = 1;
+#'   to the number of sequences in the alignment (so that
+#'   \code{mean(seqweights) = 1}.
 #'   Note this does not need to be the case if providing weights as a numeric
 #'   vector).
 #' @param cores integer giving the number of CPUs to use
@@ -72,8 +81,8 @@
 ################################################################################
 partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
                       allocation = "cluster", refine = "Viterbi",
-                      iterations = 50, seqweights = "Gerstein",
-                      cores = 1, quiet = FALSE, ...){
+                      iterations = 50, distances = NULL,
+                      seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
   ### x is a DNAbin object
   # model is a starting model to be trained on each side
   # assumes all seqs are unique
@@ -90,6 +99,7 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
     stop("Invalid sequence weights passed to 'partition'")
   }
   if(nseq == 1) return(NULL)
+  if(is.null(distances)) distances <- phylogram::mbed(x)
   tmp <- integer(nseq)
   if(nseq == 2){
     group1 <- c(TRUE, FALSE)
@@ -99,10 +109,9 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
     tmp <- 1:nseq
   }else if(identical(allocation, "cluster")){
     if(!quiet) cat("Clustering sequences into", K, "groups\n")
-    x <- lapply(x, function(y) y[y != as.raw(2)])
-    freqs <- phylogram::mbed(x, k = 5)
+    if(is.null(distances)) distances <- phylogram::mbed(x)
     #tmp <- kmeans(freqs, centers = K)$cluster
-    tmp <- tryCatch(kmeans(freqs, centers = K)$cluster,
+    tmp <- tryCatch(kmeans(distances, centers = K)$cluster,
                     error = function(er) sample(rep(1:K, nseq)[1:nseq]),
                     warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))
   }else{
@@ -125,7 +134,7 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
   scores <- matrix(nrow = K, ncol = nseq)
   pnms <- paste0("phmm", 1:K) # profile HMM names
   rownames(scores) <- pnms
-  colnames(scores) <- names(x)
+  colnames(scores) <- names(x) ### these have been changed to S1, S2, ... ?
 
   ### set up multithread
   if(inherits(cores, "cluster") | identical(cores, 1)){

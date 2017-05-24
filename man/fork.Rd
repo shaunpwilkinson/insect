@@ -5,8 +5,8 @@
 \title{Split nodes of a classification tree.}
 \usage{
 fork(node, x, refine = "Viterbi", iterations = 50, minK = 2, maxK = 2,
-  minscore = 0.9, probs = 0.05, resize = TRUE, seqweights = "Gerstein",
-  cores = 1, quiet = FALSE, ...)
+  minscore = 0.9, probs = 0.05, resize = TRUE, distances = NULL,
+  seqweights = "Gerstein", cores = 1, quiet = FALSE, ...)
 }
 \arguments{
 \item{node}{an object of class \code{"insect"}.}
@@ -52,6 +52,14 @@ change size during the training process or if the number of modules
 should be fixed. Defaults to TRUE. Only applicable if
 \code{refine = "Viterbi"}.}
 
+\item{distances}{an optional matrix of embedded distances from each sequence
+in x to a subset of 'seed' sequences.
+Defaults to NULL, in which case an object of class \code{"mbed"} is
+generated using the algorithm of Blacksheilds et al.
+(2010). For more information see documentation for the
+\code{\link[phylogram]{mbed}} function in the
+\code{\link[phylogram]{phylogram}} package.}
+
 \item{seqweights}{an optional numeric vector the same length as the
 sequence list giving the weights to use when training the
 PHMMs. Alternatively its length can be the same as the total number
@@ -94,7 +102,9 @@ Note that seqweights argument should have the same length as x.
   ## TBA
 }
 \references{
-TBA
+Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
+  for fast construction of guide trees for multiple sequence alignment.
+  \emph{Algorithms for Molecular Biology}, \strong{5}, 21.
 }
 \seealso{
 \code{\link{learn}} (parent function),

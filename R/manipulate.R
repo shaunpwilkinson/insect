@@ -54,14 +54,16 @@ duplicated.DNAbin <- function(x, incomparables = FALSE, point = TRUE, ...){
   incomparables <- incomparables #TODO
   if(is.list(x)){
     if(point){
-      hashes <- sapply(x, function(y) paste(openssl::md5(as.vector(y))))
-      dupes <- duplicated(hashes, ... = ...)
+      hashes <- sapply(x, function(s) paste(openssl::md5(as.vector(s))))
+      dupes <- duplicated(hashes, ... = ...) # logical length x
       pointers <- integer(length(x))
       dupehashes <- hashes[dupes]
       uniquehashes <- hashes[!dupes]
       pointers[!dupes] <- seq_along(uniquehashes)
-      pointers[dupes] <- sapply(dupehashes, match, uniquehashes)
-
+      pd <- integer(length(dupehashes))
+      for(i in unique(dupehashes)) pd[dupehashes == i] <- match(i, uniquehashes)
+      pointers[dupes] <- pd
+      #pointers[dupes] <- sapply(dupehashes, match, uniquehashes)
       attr(dupes, "pointers") <- pointers
     }else{
       dupes <- duplicated(lapply(x, as.vector)) # just removes attributes
@@ -69,13 +71,16 @@ duplicated.DNAbin <- function(x, incomparables = FALSE, point = TRUE, ...){
     names(dupes) <- names(x)
   }else if(is.matrix(x)){
     if(point){
-      hashes <- apply(x, 1, function(y) paste(openssl::md5(as.vector(y))))
+      hashes <- apply(x, 1, function(s) paste(openssl::md5(as.vector(s))))
       dupes <- duplicated(hashes, ... = ...)
       pointers <- integer(nrow(x))
       dupehashes <- hashes[dupes]
       uniquehashes <- hashes[!dupes]
       pointers[!dupes] <- seq_along(uniquehashes)
-      pointers[dupes] <- sapply(dupehashes, match, uniquehashes)
+      pd <- integer(length(dupehashes))
+      for(i in unique(dupehashes)) pd[dupehashes == i] <- match(i, uniquehashes)
+      pointers[dupes] <- pd
+      #pointers[dupes] <- sapply(dupehashes, match, uniquehashes)
       attr(dupes, "pointers") <- pointers
     }else{
       dupes <- duplicated(x, MARGIN = 1, ... = ...)

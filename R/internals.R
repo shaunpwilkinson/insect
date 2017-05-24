@@ -60,18 +60,19 @@
 
 
 .learn1 <- function(tree, x, refine = "Viterbi", iterations = 50, minK = 2, maxK = 2,
-                    minscore = 0.9, probs = 0.05, resize = TRUE, seqweights = "Gerstein",
-                    cores = 1, quiet = FALSE, ...){
+                    minscore = 0.9, probs = 0.05, resize = TRUE, distances = NULL,
+                    seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
   #tree is a "dendrogram" object (can be a node)
   # x is a DNAbin object - should not contain duplicates
   tree <- fork(tree, x = x, refine = refine, iterations = iterations, minK = minK,
                maxK = maxK, minscore = minscore, probs = probs, resize = resize,
-               seqweights = seqweights, cores = cores, quiet = quiet, ... = ...)
+               distances = distances, seqweights = seqweights, cores = cores,
+               quiet = quiet, ... = ...)
   if(is.list(tree)) tree[] <- lapply(tree, .learn1, x = x, refine = refine,
                                      iterations = iterations, minK = minK, maxK = maxK,
                                      probs = probs, resize = resize, minscore = minscore,
-                                     seqweights = seqweights, cores = cores,
-                                     quiet = quiet, ... = ...)
+                                     distances = distances, seqweights = seqweights,
+                                     cores = cores, quiet = quiet, ... = ...)
   return(tree)
 }
 

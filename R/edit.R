@@ -27,21 +27,40 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                    resize = TRUE, recursive = TRUE, cores = 1,
                    quiet = FALSE, ...){
   x <- attr(tree, "sequences") #full sequence set
-  attr(tree, "sequences") <- seq_along(x)
-  seqweights <- attr(tree, "weights")
+  tmpxattr <- attributes(x)
+  x <- x[seq_along(x)] # removes attributes which can be memory hungry
+  attr(tree, "sequences") <- seq_along(x) # temporary
+  ## following lines are for trees that have been stripped of memory-intensive elements
+  distances <- attr(tree, "distances")
+  if(is.null(distances)) distances <- phylogram::mbed(x)
+  attr(tree, "distances") <- NULL ## replaced later
   duplicates <- attr(tree, "duplicates")
+  if(is.null(duplicates)) duplicates <- attr(distances, "duplicates")
+  if(is.null(duplicates)) duplicates <- duplicated.DNAbin(x, point = TRUE)
+  attr(tree, "duplicates") <- NULL ## replaced later
+  pointers <- attr(tree, "pointers")
+  if(is.null(pointers)) pointers <- attr(distances, "pointers")
+  if(is.null(pointers)) pointers <- attr(duplicates, "pointers")
+  attr(tree, "pointers") <- NULL ## replaced later
+  hashes <- attr(tree, "hashes")
+  if(is.null(hashes)) hashes <- attr(distances, "hashes")
+  if(is.null(hashes)) hashes <- sapply(x, function(s) paste(openssl::md5(as.vector(s))))
+  attr(tree, "hashes") <- NULL ## replaced later
+  distances <- distances[!duplicates, ] # rm attrs, condensed version in final tree
+  seqweights <- attr(tree, "weights")
+  #ok if weights are null
+  attr(tree, "weights") <- NULL ## replaced later
   has_duplicates <- any(duplicates)
   if(has_duplicates){
-    fullseqset <- x #includes attributes
+    fullseqset <- x
     #x <- x[!duplicates]
-    x <- subset(x, subset = !duplicates)  #includes attributes
+    x <- x[!duplicates]  # attributes not needed
     rmduplicates <- function(node, whchunq, pointers){
       tmp <- attr(node, "sequences")[attr(node, "sequences") %in% whchunq]
       attr(node, "sequences") <- pointers[tmp]
       return(node)
     }
-    tree <- dendrapply(tree, rmduplicates, whchunq = which(!duplicates),
-                       pointers = attr(duplicates, "pointers"))
+    tree <- dendrapply(tree, rmduplicates, which(!duplicates), pointers)
   }
   ### set up multithread if required
   if(inherits(cores, "cluster")){
@@ -66,7 +85,8 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
       stopclustr <- TRUE
     }
   }
-  if(ncores > 1){
+  ### recursively split nodes
+  if(ncores > 1 & recursive){
     if(length(clades) < ncores){
       lockleaves <- function(node, exceptions){
         if(!is.list(node)){
@@ -101,35 +121,29 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
         tmp <- fm1(tree)
         rm(tmp)
         nmembers <- nmembers[eligible]
-        if(!any(eligible) | length(nmembers) >= ncores) break
+        if(!any(eligible) | length(nmembers) >= 2 * ncores) break
         whichclade <- names(nmembers)[which.max(nmembers)]
-        if(whichclade == ""){
-          index <- ""
-        }else{
-          whichcladei <- as.numeric(strsplit(whichclade, split = "")[[1]])
-          index <- paste0(paste0("[[", paste0(whichcladei, collapse = "]][["), "]]"))
-        }
-
+        index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
         toeval <- paste0("tree", index, "<- fork(tree",
                          index, ", x, refine = refine, ",
                          "iterations = iterations, minK = 2, maxK = 2, ",
                          "minscore = minscore, probs = probs, resize = resize, ",
-                         "seqweights = seqweights, cores = cores, quiet = quiet, ... = ...)")
+                         "distances = distances, seqweights = seqweights, ",
+                         "cores = cores, quiet = quiet, ... = ...)")
         eval(parse(text = toeval))
-        toeval <- paste0("splitsuccess <- is.list(tree", index, ")")
-        splitsuccess <- FALSE # prevents build note due to lack of visible binding
-        eval(parse(text = toeval))
+        ss <- FALSE # split success; prevents build note due to lack of visible binding
+        eval(parse(text = paste0("ss <- is.list(tree", index, ")")))
         # prevent multiple attempts to split the same node
-        if(!splitsuccess){
-          toeval <- paste0("attr(tree", index, ", lock) <- TRUE")
-          eval(parse(text = toeval))
-        }
+        if(!ss) eval(parse(text = paste0("attr(tree", index, ", lock) <-TRUE")))
       }
       clades <- names(nmembers)
+      indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
+      rm(nmembers)
+      rm(eligible)
     }
-    trees <- vector(mode = "list", length = length(nmembers))
-    for(i in seq_along(trees)){
-      trees[[i]] <- ll1(tree, exceptions = clades[i])
+    trees <- vector(mode = "list", length = length(clades)) # = length(indices)
+    for(i in seq_along(indices)){
+      eval(parse(text = paste0("trees[[", i, "]] <- tree", indices[i])))
     }
     if(!quiet) {
       cat("Recursively partitioning terminal tree branches\n")
@@ -140,50 +154,24 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                                  x, refine = refine, iterations = iterations,
                                  minK = minK, maxK = maxK, minscore = minscore,
                                  probs = probs, resize = resize,
+                                 distances = distances, # large matrix could cause probs
                                  seqweights = seqweights, cores = 1,
-                                 quiet = quiet, ... = ...)
+                                 quiet = TRUE, ... = ...)
     for(i in seq_along(trees)){
-      whichclade <- clades[i]
-      if(whichclade == ""){
-        index <- ""
-      }else{
-        whichcladei <- as.numeric(strsplit(whichclade, split = "")[[1]])
-        index <- paste0(paste0("[[", paste0(whichcladei, collapse = "]][["), "]]"))
-      }
-      toeval <- paste0("tree", index, "<- trees[[i]]", index)
-      eval(parse(text = toeval))
+      eval(parse(text = paste0("tree", indices[i], "<- trees[[", i, "]]")))
       trees[[i]] <- NA
       gc()
     }
-    rm(nmembers)
-    rm(eligible)
-  # if(identical(clades, "")){
-  #   if(recursive){
-  #     tree <- .learn1(tree, x, refine = refine, iterations = iterations,
-  #                     minK = minK, maxK = maxK, minscore = minscore, probs = probs,
-  #                     resize = resize, seqweights = seqweights, cores = cores,
-  #                     quiet = quiet, ... = ...)
-  #   }else{
-  #     tree <- fork(tree, x, refine = refine, iterations = iterations,
-  #                  minK = minK, maxK = maxK, minscore = minscore, probs = probs,
-  #                  resize = resize, seqweights = seqweights, cores = cores,
-  #                  quiet = quiet, ... = ...)
-  #   }
   }else{
-    for(i in seq_along(clades)){
-      if(clades[i] == ""){
-        index <- ""
-      }else{
-        cladesi <- as.numeric(strsplit(clades[i], split = "")[[1]])
-        index <- paste0(paste0("[[", paste0(cladesi, collapse = "]][["), "]]"))
-      }
-      #clade_i <- as.numeric(strsplit(clades[i], split = "")[[1]])
-      #index <- paste0(paste0("tree[[", paste0(clade_i, collapse = "]][["), "]]"))
-      toeval <- paste0("tree", index, if(recursive) "<-.learn1(tree" else "<-fork(tree",
-                       index, ", x, refine = refine, ",
+    indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
+    for(i in seq_along(indices)){
+      toeval <- paste0("tree", indices[i],
+                       if(recursive) "<-.learn1(tree" else "<-fork(tree",
+                       indices[i], ", x, refine = refine, ",
                        "iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, resize = resize, ",
-                       "seqweights = seqweights, cores = cores, quiet = quiet, ... = ...)")
+                       "distances = distances, seqweights = seqweights, ",
+                       "cores = cores, quiet = quiet, ... = ...)")
       eval(parse(text = toeval))
     }
   }
@@ -199,7 +187,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
     return(node)
   }
   tree <- dendrapply(tree, rm_locks)
-  add_duplicates <- function(node, pointers){
+  reduplicate <- function(node, pointers){
     seqs <- attr(node, "sequences")
     akws <- attr(node, "Akweights")
     scrs <- attr(node, "scores")
@@ -219,9 +207,9 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
     return(node)
   }
   if(!quiet) cat("Repatriating duplicate sequences with tree\n")
-  tree <- dendrapply(tree, add_duplicates,
-                     pointers = attr(duplicates, "pointers"))
+  tree <- dendrapply(tree, reduplicate, pointers = pointers)
   if(has_duplicates) x <- fullseqset
+  attributes(x) <- tmpxattr
   if(!quiet) cat("Resetting node heights\n")
   tree <- phylogram::reposition(tree)
   if(!quiet) cat("Making tree ultrametric\n")
@@ -247,8 +235,11 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   }
   tree <- dendrapply(tree, attachlins, lineages)
   attr(tree, "sequences") <- x # must happen after attaching lineages
+  attr(tree, "distances") <- distances
   attr(tree, "duplicates") <- duplicates
-  attr(tree, "pointers") <- attr(duplicates, "pointers")
+  attr(tree, "pointers") <- pointers
+  attr(tree, "weights") <- seqweights
+  attr(tree, "hashes") <- hashes # length is length(x)
   if(!quiet) cat("Done\n")
   class(tree) <- c("insect", "dendrogram")
   return(tree)
