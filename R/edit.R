@@ -27,6 +27,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                    resize = TRUE, recursive = TRUE, cores = 1,
                    quiet = FALSE, ...){
   x <- attr(tree, "sequences") #full sequence set
+  nseq <- length(x)
   tmpxattr <- attributes(x)
   x <- x[seq_along(x)] # removes attributes which can be memory hungry
   attr(tree, "sequences") <- seq_along(x) # temporary
@@ -46,7 +47,6 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   if(is.null(hashes)) hashes <- attr(distances, "hashes")
   if(is.null(hashes)) hashes <- sapply(x, function(s) paste(openssl::md5(as.vector(s))))
   attr(tree, "hashes") <- NULL ## replaced later
-  distances <- distances[!duplicates, ] # rm attrs, condensed version in final tree
   seqweights <- attr(tree, "weights")
   #ok if weights are null
   attr(tree, "weights") <- NULL ## replaced later
@@ -61,7 +61,9 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
       return(node)
     }
     tree <- dendrapply(tree, rmduplicates, which(!duplicates), pointers)
-  }
+    if(nrow(distances) == nseq) distances <- distances[!duplicates, ]
+    # rm attrs, condensed version in final tree
+  }else distances <- distances[ , ]
   ### set up multithread if required
   if(inherits(cores, "cluster")){
     ncores <- length(cores)
