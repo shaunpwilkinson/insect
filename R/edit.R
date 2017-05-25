@@ -136,7 +136,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
         ss <- FALSE # split success; prevents build note due to lack of visible binding
         eval(parse(text = paste0("ss <- is.list(tree", index, ")")))
         # prevent multiple attempts to split the same node
-        if(!ss) eval(parse(text = paste0("attr(tree", index, ", lock) <-TRUE")))
+        if(!ss) eval(parse(text = paste0("attr(tree", index, ", 'lock') <-TRUE")))
       }
       clades <- names(nmembers)
       indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
