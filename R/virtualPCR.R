@@ -79,10 +79,9 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
     stopclustr <- FALSE
   }else{
     navailcores <- parallel::detectCores()
-    if(identical(cores, "autodetect")){
-      maxcores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
-      cores <- min(navailcores - 1, maxcores)
-    }
+    if(identical(cores, "autodetect")) cores <- navailcores - 1
+      # maxcores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
+      # cores <- min(navailcores - 1, maxcores)
     if(cores > 1){
       if(cores > navailcores) stop("Number of cores is more than number available")
       if(!quiet) cat("Multithreading over", cores, "cores\n")

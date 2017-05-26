@@ -105,21 +105,17 @@ classify <- function(x, tree, threshold = 0.999, cores = 1){
   }
   if(is.list(x)){
     if(inherits(cores, "cluster")){
-      #paths <- parallel::parLapply(cores, sequences, pathfinder, model = model, ...)
       res <- parallel::parLapply(cores, x, classify1, tree, threshold)
     }else if(cores == 1){
       res <- lapply(x, classify1, tree, threshold)
     }else{
-      nseq <- length(x)
+      #nseq <- length(x)
       navailcores <- parallel::detectCores()
-      if(identical(cores, "autodetect")){
-        maxcores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
-        cores <- min(navailcores - 1, maxcores)
-      }
+      if(identical(cores, "autodetect")) cores <- navailcores - 1
+      if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
       if(cores > navailcores) stop("Number of cores to use is more than number available")
       if(cores > 1){
         cl <- parallel::makeCluster(cores)
-        # paths <- parallel::parLapply(cl, sequences, pathfinder, model = model, ...)
         res <- parallel::parLapply(cl, x, classify1, tree, threshold)
         parallel::stopCluster(cl)
       }else{
