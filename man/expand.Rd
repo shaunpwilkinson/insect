@@ -6,7 +6,7 @@
 \usage{
 expand(tree, clades = "", refine = "Viterbi", iterations = 50, minK = 2,
   maxK = 2, minscore = 0.9, probs = 0.05, resize = TRUE,
-  recursive = TRUE, cores = 1, quiet = FALSE, ...)
+  maxsize = NULL, recursive = TRUE, cores = 1, quiet = FALSE, ...)
 }
 \arguments{
 \item{tree}{an object of class \code{"insect"}.}
@@ -52,6 +52,9 @@ to test against the minimum score threshold given in \code{"minscore"}.}
 change size during the training process or if the number of modules
 should be fixed. Defaults to TRUE. Only applicable if
 \code{refine = "Viterbi"}.}
+
+\item{maxsize}{integer giving the upper bound on the number of modules
+in the PHMMs. If NULL (default) no maximum size is enforced.}
 
 \item{recursive}{logical indicating whether the splitting process
 should continue recursively until the discrimination criteria

@@ -24,15 +24,41 @@
 ################################################################################
 expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                    minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
-                   resize = TRUE, recursive = TRUE, cores = 1,
+                   resize = TRUE, maxsize = NULL, recursive = TRUE, cores = 1,
                    quiet = FALSE, ...){
   x <- attr(tree, "sequences") #full sequence set
   nseq <- length(x)
   tmpxattr <- attributes(x)
   x <- x[seq_along(x)] # removes attributes which can be memory hungry
   attr(tree, "sequences") <- seq_along(x) # temporary
-  ## following lines are for trees that have been stripped of memory-intensive elements
+  ### find splittable leaves recursively
+  indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
+  findnestedleaves <- function(node){
+    if(!is.list(node) & is.null(attr(node, "lock"))){
+      nestedleaves <<- c(nestedleaves, attr(node, "clade"))
+    }
+    return(node)
+  }
+  fnlr <- function(node){ # find nested leaves recursively
+    node <- findnestedleaves(node)
+    if(is.list(node) & is.null(attr(node, "lock"))) node[] <- lapply(node, fnlr)
+    return(node)
+  }
+  allnestedleaves <- vector(mode = "list", length = length(indices))
+  for(i in seq_along(indices)){
+    validclade <- TRUE
+    eval(parse(text = paste0("validclade <- is.leaf(tree", indices[i],") | is.list(tree", indices[i], ")")))
+    if(!validclade) stop("Clade ", clades[i], " is out of bounds\n")
+    nestedleaves <- character(0)
+    eval(parse(text = paste0("tmp <- fnlr(tree", indices[i], ")")))
+    rm(tmp)
+    allnestedleaves[[i]] <- nestedleaves
+  }
+  rm(nestedleaves)
+  clades <- unlist(allnestedleaves, use.names = TRUE)
+  indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
   distances <- attr(tree, "distances")
+  ## following lines are for trees that have been stripped of memory-intensive elements
   if(is.null(distances)) distances <- phylogram::mbed(x)
   attr(tree, "distances") <- NULL ## replaced later
   duplicates <- attr(tree, "duplicates")
@@ -130,7 +156,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                          index, ", x, refine = refine, ",
                          "iterations = iterations, minK = 2, maxK = 2, ",
                          "minscore = minscore, probs = probs, resize = resize, ",
-                         "distances = distances, seqweights = seqweights, ",
+                         "maxsize = maxsize, distances = distances, seqweights = seqweights, ",
                          "cores = cores, quiet = quiet, ... = ...)")
         eval(parse(text = toeval))
         ss <- FALSE # split success; prevents build note due to lack of visible binding
@@ -149,13 +175,12 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
     }
     if(!quiet) {
       cat("Recursively partitioning terminal tree branches\n")
-      cat("Feedback suppressed\n")
-      cat("This could take a while...\n")
+      cat("Feedback suppressed, this could take a while...\n")
     }
     trees <- parallel::parLapply(cores, trees, .learn1,
                                  x, refine = refine, iterations = iterations,
                                  minK = minK, maxK = maxK, minscore = minscore,
-                                 probs = probs, resize = resize,
+                                 probs = probs, resize = resize, maxsize = maxsize,
                                  distances = distances, # large matrix could cause probs
                                  seqweights = seqweights, cores = 1,
                                  quiet = TRUE, ... = ...)
@@ -172,7 +197,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                        indices[i], ", x, refine = refine, ",
                        "iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, resize = resize, ",
-                       "distances = distances, seqweights = seqweights, ",
+                       "maxsize = maxsize, distances = distances, seqweights = seqweights, ",
                        "cores = cores, quiet = quiet, ... = ...)")
       eval(parse(text = toeval))
     }

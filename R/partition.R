@@ -10,10 +10,6 @@
 #' @param model an optional profile hidden Markov model as the hypothetical
 #'   data generating mechanism for the entire sequence set. This is used to
 #'   provide the starting parameters to train the top level models.
-#' @param needs_training logical indicating whether the profile hidden Markov model
-#'   provided above (if applicable) should be trained before attempting to
-#'   split the sequence set, using the sequences supplied in \code{x}.
-#'   Only necessary if \code{"model"} is not NULL.
 #' @param K integer. The number of groups to split the sequences into.
 #' @param allocation integer vector giving the initial group membership of the
 #'   sequences. The vector length should be the same as that of the sequence set
@@ -79,7 +75,7 @@
 #' @examples
 #'   ## TBA
 ################################################################################
-partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
+partition <- function(x, model = NULL, K = 2,
                       allocation = "cluster", refine = "Viterbi",
                       iterations = 50, distances = NULL,
                       seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
@@ -152,7 +148,7 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
       stopclustr <- TRUE
     }
   }
-  ### Parent model
+  ### Parent model - better off moving to 'learn' ?
   if(is.null(model)){
     if(!quiet) cat("Deriving parent model\n")
     ## this should only happen at top level for tree-learning
@@ -170,12 +166,7 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
     if(!quiet) cat("Training parent model\n")
     model <- aphid::train(model, x, method = refine, seqweights = seqweights,
                           cores = cores, quiet = quiet, inserts = "inherited",
-                          ... = ...)
-  }else if(needs_training){
-    if(!quiet) cat("Training parent model\n") # model can change size here
-    model <- aphid::train(model, x, method = refine, seqweights = seqweights,
-                          cores = cores, quiet = quiet, inserts = "map",
-                          ... = ...)
+                          alignment = TRUE, ... = ...)
   }
   res[["phmm0"]] <- model
   for(j in 1:K) res[[pnms[j]]] <- model
@@ -203,7 +194,7 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
       res[[pnms[j]]] <- aphid::train(if(finetune) res[[pnms[j]]] else model,
                                      x[membership == j], #model
                                      method = refine, seqweights = seqweightsj,
-                                     inserts = if(refine == "Viterbi") "inherited" else "map",
+                                     inserts = "inherited", alignment = TRUE,
                                      cores = cores, quiet = quiet, ... = ...)
       if(!quiet) cat("Calculating sequence probabilities given child model", j, "\n")
       scores[j, ] <- if(inherits(cores, "cluster")){

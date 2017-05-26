@@ -4,10 +4,9 @@
 \alias{partition}
 \title{Split a group of sequences into subsets with maximum differentiation.}
 \usage{
-partition(x, model = NULL, needs_training = FALSE, K = 2,
-  allocation = "cluster", refine = "Viterbi", iterations = 50,
-  distances = NULL, seqweights = "Gerstein", cores = 1, quiet = FALSE,
-  ...)
+partition(x, model = NULL, K = 2, allocation = "cluster",
+  refine = "Viterbi", iterations = 50, distances = NULL,
+  seqweights = "Gerstein", cores = 1, quiet = FALSE, ...)
 }
 \arguments{
 \item{x}{a \code{"DNAbin"} object containing multiple sequences in a list.}
@@ -15,11 +14,6 @@ partition(x, model = NULL, needs_training = FALSE, K = 2,
 \item{model}{an optional profile hidden Markov model as the hypothetical
 data generating mechanism for the entire sequence set. This is used to
 provide the starting parameters to train the top level models.}
-
-\item{needs_training}{logical indicating whether the profile hidden Markov model
-provided above (if applicable) should be trained before attempting to
-split the sequence set, using the sequences supplied in \code{x}.
-Only necessary if \code{"model"} is not NULL.}
 
 \item{K}{integer. The number of groups to split the sequences into.}
 

@@ -5,8 +5,9 @@
 \title{Split nodes of a classification tree.}
 \usage{
 fork(node, x, refine = "Viterbi", iterations = 50, minK = 2, maxK = 2,
-  minscore = 0.9, probs = 0.05, resize = TRUE, distances = NULL,
-  seqweights = "Gerstein", cores = 1, quiet = FALSE, ...)
+  minscore = 0.9, probs = 0.05, resize = TRUE, maxsize = NULL,
+  distances = NULL, seqweights = "Gerstein", cores = 1, quiet = FALSE,
+  ...)
 }
 \arguments{
 \item{node}{an object of class \code{"insect"}.}
@@ -51,6 +52,9 @@ to test against the minimum score threshold given in \code{"minscore"}.}
 change size during the training process or if the number of modules
 should be fixed. Defaults to TRUE. Only applicable if
 \code{refine = "Viterbi"}.}
+
+\item{maxsize}{integer giving the upper bound on the number of modules
+in the PHMMs. If NULL (default) no maximum size is enforced.}
 
 \item{distances}{an optional matrix of embedded distances from each sequence
 in x to a subset of 'seed' sequences.

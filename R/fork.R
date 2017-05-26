@@ -27,13 +27,15 @@
 ################################################################################
 fork <- function(node, x, refine = "Viterbi", iterations = 50,
                  minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
-                 resize = TRUE, distances = NULL, seqweights = "Gerstein",
-                 cores = 1, quiet = FALSE, ...){
+                 resize = TRUE, maxsize = NULL, distances = NULL,
+                 seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
   if(!is.list(node) & is.null(attr(node, "lock"))){ # fork leaves only
     seqs <- x[attr(node, "sequences")]
     nseq <- length(seqs)
-    if(minK == 1) return(node)
-    if(nseq < minK) return(node)
+    if(minK == 1 | nseq < minK){
+      if(!is.null(attr(node, "phmm"))) attr(node, "phmm")$alignment <- NULL
+      return(node)
+    }
     if(nseq < maxK) maxK <- nseq
     if(is.null(seqweights)){
       seqweights <- rep(1, nseq)
@@ -56,9 +58,7 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
       navailcores <- parallel::detectCores()
       if(identical(cores, "autodetect")) cores <- navailcores - 1
       if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
-      if(cores > navailcores) {
-        stop("Number of cores is more than the number available")
-      }
+      if(cores > navailcores) stop("Number of cores is more than number available")
       # if(!quiet) cat("Multithreading over", cores, "cores\n")
       if(cores == 1){
         stopclustr <- FALSE
@@ -75,35 +75,42 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
       mod <- NULL
     }else{
       mod <- attr(node, "phmm")
+      attr(node, "phmm")$alignment <- NULL ## save on memory
       ins <- mod$inserts
       toosparse <- if(is.null(ins)) FALSE else sum(ins)/length(ins) > 0.5
       if(resize & toosparse & !quiet) cat("Skipping resize step\n")
       if(resize & attr(node, "clade") != "" & !toosparse){
         #don't need to retrain top level model
         # if mod was truncated then no need to resize
-        if(!quiet) cat("Retraining parent model\n")
+        if(!quiet) cat("Resizing parent model\n")
         ### model is allowed to change size here
-        mod <- aphid::train(mod, seqs, method = "Viterbi",
-                            seqweights = seqweights,
-                            cores = cores, quiet = quiet, ... = ...)
+        alig <- mod$alignment
+        if(is.null(alig)) alig <- aphid::align(seqs, model = mod, cores = cores)
+        mod <- aphid::derivePHMM.default(alig, seqweights = seqweights,
+                                         inserts = "map", maxsize = maxsize)
+        rm(alig)
+        gc()
+        # mod <- aphid::train(mod, seqs, method = "Viterbi",
+        #                     seqweights = seqweights,
+        #                     cores = cores, quiet = quiet, ... = ...)
         if(!quiet) cat("New model size :", mod$size, "\n")
-        if(refine == "BaumWelch"){
-          mod <- aphid::train(mod, seqs, method = "BaumWelch",
-                              seqweights = seqweights, ... = ...)
-        }
+        # if(refine == "BaumWelch"){
+        #   mod <- aphid::train(mod, seqs, method = "BaumWelch",
+        #                       seqweights = seqweights, ... = ...)
+        # }
       }
     }
     split_node <- FALSE
     nclades <- minK
     repeat{
-      seqsplit <- partition(seqs, model = mod, needs_training = FALSE,
-                            refine = refine, K = nclades,
+      seqsplit <- partition(seqs, model = mod, refine = refine, K = nclades,
                             iterations = iterations, distances = distances,
                             seqweights = seqweights, cores = cores, quiet = quiet,
                             ... = ...)
       if(is.null(seqsplit)){
         if(!quiet) cat("Sequence splitting failed, returning unsplit node\n")
         if(stopclustr) parallel::stopCluster(cores)
+        if(!is.null(attr(node, "phmm"))) attr(node, "phmm")$alignment <- NULL
         return(node)
       }
       if(is.null(attr(node, "phmm"))){ # should only be TRUE at top level
@@ -161,7 +168,7 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
     # splitfun <- function(s) strsplit(s, split = ";")[[1]]
     if(split_node){# placeholder for discriminant thresholding
       # change from leaf to inner node
-      if(!quiet) cat("Creating new node\n")
+      if(!quiet) cat("Splitting node", attr(node, "clade"), "\n")
       tmpattr <- attributes(node)
       node <- vector(mode = "list", length = nclades)
       attributes(node) <- tmpattr
@@ -178,6 +185,8 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
         attr(node[[i]], "Akweights") <- performances[membership == i]
         attr(node[[i]], "phmm") <- seqsplit[[paste0("phmm", i)]]
       }
+    }else{
+      attr(node, "phmm")$alignment <- NULL
     }
   }
   return(node)

@@ -44,6 +44,8 @@
 #'   change size during the training process or if the number of modules
 #'   should be fixed. Defaults to TRUE. Only applicable if
 #'   \code{refine = "Viterbi"}.
+#' @param maxsize integer giving the upper bound on the number of modules
+#'   in the PHMMs. If NULL (default) no maximum size is enforced.
 #' @param seqweights an optional numeric vector the same length as the
 #'   sequence list giving the weights to use when training the
 #'   PHMMs. Alternatively its length can be the same as the total number
@@ -114,7 +116,7 @@
 ################################################################################
 learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                   minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
-                  resize = TRUE, seqweights = "Gerstein",
+                  resize = TRUE, maxsize = NULL, seqweights = "Gerstein",
                   recursive = TRUE, cores = 1, quiet = FALSE, ...){
   # x is a "DNAbin" object
   tmpxattr <- attributes(x)
@@ -178,7 +180,8 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     if(ncores == 1){
       tree <- .learn1(tree, x = x, refine = refine, iterations = iterations,
                       minK = minK, maxK = maxK, minscore = minscore,
-                      probs = probs, resize = resize, distances = distances,
+                      probs = probs, resize = resize, maxsize = maxsize,
+                      distances = distances,
                       seqweights = seqweights, cores = cores,
                       quiet = quiet, ... = ...)
     }else{
@@ -210,7 +213,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                          index, ", x, refine = refine, ",
                          "iterations = iterations, minK = 2, maxK = 2, ",
                          "minscore = minscore, probs = probs, resize = resize, ",
-                         "distances = distances, seqweights = seqweights, ",
+                         "maxsize = maxsize, distances = distances, seqweights = seqweights, ",
                          "cores = cores, quiet = quiet, ... = ...)")
         eval(parse(text = toeval))
         ss <- FALSE # split success; prevents build note due to lack of visible binding
@@ -228,13 +231,12 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
       }
       if(!quiet) {
         cat("Recursively partitioning terminal tree branches\n")
-        cat("Feedback suppressed\n")
-        cat("This could take a while...\n")
+        cat("Feedback suppressed, this could take a while...\n")
       }
       trees <- parallel::parLapply(cores, trees, .learn1,
                                    x, refine = refine, iterations = iterations,
                                    minK = minK, maxK = maxK, minscore = minscore,
-                                   probs = probs, resize = resize,
+                                   probs = probs, resize = resize, maxsize = maxsize,
                                    distances = distances, seqweights = seqweights,
                                    cores = 1, quiet = TRUE, ... = ...)
       for(i in seq_along(trees)){
@@ -246,8 +248,8 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   }else{
     tree <- fork(tree, x = x, refine = refine, iterations = iterations,
                  minK = minK, maxK = maxK, minscore = minscore,
-                 probs = probs, resize = resize, distances = distances,
-                 seqweights = seqweights, cores = cores,
+                 probs = probs, resize = resize, maxsize = maxsize,
+                 distances = distances, seqweights = seqweights, cores = cores,
                  quiet = quiet, ... = ...)
   }
   if(stopclustr) parallel::stopCluster(cores)
