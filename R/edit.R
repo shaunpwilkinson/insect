@@ -116,7 +116,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
         if(is.list(node)) node[] <- lapply(node, fm1)
         return(node)
       }
-      if(!quiet) cat("Recursively partitioning basal tree branches")
+      if(!quiet) cat("Recursively partitioning basal tree branches\n")
       repeat{
         nmembers <- integer(0)
         eligible <- logical(0)

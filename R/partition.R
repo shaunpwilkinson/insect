@@ -135,7 +135,6 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
   pnms <- paste0("phmm", 1:K) # profile HMM names
   rownames(scores) <- pnms
   colnames(scores) <- names(x) ### these have been changed to S1, S2, ... ?
-
   ### set up multithread
   if(inherits(cores, "cluster") | identical(cores, 1)){
     stopclustr <- FALSE
@@ -153,36 +152,30 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
       stopclustr <- TRUE
     }
   }
-
-
+  ### Parent model
   if(is.null(model)){
     if(!quiet) cat("Deriving parent model\n")
-    nseeds <- ceiling(log(nseq, 2)^2)
-    seeds <- sample(1:nseq, size = nseeds)
-    #seedsTF <- 1:nseq %in% seeds
-    model <- aphid::derivePHMM.list(x, refine = "none", seeds = seeds,
-                                    seqweights = seqweights)
+    ## this should only happen at top level for tree-learning
+    xlengths <- sapply(x, length)
+    seeds <- which(xlengths == max(xlengths))
+    nseeds <- length(seeds)
+    seedmat <- matrix(unlist(x[[seeds]], use.names = FALSE), nrow = nseeds, byrow = TRUE)
+    model <- aphid::derivePHMM.default(seedmat, seqweights = seqweights[seeds])
+    # nseeds <- ceiling(log(nseq, 2)^2)
+    # seeds <- sample(1:nseq, size = nseeds)
+    # model <- aphid::derivePHMM.list(x, refine = "none", seeds = seeds,
+    #                                 seqweights = seqweights)
     ## just a progressive multiple alignment of seed seqs only
     ## now train the model
     if(!quiet) cat("Training parent model\n")
-    # optncores <- .optcores(maxcores, nseq)
-    # para <- optncores > 1
-    # if(para & !quiet) cat("Multithreading model training over", optncores, "cores\n")
-    # cores <- if(para) parallel::makeCluster(optncores) else 1
     model <- aphid::train(model, x, method = refine, seqweights = seqweights,
-                        cores = cores, quiet = quiet, ... = ...)
-    # if(para) parallel::stopCluster(cores)
-    # model <- aphid::derivePHMM.list(x, refine = refine,
-    #                                 seqweights = seqweights, ... = ...)
+                          cores = cores, quiet = quiet, inserts = "inherited",
+                          ... = ...)
   }else if(needs_training){
-    if(!quiet) cat("Training parent model\n")  # model can change size here
-    # optncores <- .optcores(maxcores, nseq)
-    # para <- optncores > 1
-    # if(para & !quiet) cat("Multithreading model training over", optncores, "cores\n")
-    # cores <- if(para) parallel::makeCluster(optncores) else 1
+    if(!quiet) cat("Training parent model\n") # model can change size here
     model <- aphid::train(model, x, method = refine, seqweights = seqweights,
-                          cores = cores, quiet = quiet, ... = ...)
-    # if(para) parallel::stopCluster(cores)
+                          cores = cores, quiet = quiet, inserts = "map",
+                          ... = ...)
   }
   res[["phmm0"]] <- model
   for(j in 1:K) res[[pnms[j]]] <- model
@@ -207,10 +200,6 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
       #                         method = refine, seqweights = seqweightsj,
       #                         inserts = if(refine == "Viterbi") "inherited" else "map",
       #                         ... = ...)
-      # optncores <- .optcores(maxcores, nseq = seq_numbers[j])
-      # para <- optncores > 1
-      # if(para & !quiet) cat("Multithreading model training over", optncores, "cores\n")
-      # cores <- if(para) parallel::makeCluster(optncores) else 1
       res[[pnms[j]]] <- aphid::train(if(finetune) res[[pnms[j]]] else model,
                                      x[membership == j], #model
                                      method = refine, seqweights = seqweightsj,
@@ -220,16 +209,8 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
       scores[j, ] <- if(inherits(cores, "cluster")){
         parallel::parSapply(cores, x, fscore, model = res[[pnms[j]]])
       }else{
-        scores[j, ] <- sapply(x, fscore, model = res[[pnms[j]]])
+        sapply(x, fscore, model = res[[pnms[j]]])
       }
-
-      # if(para){
-      #   scores[j, ] <- parallel::parSapply(cl = cores, x, fscore, mod = res[[pnms[j]]])
-      #   parallel::stopCluster(cores)
-      # }else{
-      #   scores[j, ] <- sapply(x, fscore, mod = res[[pnms[j]]])
-      # }
-
       # res[[pnms[j]]] <- aphid::train(model, x[membership == j], #model
       #                         method = refine, seqweights = seqweightsj,
       #                         inserts = if(refine == "Viterbi") "inherited" else "map",
@@ -255,11 +236,7 @@ partition <- function(x, model = NULL, needs_training = FALSE, K = 2,
       cat("\n")
     }
     tmpmd5 <- paste(openssl::md5(as.raw(tmp)))
-    # cat("hashes:", md5s, "\n")
-    # cat("New hash:", tmpmd5, "\n")
-    # cat("In md5s?", tmpmd5 %in% md5s, "\n")
     if(tmpmd5 %in% md5s){
-      #cat("matches iteration", match(TRUE, sapply(md5s, identical, tmpmd5)), "\n")
       break
     }else if(length(unique(tmp)) < K){
       if(!quiet){

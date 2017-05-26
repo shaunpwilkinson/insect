@@ -75,7 +75,12 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
       mod <- NULL
     }else{
       mod <- attr(node, "phmm")
-      if(resize & attr(node, "clade") != ""){ #don't need to retrain top level model
+      ins <- mod$inserts
+      toosparse <- if(is.null(ins)) FALSE else sum(ins)/length(ins) > 0.5
+      if(resize & toosparse & !quiet) cat("Skipping resize step\n")
+      if(resize & attr(node, "clade") != "" & !toosparse){
+        #don't need to retrain top level model
+        # if mod was truncated then no need to resize
         if(!quiet) cat("Retraining parent model\n")
         ### model is allowed to change size here
         mod <- aphid::train(mod, seqs, method = "Viterbi",
