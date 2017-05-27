@@ -60,7 +60,7 @@ have identical nucleotide composition to one that is already in the
 dataset should be removed (TRUE) or retained (FALSE; default).}
 
 \item{cores}{integer giving the number of CPUs to parallelize the operation
-over. Defaults to 1, and reverts to 1 if 'sequences' is not a list.
+over. Defaults to 1, and reverts to 1 if x is not a list.
 This argument may alternatively be a 'cluster' object,
 in which case it is the user's responsibility to close the socket
 connection at the conclusion of the operation,

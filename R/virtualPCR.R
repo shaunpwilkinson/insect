@@ -43,7 +43,7 @@
 #'   have identical nucleotide composition to one that is already in the
 #'   dataset should be removed (TRUE) or retained (FALSE; default).
 #' @param cores integer giving the number of CPUs to parallelize the operation
-#'   over. Defaults to 1, and reverts to 1 if 'sequences' is not a list.
+#'   over. Defaults to 1, and reverts to 1 if x is not a list.
 #'   This argument may alternatively be a 'cluster' object,
 #'   in which case it is the user's responsibility to close the socket
 #'   connection at the conclusion of the operation,
@@ -80,8 +80,6 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   }else{
     navailcores <- parallel::detectCores()
     if(identical(cores, "autodetect")) cores <- navailcores - 1
-      # maxcores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
-      # cores <- min(navailcores - 1, maxcores)
     if(cores > 1){
       if(cores > navailcores) stop("Number of cores is more than number available")
       if(!quiet) cat("Multithreading over", cores, "cores\n")

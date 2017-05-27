@@ -155,7 +155,7 @@ partition <- function(x, model = NULL, K = 2,
     xlengths <- sapply(x, length)
     seeds <- which(xlengths == max(xlengths))
     nseeds <- length(seeds)
-    seedmat <- matrix(unlist(x[[seeds]], use.names = FALSE), nrow = nseeds, byrow = TRUE)
+    seedmat <- matrix(unlist(x[seeds], use.names = FALSE), nrow = nseeds, byrow = TRUE)
     model <- aphid::derivePHMM.default(seedmat, seqweights = seqweights[seeds])
     # nseeds <- ceiling(log(nseq, 2)^2)
     # seeds <- sample(1:nseq, size = nseeds)
