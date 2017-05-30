@@ -135,6 +135,7 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
           if(tokeep > 0) s <- rev(rev(s)[1:tokeep]) else return(NULL)
         }
         if(length(s) < minamplen) return(NULL)
+        attr(s, "forscore") <- vit$score
         return(s)
       }
     }
@@ -152,9 +153,12 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   nseq <- sum(!discards)
   if(!quiet) cat("Retained", nseq, "sequences after forward trim\n")
   if(nseq > 0){
+    forscores <- unlist(lapply(x, function(s) attr(s, "forscore")), use.names = FALSE)
     x <- x[!discards]
+    x <- lapply(x, as.vector) # removes individual forscore attrs
     for(i in whichattr) tmpattr[[i]] <- tmpattr[[i]][!discards]
     attributes(x) <- tmpattr
+    attr(x, "forscores") <- forscores
   }else{
     cat("None of the sequences met forward primer specificity criteria\n")
     x <- NULL # cant return yet since cluster is still open
@@ -177,7 +181,10 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
             tokeep <- min(zeroonestarts2) - 1
             if(tokeep > 0) s <- s[1:tokeep] else return(NULL)
           }
-          if(length(s) >= minamplen & length(s) <= maxamplen) return(s)
+          if(length(s) >= minamplen & length(s) <= maxamplen) {
+            attr(s, "revscore") <- vit$score
+            return(s)
+          }
         }
       }
       return(NULL)
@@ -193,10 +200,13 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
     discards <- sapply(x, is.null)
     nseq <- sum(!discards)
     if(nseq > 0){
+      revscores <- unlist(lapply(x, function(s) attr(s, "revscore")), use.names = FALSE)
       if(!quiet) cat("Retained", nseq, "sequences after reverse trim\n")
       x <- x[!discards]
+      x <- lapply(x, as.vector) # removes individual revscore attrs
       for(i in whichattr) tmpattr[[i]] <- tmpattr[[i]][!discards]
       attributes(x) <- tmpattr
+      attr(x, "revscores") <- revscores
     }else{
       cat("None of the sequences met reverse primer specificity criteria\n")
       x <- NULL

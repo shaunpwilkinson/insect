@@ -69,7 +69,7 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
       }
     }
     ### Split clade
-    if(!quiet) cat("\nAttempting to split clade", attr(node, "clade"), "\n")
+    if(!quiet) cat("\nAttempting to split node", attr(node, "clade"), "\n")
     if(is.null(attr(node, "phmm"))){
       # should only happen at top level and if a PHMM is not provided
       mod <- NULL
@@ -87,7 +87,8 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
         alig <- mod$alignment
         if(is.null(alig)) alig <- aphid::align(seqs, model = mod, cores = cores)
         mod <- aphid::derivePHMM.default(alig, seqweights = seqweights,
-                                         inserts = "map", maxsize = maxsize)
+                                         inserts = if(nseq < 1000) "map" else "threshold",
+                                         maxsize = maxsize)
         rm(alig)
         gc()
         # mod <- aphid::train(mod, seqs, method = "Viterbi",

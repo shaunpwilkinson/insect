@@ -59,7 +59,20 @@ join <- function(...){
 #'   the direction of the trim. Options are "forward" (trims everything to
 #'   the right of the motif), "backward" (trims everything to the left of
 #'   the motif) or "both" (retains the motif region only).
-#' @param ... further arguments to be passed to \code{\link[aphid]{Viterbi}}.
+#' @param cores integer giving the number of CPUs to parallelize the operation
+#'   over. Defaults to 1, and reverts to 1 if x is not a list.
+#'   This argument may alternatively be a 'cluster' object,
+#'   in which case it is the user's responsibility to close the socket
+#'   connection at the conclusion of the operation,
+#'   for example by running \code{parallel::stopCluster(cores)}.
+#'   The string 'autodetect' is also accepted, in which case the maximum
+#'   number of cores to use is one less than the total number of cores available.
+#'   Note that in this case there
+#'   may be a tradeoff in terms of speed depending on the number and size
+#'   of sequences to be aligned, due to the extra time required to initialize
+#'   the cluster.
+#' @param ... further arguments to be passed to \code{\link[aphid]{Viterbi}}
+#'   (not including 'type').
 #' @return an object of class \code{DNAbin}.
 #' @details
 #'   This functions finds the optimal semiglobal alignment (a.k.a. "glocal"
@@ -73,12 +86,7 @@ join <- function(...){
 #' @examples
 #'   ## TBA
 ################################################################################
-trim <- function(x, motif, direction = "both", ...){
-  # if(!(identical(direction, "forward") | identical(direction, "reverse") |
-  #      identical(direction, "both"))){
-  #   stop("Direction must be either 'forward', 'reverse' of 'both'")
-  # }
-  #fw <- direction == "forward"
+trim <- function(x, motif, direction = "both", cores = 1, ...){
   trim1 <- function(x, motif, direction){
     vit <- aphid::Viterbi(motif, x, type = "semiglobal", ... = ...)
     if(identical(direction, "forward")){
@@ -99,7 +107,30 @@ trim <- function(x, motif, direction = "both", ...){
     }else stop("Invalid argument for 'direction'")
     return(res)
   }
-  res <- if(is.list(x)) lapply(x, trim1, motif, direction) else trim1(x, motif, direction)
+  if(is.list(x)){
+    if(inherits(cores, "cluster")){
+      res <- parallel::parLapply(cores, x, trim1, motif, direction, ...)
+    }else if(cores == 1){
+      res <- lapply(x, trim1, motif, direction, ...)
+    }else{
+      #nseq <- length(x)
+      navailcores <- parallel::detectCores()
+      if(identical(cores, "autodetect")) cores <- navailcores - 1
+      if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
+      if(cores > navailcores) stop("Number of cores to use is more than number available")
+      if(cores > 1){
+        cl <- parallel::makeCluster(cores)
+        res <- parallel::parLapply(cl, x, trim1, motif, direction, ...)
+        parallel::stopCluster(cl)
+      }else{
+        res <- lapply(x, trim1, motif, direction, ...)
+      }
+    }
+    return(res)
+  }else{
+    return(trim1(x, motif, direction, ...))
+  }
+  #res <- if(is.list(x)) lapply(x, trim1, motif, direction) else trim1(x, motif, direction)
   attributes(res) <- attributes(x)
   #class(res) <- "DNAbin"
   return(res)
