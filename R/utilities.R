@@ -132,7 +132,7 @@ trim <- function(x, motif, direction = "both", cores = 1, ...){
   }
   #res <- if(is.list(x)) lapply(x, trim1, motif, direction) else trim1(x, motif, direction)
   attributes(res) <- attributes(x)
-  #class(res) <- "DNAbin"
+  class(res) <- "DNAbin"
   return(res)
 }
 ################################################################################

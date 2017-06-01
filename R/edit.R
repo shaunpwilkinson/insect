@@ -47,7 +47,9 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   allnestedleaves <- vector(mode = "list", length = length(indices))
   for(i in seq_along(indices)){
     validclade <- TRUE
-    eval(parse(text = paste0("validclade <- is.leaf(tree", indices[i],") | is.list(tree", indices[i], ")")))
+    toeval <- paste0("validclade <- is.leaf(tree", indices[i],
+                     ") | is.list(tree", indices[i], ")")
+    eval(parse(text = toeval))
     if(!validclade) stop("Clade ", clades[i], " is out of bounds\n")
     nestedleaves <- character(0)
     eval(parse(text = paste0("tmp <- fnlr(tree", indices[i], ")")))
@@ -149,7 +151,8 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
         tmp <- fm1(tree)
         rm(tmp)
         nmembers <- nmembers[eligible]
-        if(!any(eligible) | length(nmembers) >= 2 * ncores) break
+        # if(!any(eligible) | length(nmembers) >= 2 * ncores) break
+        if(!any(eligible) | all(nmembers[eligible] < 200)) break
         whichclade <- names(nmembers)[which.max(nmembers)]
         index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
         toeval <- paste0("tree", index, "<- fork(tree",

@@ -206,7 +206,8 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
         tmp <- fm1(tree)
         rm(tmp)
         nmembers <- nmembers[eligible]
-        if(!any(eligible) | length(nmembers) >= 2 * ncores) break
+        # if(!any(eligible) | length(nmembers) >= 2 * ncores) break
+        if(!any(eligible) | all(nmembers[eligible] < 200)) break
         whichclade <- names(nmembers)[which.max(nmembers)]
         index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
         toeval <- paste0("tree", index, "<- fork(tree",
