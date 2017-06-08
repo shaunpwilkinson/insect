@@ -105,7 +105,10 @@ partition <- function(x, model = NULL, K = 2,
   }else if(identical(allocation, "cluster")){
     if(!quiet) cat("Clustering sequences into", K, "groups\n")
     #if(is.null(distances)) distances <- phylogram::mbed(x)
-    if(is.null(kmers)) kmers <- phylogram::kcount(x, k = 4)/(sapply(x, length) - 3)#k-1=3
+    if(is.null(kmers)){
+      if(!quiet) cat("Counting k-mers\n")
+      kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4)#k-1=3
+    }
     #tmp <- kmeans(freqs, centers = K)$cluster
     tmp <- tryCatch(kmeans(kmers, centers = K)$cluster,
                     error = function(er) sample(rep(1:K, nseq)[1:nseq]),

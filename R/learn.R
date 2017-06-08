@@ -115,7 +115,7 @@
 #'   ## TBA
 ################################################################################
 learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
-                  minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
+                  minK = 2, maxK = 2, minscore = 0.9, probs = 0.1,
                   resize = TRUE, maxsize = NULL, seqweights = "Gerstein",
                   recursive = TRUE, cores = 1, quiet = FALSE, ...){
   # x is a "DNAbin" object
@@ -151,10 +151,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     x <- x[!duplicates] #subset.DNAbin(x, subset = !duplicates)  #exc attributes
     if(length(seqweights) == nseq) seqweights <- seqweights[!duplicates]
   }
-  if(!quiet) cat("Counting k-mers\n")
-  ## kmers are actually frequencies not counts
-  ## could offer option to specify k here eventually but 4 is ok for now
-  kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4) #k-1=4
+
   if(identical(seqweights, "Gerstein")){
     if(!quiet) cat("Deriving sequence weights\n")
     seqweights <- aphid::weight(x, "Gerstein")
@@ -187,6 +184,12 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
       stopclustr <- TRUE
     }
   }
+  if(ncores == 1){
+    if(!quiet) cat("Counting k-mers\n")
+    ## kmers are actually frequencies not counts
+    ## could offer option to specify k here eventually but 4 is ok for now
+    kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4) #k-1=4
+  }else kmers <- NULL
   if(recursive){
     if(!quiet) cat("Learning tree\n")
     if(ncores == 1){
@@ -266,6 +269,9 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                  quiet = quiet, ... = ...)
   }
   if(stopclustr) parallel::stopCluster(cores)
+  ### remove kmers since can be memory hungry, prevent next operations
+  rm(kmers)
+  gc()
   ### fix midpoints, members, heights and leaf integers
   ### note changes here also apply to 'expand' function
   if(!quiet) cat("Setting midpoints and members attributes\n")
@@ -327,7 +333,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "sequences") <- x # must happen after attaching lineages
   attr(tree, "duplicates") <- duplicates # length is length(x)
   attr(tree, "pointers") <- pointers # length is length(x)
-  attr(tree, "kmers") <- kmers # number of rows is number of unique seqs
+  #attr(tree, "kmers") <- kmers # number of rows is number of unique seqs
   attr(tree, "weights") <- seqweights # length is number of unique seqs
   attr(tree, "hashes") <- hashes # length is length(x)
   #attr(tree, "indices") <- .reindex(tree)

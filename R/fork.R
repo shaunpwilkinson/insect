@@ -44,14 +44,23 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
       ### scale weights to average 1
       seqweights <- seqweights/mean(seqweights)
     }else stop("Invalid seqweights argument")
-    if(is.null(kmers)){
-      # distances <- phylogram::mbed(x[attr(node, "sequences")])
-      kmers <- phylogram::kcount(seqs, k = 4)/(sapply(seqs, length) - 3)#k-1=3
-    # }else if(nrow(distances) == length(x)){
-      # distances <- distances[attr(node, "sequences"), ]
-    }else if(nrow(kmers) == length(x)){
-      kmers <- kmers[attr(node, "sequences"), ]
-    }else stop("Invalid kmers argument")
+    if(!is.null(kmers)){
+      if(nrow(kmers) == length(x)){
+        kmers <- kmers[attr(node, "sequences"), ]
+      }else{
+        stopifnot(nrow(kmers) == length(attr(node, "sequences")))
+      }
+    }
+
+    # if(is.null(kmers)){
+    #   # distances <- phylogram::mbed(x[attr(node, "sequences")])
+    #   if(!quiet) cat("Counting k-mers\n")
+    #   kmers <- phylogram::kcount(seqs, k = 5)/(sapply(seqs, length) - 4)#k-1=3
+    # # }else if(nrow(distances) == length(x)){
+    #   # distances <- distances[attr(node, "sequences"), ]
+    # }else if(nrow(kmers) == length(x)){
+    #   kmers <- kmers[attr(node, "sequences"), ]
+    # }else stop("Invalid kmers argument")
 
     ### set up multithread
     if(inherits(cores, "cluster") | identical(cores, 1)){

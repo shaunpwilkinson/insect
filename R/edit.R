@@ -23,7 +23,7 @@
 #'   ## TBA
 ################################################################################
 expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
-                   minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
+                   minK = 2, maxK = 2, minscore = 0.9, probs = 0.1,
                    resize = TRUE, maxsize = NULL, recursive = TRUE, cores = 1,
                    quiet = FALSE, ...){
   x <- attr(tree, "sequences") #full sequence set
@@ -59,6 +59,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   rm(nestedleaves)
   clades <- unlist(allnestedleaves, use.names = TRUE)
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
+  ## following lines are for trees that have been stripped of memory-intensive elements
   hashes <- attr(tree, "hashes")
   if(is.null(hashes)) hashes <- .digest(x, simplify = TRUE)
   attr(tree, "hashes") <- NULL
@@ -76,7 +77,6 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
     pointers[duplicates] <- pd
   }
   attr(tree, "pointers") <- NULL
-
 
   # attr(tree, "distances") <- NULL ## replaced later
   # duplicates <- attr(tree, "duplicates")
@@ -110,17 +110,10 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
     # if(nrow(kmers) == nseq) kmers <- kmers[!duplicates, ]
     # rm attrs, condensed version in final tree
   }# else distances <- distances[ , ]
-  ### set up multithread if required
-  kmers <- attr(tree, "kmers")
-  ## following lines are for trees that have been stripped of memory-intensive elements
-  #if(is.null(kmers)) kmers <- phylogram::mbed(x)
-  if(is.null(kmers)){
-    kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4) #k - 1 = 4
-  }else if(has_duplicates & nrow(kmers) == nseq){
-    kmers <- kmers[!duplicates, ]
-  }
-  attr(tree, "kmers") <- NULL ## replaced later
 
+
+
+  ### set up multithread if required
   if(inherits(cores, "cluster")){
     ncores <- length(cores)
     stopclustr <- FALSE
@@ -143,6 +136,18 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
       stopclustr <- TRUE
     }
   }
+  ## calculate k-mers once but only if run on single core
+  ## otherwise uses excessive memory (since this can be > 1GB)
+  # kmers <- attr(tree, "kmers")
+  #if(is.null(kmers)) kmers <- phylogram::mbed(x)
+  if(ncores == 1){
+    if(!quiet) cat("Counting k-mers\n")
+    kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4) #k - 1 = 4
+  # }else if(has_duplicates & nrow(kmers) == nseq & ncores = 1){
+  #   kmers <- kmers[!duplicates, ]
+  }else kmers <- NULL
+  # attr(tree, "kmers") <- NULL ## replaced later
+  ## prev line commented to prevent k-mer stripping
   ### recursively split nodes
   if(ncores > 1 & recursive){
     if(length(clades) < ncores){
@@ -212,7 +217,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                                  x, refine = refine, iterations = iterations,
                                  minK = minK, maxK = maxK, minscore = minscore,
                                  probs = probs, resize = resize, maxsize = maxsize,
-                                 kmers = kmers, # large matrix could cause probs
+                                 kmers = kmers, # large matrix could cause memory probs
                                  seqweights = seqweights, cores = 1,
                                  quiet = TRUE, ... = ...)
     for(i in seq_along(trees)){
@@ -234,6 +239,9 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
     }
   }
   if(stopclustr) parallel::stopCluster(cores)
+  ### remove kmers since can be memory hungry, prevent next operations
+  rm(kmers)
+  gc()
   ### fix midpoints, members, heights and leaf integers
   ### note changes here also apply to 'learn' function
   if(!quiet) cat("Setting midpoints and members attributes\n")
@@ -293,7 +301,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   }
   tree <- dendrapply(tree, attachlins, lineages)
   attr(tree, "sequences") <- x # must happen after attaching lineages
-  attr(tree, "kmers") <- kmers
+  # attr(tree, "kmers") <- kmers
   attr(tree, "duplicates") <- duplicates
   attr(tree, "pointers") <- pointers
   attr(tree, "weights") <- seqweights

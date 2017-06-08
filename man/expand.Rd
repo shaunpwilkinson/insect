@@ -5,7 +5,7 @@
 \title{Expand an existing classification tree.}
 \usage{
 expand(tree, clades = "", refine = "Viterbi", iterations = 50, minK = 2,
-  maxK = 2, minscore = 0.9, probs = 0.05, resize = TRUE,
+  maxK = 2, minscore = 0.9, probs = 0.1, resize = TRUE,
   maxsize = NULL, recursive = TRUE, cores = 1, quiet = FALSE, ...)
 }
 \arguments{
