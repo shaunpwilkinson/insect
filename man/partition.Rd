@@ -2,10 +2,10 @@
 % Please edit documentation in R/partition.R
 \name{partition}
 \alias{partition}
-\title{Split a group of sequences into subsets with maximum differentiation.}
+\title{Split sequences into subsets with maximum differentiation.}
 \usage{
 partition(x, model = NULL, K = 2, allocation = "cluster",
-  refine = "Viterbi", iterations = 50, distances = NULL,
+  refine = "Viterbi", iterations = 50, kmers = NULL,
   seqweights = "Gerstein", cores = 1, quiet = FALSE, ...)
 }
 \arguments{
@@ -35,13 +35,11 @@ or Baum Welch iterations to be used in model training, which can be set
 using the argument \code{"maxiter"} (eventually passed to
 \code{\link[aphid]{train}} via the dots argument "...").}
 
-\item{distances}{an optional matrix of embedded distances from each sequence
-in x to a subset of 'seed' sequences.
-Defaults to NULL, in which case an object of class \code{"mbed"} is
-generated using the algorithm of Blacksheilds et al.
-(2010). For more information see documentation for the
-\code{\link[phylogram]{mbed}} function in the
-\code{\link[phylogram]{phylogram}} package.}
+\item{kmers}{an optional matrix of k-mer frequencies used for
+initial assignment of sequences to groups via k-means clustering.
+Rows should sum to one to account for differences in sequence length.
+Defaults to NULL, in which case k-mers are automatically
+counted (using k = 4) and normalized to sequence length.}
 
 \item{seqweights}{either NULL (default; all sequences are given an equal
 weight of 1), a numeric vector the same length as \code{x} representing

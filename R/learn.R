@@ -121,20 +121,28 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   # x is a "DNAbin" object
   tmpxattr <- attributes(x)
   nseq <- length(x)
-  x <- x[1:nseq]# removes attributes
+  x <- x[] # removes attributes
+  if(is.null(seqweights)) seqweights <- rep(1, length(x))
   # First initialize the tree
   tree <- 1
   attr(tree, "clade") <- ""
   attr(tree, "leaf") <- TRUE
-  if(!quiet) cat("Embedding sequences for k-means clustering\n")
-  ### could offer option to specify k here eventually
-  distances <- phylogram::mbed(x)
-  duplicates <- attr(distances, "duplicates")
-  pointers <- attr(distances, "pointers")
-  hashes <- attr(distances, "hashes")
-  distances <- distances[!duplicates, ]
-  if(is.null(seqweights)) seqweights <- rep(1, length(x))
-  # set duplicates aside until end
+
+  #distances <- phylogram::mbed(x)
+  #duplicates <- attr(distances, "duplicates")
+  #pointers <- attr(distances, "pointers")
+  #hashes <- attr(distances, "hashes")
+  if(!quiet) cat("Finding duplicates\n")
+  hashes <- .digest(x, simplify = TRUE)
+  duplicates <- duplicated(hashes) # logical length x
+  pointers <- integer(length(x))
+  dhashes <- hashes[duplicates]
+  uhashes <- hashes[!duplicates]
+  pointers[!duplicates] <- seq_along(uhashes)
+  pd <- integer(length(dhashes))
+  for(i in unique(dhashes)) pd[dhashes == i] <- match(i, uhashes)
+  pointers[duplicates] <- pd
+  #distances <- distances[!duplicates, ]
   nuseq <- sum(!duplicates)
   has_duplicates <- any(duplicates)
   if(has_duplicates){
@@ -143,8 +151,12 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     x <- x[!duplicates] #subset.DNAbin(x, subset = !duplicates)  #exc attributes
     if(length(seqweights) == nseq) seqweights <- seqweights[!duplicates]
   }
+  if(!quiet) cat("Counting k-mers\n")
+  ## kmers are actually frequencies not counts
+  ## could offer option to specify k here eventually but 4 is ok for now
+  kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4) #k-1=4
   if(identical(seqweights, "Gerstein")){
-    if(!quiet) cat("Deriving sequence weights for unique sequences\n")
+    if(!quiet) cat("Deriving sequence weights\n")
     seqweights <- aphid::weight(x, "Gerstein")
   }
   attr(tree, "sequences") <- seq_along(x) # tmp-eventually replaced by DNAbin
@@ -181,7 +193,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
       tree <- .learn1(tree, x = x, refine = refine, iterations = iterations,
                       minK = minK, maxK = maxK, minscore = minscore,
                       probs = probs, resize = resize, maxsize = maxsize,
-                      distances = distances,
+                      kmers = kmers,
                       seqweights = seqweights, cores = cores,
                       quiet = quiet, ... = ...)
     }else{
@@ -199,7 +211,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
         if(is.list(node)) node[] <- lapply(node, fm1)
         return(node)
       }
-      if(!quiet) cat("Recursively partitioning basal tree branches")
+      if(!quiet) cat("Recursively partitioning basal tree branches\n")
       repeat{
         nmembers <- integer(0)
         eligible <- logical(0)
@@ -214,7 +226,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                          index, ", x, refine = refine, ",
                          "iterations = iterations, minK = 2, maxK = 2, ",
                          "minscore = minscore, probs = probs, resize = resize, ",
-                         "maxsize = maxsize, distances = distances, seqweights = seqweights, ",
+                         "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
                          "cores = cores, quiet = quiet, ... = ...)")
         eval(parse(text = toeval))
         ss <- FALSE # split success; prevents build note due to lack of visible binding
@@ -238,7 +250,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                                    x, refine = refine, iterations = iterations,
                                    minK = minK, maxK = maxK, minscore = minscore,
                                    probs = probs, resize = resize, maxsize = maxsize,
-                                   distances = distances, seqweights = seqweights,
+                                   kmers = kmers, seqweights = seqweights,
                                    cores = 1, quiet = TRUE, ... = ...)
       for(i in seq_along(trees)){
         eval(parse(text = paste0("tree", indices[i], "<- trees[[", i, "]]")))
@@ -250,7 +262,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     tree <- fork(tree, x = x, refine = refine, iterations = iterations,
                  minK = minK, maxK = maxK, minscore = minscore,
                  probs = probs, resize = resize, maxsize = maxsize,
-                 distances = distances, seqweights = seqweights, cores = cores,
+                 kmers = kmers, seqweights = seqweights, cores = cores,
                  quiet = quiet, ... = ...)
   }
   if(stopclustr) parallel::stopCluster(cores)
@@ -315,8 +327,8 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "sequences") <- x # must happen after attaching lineages
   attr(tree, "duplicates") <- duplicates # length is length(x)
   attr(tree, "pointers") <- pointers # length is length(x)
-  attr(tree, "distances") <- distances # number of rows is sum not duplicated
-  attr(tree, "weights") <- seqweights # length is sum not duplicated
+  attr(tree, "kmers") <- kmers # number of rows is number of unique seqs
+  attr(tree, "weights") <- seqweights # length is number of unique seqs
   attr(tree, "hashes") <- hashes # length is length(x)
   #attr(tree, "indices") <- .reindex(tree)
   if(!quiet) cat("Done\n")

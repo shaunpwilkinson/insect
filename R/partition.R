@@ -1,5 +1,5 @@
 ################################################################################
-#' Split a group of sequences into subsets with maximum differentiation.
+#' Split sequences into subsets with maximum differentiation.
 #'
 #' Finds the best split of a set of DNA sequences and provides a profile
 #'   hidden Markov model for each subset along with the logged full
@@ -26,13 +26,11 @@
 #'   or Baum Welch iterations to be used in model training, which can be set
 #'   using the argument \code{"maxiter"} (eventually passed to
 #'   \code{\link[aphid]{train}} via the dots argument "...").
-#' @param distances an optional matrix of embedded distances from each sequence
-#'   in x to a subset of 'seed' sequences.
-#'   Defaults to NULL, in which case an object of class \code{"mbed"} is
-#'   generated using the algorithm of Blacksheilds et al.
-#'   (2010). For more information see documentation for the
-#'   \code{\link[phylogram]{mbed}} function in the
-#'   \code{\link[phylogram]{phylogram}} package.
+#' @param kmers an optional matrix of k-mer frequencies used for
+#'   initial assignment of sequences to groups via k-means clustering.
+#'   Rows should sum to one to account for differences in sequence length.
+#'   Defaults to NULL, in which case k-mers are automatically
+#'   counted (using k = 4) and normalized to sequence length.
 #' @param seqweights either NULL (default; all sequences are given an equal
 #'   weight of 1), a numeric vector the same length as \code{x} representing
 #'   the sequence weights used to derive the model, or a character string giving
@@ -77,7 +75,7 @@
 ################################################################################
 partition <- function(x, model = NULL, K = 2,
                       allocation = "cluster", refine = "Viterbi",
-                      iterations = 50, distances = NULL,
+                      iterations = 50, kmers = NULL,
                       seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
   ### x is a DNAbin object
   # model is a starting model to be trained on each side
@@ -95,7 +93,8 @@ partition <- function(x, model = NULL, K = 2,
     stop("Invalid sequence weights passed to 'partition'")
   }
   if(nseq == 1) return(NULL)
-  if(is.null(distances)) distances <- phylogram::mbed(x)
+  #if(is.null(distances)) distances <- phylogram::mbed(x)
+
   tmp <- integer(nseq)
   if(nseq == 2){
     group1 <- c(TRUE, FALSE)
@@ -105,9 +104,10 @@ partition <- function(x, model = NULL, K = 2,
     tmp <- 1:nseq
   }else if(identical(allocation, "cluster")){
     if(!quiet) cat("Clustering sequences into", K, "groups\n")
-    if(is.null(distances)) distances <- phylogram::mbed(x)
+    #if(is.null(distances)) distances <- phylogram::mbed(x)
+    if(is.null(kmers)) kmers <- phylogram::kcount(x, k = 4)/(sapply(x, length) - 3)#k-1=3
     #tmp <- kmeans(freqs, centers = K)$cluster
-    tmp <- tryCatch(kmeans(distances, centers = K)$cluster,
+    tmp <- tryCatch(kmeans(kmers, centers = K)$cluster,
                     error = function(er) sample(rep(1:K, nseq)[1:nseq]),
                     warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))
   }else{

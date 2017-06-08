@@ -29,7 +29,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   x <- attr(tree, "sequences") #full sequence set
   nseq <- length(x)
   tmpxattr <- attributes(x)
-  x <- x[seq_along(x)] # removes attributes which can be memory hungry
+  x <- x[] # temporarily remove memory hungry attributes
   attr(tree, "sequences") <- seq_along(x) # temporary
   ### find splittable leaves recursively
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
@@ -59,24 +59,41 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   rm(nestedleaves)
   clades <- unlist(allnestedleaves, use.names = TRUE)
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
-  distances <- attr(tree, "distances")
-  ## following lines are for trees that have been stripped of memory-intensive elements
-  if(is.null(distances)) distances <- phylogram::mbed(x)
-  attr(tree, "distances") <- NULL ## replaced later
-  duplicates <- attr(tree, "duplicates")
-  if(is.null(duplicates)) duplicates <- attr(distances, "duplicates")
-  if(is.null(duplicates)) duplicates <- duplicated.DNAbin(x, point = TRUE)
-  attr(tree, "duplicates") <- NULL ## replaced later
-  pointers <- attr(tree, "pointers")
-  if(is.null(pointers)) pointers <- attr(distances, "pointers")
-  if(is.null(pointers)) pointers <- attr(duplicates, "pointers")
-  attr(tree, "pointers") <- NULL ## replaced later
   hashes <- attr(tree, "hashes")
-  if(is.null(hashes)) hashes <- attr(distances, "hashes")
-  if(is.null(hashes)) hashes <- sapply(x, function(s) paste(openssl::md5(as.vector(s))))
-  attr(tree, "hashes") <- NULL ## replaced later
+  if(is.null(hashes)) hashes <- .digest(x, simplify = TRUE)
+  attr(tree, "hashes") <- NULL
+  duplicates <- attr(tree, "duplicates")
+  if(is.null(duplicates)) duplicates <- duplicated(hashes)
+  attr(tree, "duplicates") <- NULL
+  pointers <- attr(tree, "pointers")
+  if(is.null(pointers)){
+    pointers <- integer(length(x))
+    dhashes <- hashes[duplicates]
+    uhashes <- hashes[!duplicates]
+    pointers[!duplicates] <- seq_along(uhashes)
+    pd <- integer(length(dhashes))
+    for(i in unique(dhashes)) pd[dhashes == i] <- match(i, uhashes)
+    pointers[duplicates] <- pd
+  }
+  attr(tree, "pointers") <- NULL
+
+
+  # attr(tree, "distances") <- NULL ## replaced later
+  # duplicates <- attr(tree, "duplicates")
+  # if(is.null(duplicates)) duplicates <- attr(distances, "duplicates")
+  # if(is.null(duplicates)) duplicates <- duplicated.DNAbin(x, point = TRUE)
+  # attr(tree, "duplicates") <- NULL ## replaced later
+  # pointers <- attr(tree, "pointers")
+  # if(is.null(pointers)) pointers <- attr(distances, "pointers")
+  # if(is.null(pointers)) pointers <- attr(duplicates, "pointers")
+  # attr(tree, "pointers") <- NULL ## replaced later
+  # hashes <- attr(tree, "hashes")
+  # if(is.null(hashes)) hashes <- attr(distances, "hashes")
+  # if(is.null(hashes)) hashes <- sapply(x, function(s) paste(openssl::md5(as.vector(s))))
+  # attr(tree, "hashes") <- NULL ## replaced later
+
   seqweights <- attr(tree, "weights")
-  #ok if weights are null
+  #ok if weights are null here
   attr(tree, "weights") <- NULL ## replaced later
   has_duplicates <- any(duplicates)
   if(has_duplicates){
@@ -89,10 +106,21 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
       return(node)
     }
     tree <- dendrapply(tree, rmduplicates, which(!duplicates), pointers)
-    if(nrow(distances) == nseq) distances <- distances[!duplicates, ]
+    # if(nrow(distances) == nseq) distances <- distances[!duplicates, ]
+    # if(nrow(kmers) == nseq) kmers <- kmers[!duplicates, ]
     # rm attrs, condensed version in final tree
-  }else distances <- distances[ , ]
+  }# else distances <- distances[ , ]
   ### set up multithread if required
+  kmers <- attr(tree, "kmers")
+  ## following lines are for trees that have been stripped of memory-intensive elements
+  #if(is.null(kmers)) kmers <- phylogram::mbed(x)
+  if(is.null(kmers)){
+    kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4) #k - 1 = 4
+  }else if(has_duplicates & nrow(kmers) == nseq){
+    kmers <- kmers[!duplicates, ]
+  }
+  attr(tree, "kmers") <- NULL ## replaced later
+
   if(inherits(cores, "cluster")){
     ncores <- length(cores)
     stopclustr <- FALSE
@@ -152,14 +180,14 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
         rm(tmp)
         nmembers <- nmembers[eligible]
         # if(!any(eligible) | length(nmembers) >= 2 * ncores) break
-        if(!any(eligible) | all(nmembers[eligible] < 200)) break
+        if(!any(eligible) | all(nmembers < 200)) break
         whichclade <- names(nmembers)[which.max(nmembers)]
         index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
         toeval <- paste0("tree", index, "<- fork(tree",
                          index, ", x, refine = refine, ",
                          "iterations = iterations, minK = 2, maxK = 2, ",
                          "minscore = minscore, probs = probs, resize = resize, ",
-                         "maxsize = maxsize, distances = distances, seqweights = seqweights, ",
+                         "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
                          "cores = cores, quiet = quiet, ... = ...)")
         eval(parse(text = toeval))
         ss <- FALSE # split success; prevents build note due to lack of visible binding
@@ -184,7 +212,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                                  x, refine = refine, iterations = iterations,
                                  minK = minK, maxK = maxK, minscore = minscore,
                                  probs = probs, resize = resize, maxsize = maxsize,
-                                 distances = distances, # large matrix could cause probs
+                                 kmers = kmers, # large matrix could cause probs
                                  seqweights = seqweights, cores = 1,
                                  quiet = TRUE, ... = ...)
     for(i in seq_along(trees)){
@@ -200,7 +228,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                        indices[i], ", x, refine = refine, ",
                        "iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, resize = resize, ",
-                       "maxsize = maxsize, distances = distances, seqweights = seqweights, ",
+                       "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
                        "cores = cores, quiet = quiet, ... = ...)")
       eval(parse(text = toeval))
     }
@@ -265,7 +293,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   }
   tree <- dendrapply(tree, attachlins, lineages)
   attr(tree, "sequences") <- x # must happen after attaching lineages
-  attr(tree, "distances") <- distances
+  attr(tree, "kmers") <- kmers
   attr(tree, "duplicates") <- duplicates
   attr(tree, "pointers") <- pointers
   attr(tree, "weights") <- seqweights

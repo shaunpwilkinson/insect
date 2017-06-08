@@ -60,19 +60,19 @@
 
 
 .learn1 <- function(tree, x, refine = "Viterbi", iterations = 50, minK = 2, maxK = 2,
-                    minscore = 0.9, probs = 0.05, resize = TRUE, maxsize = NULL, distances = NULL,
+                    minscore = 0.9, probs = 0.05, resize = TRUE, maxsize = NULL, kmers = NULL,
                     seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
   #tree is a "dendrogram" object (can be a node)
   # x is a DNAbin object - should not contain duplicates
   tree <- fork(tree, x = x, refine = refine, iterations = iterations, minK = minK,
                maxK = maxK, minscore = minscore, probs = probs, resize = resize, maxsize = maxsize,
-               distances = distances, seqweights = seqweights, cores = cores,
+               kmers = kmers, seqweights = seqweights, cores = cores,
                quiet = quiet, ... = ...)
   if(is.list(tree)) tree[] <- lapply(tree, .learn1, x = x, refine = refine,
                                      iterations = iterations, minK = minK, maxK = maxK,
                                      probs = probs, resize = resize, maxsize = maxsize,
                                      minscore = minscore,
-                                     distances = distances, seqweights = seqweights,
+                                     kmers = kmers, seqweights = seqweights,
                                      cores = cores, quiet = quiet, ... = ...)
   return(tree)
 }
@@ -104,3 +104,23 @@
 #   return(ncores)
 # }
 
+.digest <- function(x, simplify = TRUE){
+  digest1 <- function(s){
+    if(mode(s) != "raw"){
+      if(mode(s) == "character"){
+        s <- sapply(s, charToRaw)
+      }else if(mode(s) == "integer"){
+        s <- sapply(s, as.raw)
+      }else if(mode(s) == "numeric"){
+        s <- unlist(sapply(s, function(a) charToRaw(paste(round(a, 4)))), use.names = FALSE)
+        #stop("Can't digest numeric vectors")
+      }
+    }
+    return(paste(openssl::md5(as.vector(s))))
+  }
+  if(is.list(x)){
+    if(simplify) return(sapply(x, digest1)) else return(lapply(x, digest1))
+  }else{
+    return(digest1(x))
+  }
+}

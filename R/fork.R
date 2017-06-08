@@ -5,13 +5,11 @@
 #'
 #' @param node an object of class \code{"insect"}.
 #' @param x an object of class \code{"DNAbin"}.
-#' @param distances an optional matrix of embedded distances from each sequence
-#'   in x to a subset of 'seed' sequences.
-#'   Defaults to NULL, in which case an object of class \code{"mbed"} is
-#'   generated using the algorithm of Blacksheilds et al.
-#'   (2010). For more information see documentation for the
-#'   \code{\link[phylogram]{mbed}} function in the
-#'   \code{\link[phylogram]{phylogram}} package.
+#' @param kmers an optional matrix of k-mer frequencies used for
+#'   initial assignment of sequences to groups via k-means clustering.
+#'   Rows should sum to one to account for differences in sequence length.
+#'   Defaults to NULL, in which case k-mers are automatically
+#'   counted (using k = 4) and normalized to sequence length.
 #' @inheritParams learn
 #' @return an object of class \code{"insect"}.
 #' @details Note that seqweights argument should have the same length as x.
@@ -27,7 +25,7 @@
 ################################################################################
 fork <- function(node, x, refine = "Viterbi", iterations = 50,
                  minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
-                 resize = TRUE, maxsize = NULL, distances = NULL,
+                 resize = TRUE, maxsize = NULL, kmers = NULL,
                  seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
   if(!is.list(node) & is.null(attr(node, "lock"))){ # fork leaves only
     seqs <- x[attr(node, "sequences")]
@@ -46,11 +44,15 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
       ### scale weights to average 1
       seqweights <- seqweights/mean(seqweights)
     }else stop("Invalid seqweights argument")
-    if(is.null(distances)){
-      distances <- phylogram::mbed(x[attr(node, "sequences")])
-    }else if(nrow(distances) == length(x)){
-      distances <- distances[attr(node, "sequences"), ]
-    }else stop("Invalid distances argument")
+    if(is.null(kmers)){
+      # distances <- phylogram::mbed(x[attr(node, "sequences")])
+      kmers <- phylogram::kcount(seqs, k = 4)/(sapply(seqs, length) - 3)#k-1=3
+    # }else if(nrow(distances) == length(x)){
+      # distances <- distances[attr(node, "sequences"), ]
+    }else if(nrow(kmers) == length(x)){
+      kmers <- kmers[attr(node, "sequences"), ]
+    }else stop("Invalid kmers argument")
+
     ### set up multithread
     if(inherits(cores, "cluster") | identical(cores, 1)){
       stopclustr <- FALSE
@@ -105,7 +107,7 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
     nclades <- minK
     repeat{
       seqsplit <- partition(seqs, model = mod, refine = refine, K = nclades,
-                            iterations = iterations, distances = distances,
+                            iterations = iterations, kmers = kmers,
                             seqweights = seqweights, cores = cores, quiet = quiet,
                             ... = ...)
       if(is.null(seqsplit)){

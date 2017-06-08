@@ -6,8 +6,7 @@
 \usage{
 fork(node, x, refine = "Viterbi", iterations = 50, minK = 2, maxK = 2,
   minscore = 0.9, probs = 0.05, resize = TRUE, maxsize = NULL,
-  distances = NULL, seqweights = "Gerstein", cores = 1, quiet = FALSE,
-  ...)
+  kmers = NULL, seqweights = "Gerstein", cores = 1, quiet = FALSE, ...)
 }
 \arguments{
 \item{node}{an object of class \code{"insect"}.}
@@ -56,13 +55,11 @@ should be fixed. Defaults to TRUE. Only applicable if
 \item{maxsize}{integer giving the upper bound on the number of modules
 in the PHMMs. If NULL (default) no maximum size is enforced.}
 
-\item{distances}{an optional matrix of embedded distances from each sequence
-in x to a subset of 'seed' sequences.
-Defaults to NULL, in which case an object of class \code{"mbed"} is
-generated using the algorithm of Blacksheilds et al.
-(2010). For more information see documentation for the
-\code{\link[phylogram]{mbed}} function in the
-\code{\link[phylogram]{phylogram}} package.}
+\item{kmers}{an optional matrix of k-mer frequencies used for
+initial assignment of sequences to groups via k-means clustering.
+Rows should sum to one to account for differences in sequence length.
+Defaults to NULL, in which case k-mers are automatically
+counted (using k = 4) and normalized to sequence length.}
 
 \item{seqweights}{an optional numeric vector the same length as the
 sequence list giving the weights to use when training the
