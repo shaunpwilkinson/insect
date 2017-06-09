@@ -5,7 +5,7 @@
 \title{Split sequences into subsets with maximum differentiation.}
 \usage{
 partition(x, model = NULL, K = 2, allocation = "cluster",
-  refine = "Viterbi", iterations = 50, kmers = NULL,
+  refine = "Viterbi", nstart = 10, iterations = 50, kmers = NULL,
   seqweights = "Gerstein", cores = 1, quiet = FALSE, ...)
 }
 \arguments{
@@ -27,6 +27,9 @@ This is the default option.}
 \item{refine}{the method used to train/refine the models. Valid methods
 are "Viterbi" (Viterbi training; default) and "BaumWelch" (a modified
 version of the E-M algorithm).}
+
+\item{nstart}{integer. The number of random starting sets to be chosen
+for initial k-means assignment of sequences to groups.}
 
 \item{iterations}{integer giving the maximum number of training-classification
 iterations to be used in the splitting process (see details section).

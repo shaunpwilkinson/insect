@@ -4,8 +4,8 @@
 \alias{learn}
 \title{Informatic sequence classification tree learning.}
 \usage{
-learn(x, model = NULL, refine = "Viterbi", iterations = 50, minK = 2,
-  maxK = 2, minscore = 0.9, probs = 0.1, resize = TRUE,
+learn(x, model = NULL, refine = "Viterbi", iterations = 50, nstart = 10,
+  minK = 2, maxK = 2, minscore = 0.9, probs = 0.1, resize = TRUE,
   maxsize = NULL, seqweights = "Gerstein", recursive = TRUE, cores = 1,
   quiet = FALSE, ...)
 }
@@ -33,6 +33,9 @@ Note that this is not necessarily the same as the number of Viterbi training
 or Baum Welch iterations to be used in model training, which can be set
 using the argument \code{"maxiter"} (eventually passed to
 \code{\link[aphid]{train}} via the dots argument "...").}
+
+\item{nstart}{integer. The number of random starting sets to be chosen
+for initial k-means assignment of sequences to groups.}
 
 \item{minK}{integer. The minimum number of furications allowed at each inner
 node of the tree. Defaults to 2 (all inner nodes are bifuricating).}

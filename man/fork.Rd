@@ -4,9 +4,10 @@
 \alias{fork}
 \title{Split nodes of a classification tree.}
 \usage{
-fork(node, x, refine = "Viterbi", iterations = 50, minK = 2, maxK = 2,
-  minscore = 0.9, probs = 0.05, resize = TRUE, maxsize = NULL,
-  kmers = NULL, seqweights = "Gerstein", cores = 1, quiet = FALSE, ...)
+fork(node, x, refine = "Viterbi", nstart = 10, iterations = 50,
+  minK = 2, maxK = 2, minscore = 0.9, probs = 0.05, resize = TRUE,
+  maxsize = NULL, kmers = NULL, seqweights = "Gerstein", cores = 1,
+  quiet = FALSE, ...)
 }
 \arguments{
 \item{node}{an object of class \code{"insect"}.}
@@ -18,6 +19,9 @@ method to be used in the partitioning process. Valid options are
 \code{"Viterbi"} (Viterbi training; the default option) and
 \code{"BaumWelch"} (a modified version of the Expectation-Maximization
 algorithm).}
+
+\item{nstart}{integer. The number of random starting sets to be chosen
+for initial k-means assignment of sequences to groups.}
 
 \item{iterations}{integer giving the maximum number of training-classification
 iterations to be used in the splitting process (see details section).

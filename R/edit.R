@@ -23,7 +23,7 @@
 #'   ## TBA
 ################################################################################
 expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
-                   minK = 2, maxK = 2, minscore = 0.9, probs = 0.1,
+                   nstart = 10, minK = 2, maxK = 2, minscore = 0.9, probs = 0.1,
                    resize = TRUE, maxsize = NULL, recursive = TRUE, cores = 1,
                    quiet = FALSE, ...){
   x <- attr(tree, "sequences") #full sequence set
@@ -190,7 +190,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
         index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
         toeval <- paste0("tree", index, "<- fork(tree",
                          index, ", x, refine = refine, ",
-                         "iterations = iterations, minK = 2, maxK = 2, ",
+                         "nstart = nstart, iterations = iterations, minK = minK, maxK = maxK, ",
                          "minscore = minscore, probs = probs, resize = resize, ",
                          "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
                          "cores = cores, quiet = quiet, ... = ...)")
@@ -214,8 +214,8 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
       cat("Feedback suppressed, this could take a while...\n")
     }
     trees <- parallel::parLapply(cores, trees, .learn1,
-                                 x, refine = refine, iterations = iterations,
-                                 minK = minK, maxK = maxK, minscore = minscore,
+                                 x, refine = refine, nstart = nstart, iterations = iterations,
+                                 nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
                                  probs = probs, resize = resize, maxsize = maxsize,
                                  kmers = kmers, # large matrix could cause memory probs
                                  seqweights = seqweights, cores = 1,
@@ -230,7 +230,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
     for(i in seq_along(indices)){
       toeval <- paste0("tree", indices[i],
                        if(recursive) "<-.learn1(tree" else "<-fork(tree",
-                       indices[i], ", x, refine = refine, ",
+                       indices[i], ", x, refine = refine, nstart = nstart, ",
                        "iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, resize = resize, ",
                        "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
@@ -269,7 +269,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
     attr(node, "sequences") <- unlist(newseqs, use.names = FALSE)
     if(!is.null(akws)) attr(node, "Akweights") <- unlist(akws, use.names = FALSE)
     if(!is.null(scrs)) attr(node, "scores") <- unlist(scrs, use.names = FALSE)
-    attr(node, "ntotal") <- length(newseqs)
+    attr(node, "ntotal") <- length(attr(node, "sequences"))
     return(node)
   }
   if(!quiet) cat("Repatriating duplicate sequences with tree\n")

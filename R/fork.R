@@ -23,7 +23,7 @@
 #' @examples
 #'   ## TBA
 ################################################################################
-fork <- function(node, x, refine = "Viterbi", iterations = 50,
+fork <- function(node, x, refine = "Viterbi", nstart = 10, iterations = 50,
                  minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
                  resize = TRUE, maxsize = NULL, kmers = NULL,
                  seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
@@ -116,7 +116,7 @@ fork <- function(node, x, refine = "Viterbi", iterations = 50,
     nclades <- minK
     repeat{
       seqsplit <- partition(seqs, model = mod, refine = refine, K = nclades,
-                            iterations = iterations, kmers = kmers,
+                            nstart = nstart, iterations = iterations, kmers = kmers,
                             seqweights = seqweights, cores = cores, quiet = quiet,
                             ... = ...)
       if(is.null(seqsplit)){

@@ -20,6 +20,8 @@
 #' @param refine the method used to train/refine the models. Valid methods
 #'   are "Viterbi" (Viterbi training; default) and "BaumWelch" (a modified
 #'   version of the E-M algorithm).
+#' @param nstart integer. The number of random starting sets to be chosen
+#'   for initial k-means assignment of sequences to groups.
 #' @param iterations integer giving the maximum number of training-classification
 #'   iterations to be used in the splitting process (see details section).
 #'   Note that this is not necessarily the same as the number of Viterbi training
@@ -75,7 +77,7 @@
 ################################################################################
 partition <- function(x, model = NULL, K = 2,
                       allocation = "cluster", refine = "Viterbi",
-                      iterations = 50, kmers = NULL,
+                      nstart = 10, iterations = 50, kmers = NULL,
                       seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
   ### x is a DNAbin object
   # model is a starting model to be trained on each side
@@ -94,7 +96,6 @@ partition <- function(x, model = NULL, K = 2,
   }
   if(nseq == 1) return(NULL)
   #if(is.null(distances)) distances <- phylogram::mbed(x)
-
   tmp <- integer(nseq)
   if(nseq == 2){
     group1 <- c(TRUE, FALSE)
@@ -110,7 +111,7 @@ partition <- function(x, model = NULL, K = 2,
       kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4)#k-1=3
     }
     #tmp <- kmeans(freqs, centers = K)$cluster
-    tmp <- tryCatch(kmeans(kmers, centers = K)$cluster,
+    tmp <- tryCatch(kmeans(kmers, centers = K, nstart = nstart)$cluster,
                     error = function(er) sample(rep(1:K, nseq)[1:nseq]),
                     warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))
   }else{

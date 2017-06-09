@@ -23,6 +23,8 @@
 #'   or Baum Welch iterations to be used in model training, which can be set
 #'   using the argument \code{"maxiter"} (eventually passed to
 #'   \code{\link[aphid]{train}} via the dots argument "...").
+#' @param nstart integer. The number of random starting sets to be chosen
+#'   for initial k-means assignment of sequences to groups.
 #' @param minK integer. The minimum number of furications allowed at each inner
 #'   node of the tree. Defaults to 2 (all inner nodes are bifuricating).
 #' @param maxK integer. The maximum number of furications allowed at each inner
@@ -115,7 +117,7 @@
 #'   ## TBA
 ################################################################################
 learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
-                  minK = 2, maxK = 2, minscore = 0.9, probs = 0.1,
+                  nstart = 10, minK = 2, maxK = 2, minscore = 0.9, probs = 0.1,
                   resize = TRUE, maxsize = NULL, seqweights = "Gerstein",
                   recursive = TRUE, cores = 1, quiet = FALSE, ...){
   # x is a "DNAbin" object
@@ -127,7 +129,6 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   tree <- 1
   attr(tree, "clade") <- ""
   attr(tree, "leaf") <- TRUE
-
   #distances <- phylogram::mbed(x)
   #duplicates <- attr(distances, "duplicates")
   #pointers <- attr(distances, "pointers")
@@ -151,7 +152,6 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     x <- x[!duplicates] #subset.DNAbin(x, subset = !duplicates)  #exc attributes
     if(length(seqweights) == nseq) seqweights <- seqweights[!duplicates]
   }
-
   if(identical(seqweights, "Gerstein")){
     if(!quiet) cat("Deriving sequence weights\n")
     seqweights <- aphid::weight(x, "Gerstein")
@@ -194,10 +194,9 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     if(!quiet) cat("Learning tree\n")
     if(ncores == 1){
       tree <- .learn1(tree, x = x, refine = refine, iterations = iterations,
-                      minK = minK, maxK = maxK, minscore = minscore,
+                      nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
                       probs = probs, resize = resize, maxsize = maxsize,
-                      kmers = kmers,
-                      seqweights = seqweights, cores = cores,
+                      kmers = kmers, seqweights = seqweights, cores = cores,
                       quiet = quiet, ... = ...)
     }else{
       findnmembers <- function(node){
@@ -227,7 +226,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
         index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
         toeval <- paste0("tree", index, "<- fork(tree",
                          index, ", x, refine = refine, ",
-                         "iterations = iterations, minK = 2, maxK = 2, ",
+                         "iterations = iterations, nstart = nstart, minK = minK, maxK = maxK, ",
                          "minscore = minscore, probs = probs, resize = resize, ",
                          "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
                          "cores = cores, quiet = quiet, ... = ...)")
@@ -250,7 +249,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
         cat("Feedback suppressed, this could take a while...\n")
       }
       trees <- parallel::parLapply(cores, trees, .learn1,
-                                   x, refine = refine, iterations = iterations,
+                                   x, refine = refine, iterations = iterations, nstart = nstart,
                                    minK = minK, maxK = maxK, minscore = minscore,
                                    probs = probs, resize = resize, maxsize = maxsize,
                                    kmers = kmers, seqweights = seqweights,
@@ -299,7 +298,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     attr(node, "sequences") <- unlist(newseqs, use.names = FALSE)
     if(!is.null(akws)) attr(node, "Akweights") <- unlist(akws, use.names = FALSE)
     if(!is.null(scrs)) attr(node, "scores") <- unlist(scrs, use.names = FALSE)
-    attr(node, "ntotal") <- length(newseqs)
+    attr(node, "ntotal") <- length(attr(node, "sequences"))
     return(node)
   }
   if(!quiet) cat("Repatriating duplicate sequences with tree\n")
