@@ -26,12 +26,6 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
                    nstart = 10, minK = 2, maxK = 2, minscore = 0.9, probs = 0.1,
                    resize = TRUE, maxsize = NULL, recursive = TRUE, cores = 1,
                    quiet = FALSE, ...){
-  x <- attr(tree, "sequences") #full sequence set
-  nseq <- length(x)
-  tmpxattr <- attributes(x)
-  x <- x[] # temporarily remove memory hungry attributes
-  attr(tree, "sequences") <- seq_along(x) # temporary
-  ### find splittable leaves recursively
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
   findnestedleaves <- function(node){
     if(!is.list(node) & is.null(attr(node, "lock"))){
@@ -58,7 +52,17 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   }
   rm(nestedleaves)
   clades <- unlist(allnestedleaves, use.names = TRUE)
+  if(length(clades) == 0) return(tree)
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
+
+  # temporarily remove DNAbin from root node and replace with indices
+  x <- attr(tree, "sequences") #full sequence set
+  # nseq <- length(x)
+  tmpxattr <- attributes(x)
+  x <- x[] # temporarily remove memory hungry attributes
+  attr(tree, "sequences") <- seq_along(x) # temporary
+  ### find splittable leaves recursively
+
   ## following lines are for trees that have been stripped of memory-intensive elements
   hashes <- attr(tree, "hashes")
   if(is.null(hashes)) hashes <- .digest(x, simplify = TRUE)
@@ -150,66 +154,66 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   ## prev line commented to prevent k-mer stripping
   ### recursively split nodes
   if(ncores > 1 & recursive){
-    if(length(clades) < ncores){
-      lockleaves <- function(node, exceptions){
-        if(!is.list(node)){
-          if(!attr(node, "clade") %in% exceptions) attr(node, "lock") <- TRUE
-        }
-        return(node)
+    #if(length(clades) < ncores){
+    lockleaves <- function(node, exceptions){
+      if(!is.list(node)){
+        if(!attr(node, "clade") %in% exceptions) attr(node, "lock") <- TRUE
       }
-      ll1 <- function(node, exceptions){
-        node <- lockleaves(node, exceptions)
-        if(is.list(node)) node[] <- lapply(node, ll1, exceptions)
-        return(node)
-      }
-      tree <- ll1(tree, exceptions = clades)
-      findnmembers <- function(node){
-        if(!is.list(node)){
-          numberofseqs <- length(attr(node, "sequences"))
-          names(numberofseqs) <- attr(node, "clade")
-          nmembers <<- c(nmembers, numberofseqs)
-          eligible <<- c(eligible, is.null(attr(node, "lock")))
-        }
-        return(node)
-      }
-      fm1 <- function(node){
-        node <- findnmembers(node)
-        if(is.list(node)) node[] <- lapply(node, fm1)
-        return(node)
-      }
-      if(!quiet) cat("Recursively partitioning basal tree branches\n")
-      repeat{
-        nmembers <- integer(0)
-        eligible <- logical(0)
-        tmp <- fm1(tree)
-        rm(tmp)
-        nmembers <- nmembers[eligible]
-        # if(!any(eligible) | length(nmembers) >= 2 * ncores) break
-        if(!any(eligible) | all(nmembers < 200)) break
-        whichclade <- names(nmembers)[which.max(nmembers)]
-        index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
-        toeval <- paste0("tree", index, "<- fork(tree",
-                         index, ", x, refine = refine, ",
-                         "nstart = nstart, iterations = iterations, minK = minK, maxK = maxK, ",
-                         "minscore = minscore, probs = probs, resize = resize, ",
-                         "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
-                         "cores = cores, quiet = quiet, ... = ...)")
-        eval(parse(text = toeval))
-        ss <- FALSE # split success; prevents build note due to lack of visible binding
-        eval(parse(text = paste0("ss <- is.list(tree", index, ")")))
-        # prevent multiple attempts to split the same node
-        if(!ss) eval(parse(text = paste0("attr(tree", index, ", 'lock') <-TRUE")))
-      }
-      clades <- names(nmembers)
-      indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
-      rm(nmembers)
-      rm(eligible)
+      return(node)
     }
+    ll1 <- function(node, exceptions){
+      node <- lockleaves(node, exceptions)
+      if(is.list(node)) node[] <- lapply(node, ll1, exceptions)
+      return(node)
+    }
+    tree <- ll1(tree, exceptions = clades)
+    findnmembers <- function(node){
+      if(!is.list(node)){
+        numberofseqs <- length(attr(node, "sequences"))
+        names(numberofseqs) <- attr(node, "clade")
+        nmembers <<- c(nmembers, numberofseqs)
+        eligible <<- c(eligible, is.null(attr(node, "lock")))
+      }
+      return(node)
+    }
+    fm1 <- function(node){
+      node <- findnmembers(node)
+      if(is.list(node)) node[] <- lapply(node, fm1)
+      return(node)
+    }
+    if(!quiet) cat("Recursively partitioning basal tree branches\n")
+    repeat{
+      nmembers <- integer(0)
+      eligible <- logical(0)
+      tmp <- fm1(tree)
+      rm(tmp)
+      nmembers <- nmembers[eligible]
+      # if(!any(eligible) | length(nmembers) >= 2 * ncores) break
+      if(!any(eligible) | all(nmembers < 200)) break
+      whichclade <- names(nmembers)[which.max(nmembers)]
+      index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
+      toeval <- paste0("tree", index, "<- fork(tree",
+                       index, ", x, refine = refine, ",
+                       "nstart = nstart, iterations = iterations, minK = minK, maxK = maxK, ",
+                       "minscore = minscore, probs = probs, resize = resize, ",
+                       "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
+                       "cores = cores, quiet = quiet, ... = ...)")
+      eval(parse(text = toeval))
+      ss <- FALSE # split success; prevents build note due to lack of visible binding
+      eval(parse(text = paste0("ss <- is.list(tree", index, ")")))
+      # prevent multiple attempts to split the same node
+      if(!ss) eval(parse(text = paste0("attr(tree", index, ", 'lock') <-TRUE")))
+    }
+    clades <- names(nmembers)
+    indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
+    rm(nmembers)
+    rm(eligible)
+    #}
     trees <- vector(mode = "list", length = length(clades)) # = length(indices)
     for(i in seq_along(indices)){
       eval(parse(text = paste0("trees[[", i, "]] <- tree", indices[i])))
     }
-    if(!quiet) {
+    if(!quiet){
       cat("Recursively partitioning terminal tree branches\n")
       cat("Feedback suppressed, this could take a while...\n")
     }
