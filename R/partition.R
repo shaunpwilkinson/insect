@@ -111,7 +111,7 @@ partition <- function(x, model = NULL, K = 2,
       kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4)#k-1=3
     }
     #tmp <- kmeans(freqs, centers = K)$cluster
-    if(!quiet) cat("Assigning sequences to starting groups with k-means algorithm\n")
+    if(!quiet) cat("Assigning sequences to groups with k-means algorithm\n")
     tmp <- tryCatch(kmeans(kmers, centers = K, nstart = nstart)$cluster,
                     error = function(er) sample(rep(1:K, nseq)[1:nseq]),
                     warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))

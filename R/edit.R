@@ -215,7 +215,7 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
     }
     trees <- parallel::parLapply(cores, trees, .learn1,
                                  x, refine = refine, nstart = nstart, iterations = iterations,
-                                 nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
+                                 minK = minK, maxK = maxK, minscore = minscore,
                                  probs = probs, resize = resize, maxsize = maxsize,
                                  kmers = kmers, # large matrix could cause memory probs
                                  seqweights = seqweights, cores = 1,

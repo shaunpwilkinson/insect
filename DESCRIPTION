@@ -4,7 +4,7 @@ Title: Informatic sequence classification trees
 Version: 0.0.0.9000
 Authors@R: person("Shaun", "Wilkinson", email = "shaunpwilkinson@gmail.com",
     role = c("aut", "cre"))
-Maintainer: Shaun Wilkinson <shaunpwilkinson@gmail.com>
+Maintainer: Shaun P. Wilkinson <shaunpwilkinson@gmail.com>
 Description: R package 'insect' contains functions to create and use
     classification trees for DNA meta-barcoding. This enables
     users to quickly assign the taxonomic identities of large numbers
