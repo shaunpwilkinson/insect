@@ -286,7 +286,8 @@ expand <- function(tree, clades = "", refine = "Viterbi", iterations = 50,
   tree <- phylogram::ultrametricize(tree)
   if(!quiet) cat("Labelling nodes\n")
   lineages <- gsub("\\.", "", attr(x, "lineage"))
-  lineages <- paste0(lineages, "; ", attr(x, "species"))
+  #lineages <- paste0(lineages, "; ", attr(x, "species"))
+  lineages <- paste0(lineages, "; ~", attr(x, "species"), "~")
   attachlins <- function(node, lineages){
     splitfun <- function(s) strsplit(s, split = "; ")[[1]]
     linvecs <- lapply(lineages[attr(node, "sequences")], splitfun)

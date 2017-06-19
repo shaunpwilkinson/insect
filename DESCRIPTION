@@ -1,11 +1,12 @@
 Package: insect
 Type: Package
-Title: Informatic sequence classification trees
+Title: Informatic Sequence Classification Trees
 Version: 0.0.0.9000
 Authors@R: person("Shaun", "Wilkinson", email = "shaunpwilkinson@gmail.com",
     role = c("aut", "cre"))
-Maintainer: Shaun P. Wilkinson <shaunpwilkinson@gmail.com>
-Description: R package 'insect' contains functions to create and use
+Author: Shaun Wilkinson [aut, cre]
+Maintainer: Shaun Wilkinson <shaunpwilkinson@gmail.com>
+Description: The 'insect' package contains functions to create and use
     classification trees for DNA meta-barcoding. This enables
     users to quickly assign the taxonomic identities of large numbers
     of DNA barcodes or other informative sequences
@@ -20,9 +21,8 @@ Depends:
 Imports:
     ape (>= 3.0.0),
     aphid (>= 0.0.0.9000),
-    graphics,
     openssl, 
-    phylogram (>= 0.0.0.9000),
+    phylogram (>= 1.0.0),
     Rcpp (>= 0.12.9),
     stats,
     utils
@@ -32,7 +32,6 @@ Suggests:
     testthat
 Remotes:
     shaunpwilkinson/aphid,
-    shaunpwilkinson/phylogram
 LinkingTo: Rcpp
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
