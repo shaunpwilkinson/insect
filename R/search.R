@@ -28,9 +28,19 @@
 #'   to the console.
 #' @return a list of DNA sequences, either in \code{DNAbin} format or as
 #'   character vectors if \code{DNA} is set to \code{FALSE}.
-#' @details TBA
+#' @details
+#'   This function uses the Entrez e-utilities API to search and download
+#'   sequences from GenBank.
+#'   Occasionally users may encounter an unknown error that is not reproducible
+#'   and appears to be related to database records being updated in GenBank.
+#'   This can generally be remedied by re-running the function. If problems
+#'   persist please feel free to raise an issue on the package bug-reports page at
+#'   <http://github.com/shaunpwilkinson/insect/issues>.
 #' @author Shaun Wilkinson
-#' @references TBA
+#' @references
+#'   NCBI Resource Coordinators (2012) Database resources of the National
+#'   Center for Biotechnology Information. \emph{Nucleic Acids Research},
+#'    \strong{41} (Database issue): D8–D20.
 #' @seealso \code{\link{readGB}} and \code{\link[ape]{read.GenBank}} (ape)
 #'   for downloading DNA sequences from GenBank using accession numbers.
 #' @examples
@@ -149,6 +159,7 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
       # if(length(ends) != (b - a + 1) | length(starts) != (b - a + 1)){
       #   stop("Error in sequence download, check internet connection and try again\n")
       # }
+      if(length(starts) != length(ends)) stop("Unknown error occurred, please try again")
       runs <- mapply(":", starts, ends, SIMPLIFY = FALSE)
       tmp2 <- lapply(runs, function(e) tmp[e])
       for(j in seq_along(tmp2)){
@@ -227,8 +238,9 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
       cat("\n")
     }
   }
-  lengthcheck <- sapply(obj, length)
-  if(any(lengthcheck == 0)) warning("Some sequences failed to download\n")
+  nolength <- sapply(obj, length) == 0
+  noclass <- sapply(obj, class) == "NULL"
+  if(any(nolength | noclass)) warning("Some sequences failed to download\n")
   return(obj)
 }
 ################################################################################
