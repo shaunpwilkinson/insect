@@ -102,21 +102,16 @@ fork <- function(node, x, refine = "Viterbi", nstart = 10, iterations = 50,
                                          maxsize = maxsize)
         rm(alig)
         gc()
-        # mod <- aphid::train(mod, seqs, method = "Viterbi",
-        #                     seqweights = seqweights,
-        #                     cores = cores, quiet = quiet, ... = ...)
         if(!quiet) cat("New model size :", mod$size, "\n")
-        # if(refine == "BaumWelch"){
-        #   mod <- aphid::train(mod, seqs, method = "BaumWelch",
-        #                       seqweights = seqweights, ... = ...)
-        # }
       }
     }
     split_node <- FALSE
     nclades <- minK
+    allocation <- "cluster"
     repeat{
       seqsplit <- partition(seqs, model = mod, refine = refine, K = nclades,
-                            nstart = nstart, iterations = iterations, kmers = kmers,
+                            allocation = allocation, nstart = nstart,
+                            iterations = iterations, kmers = kmers,
                             seqweights = seqweights, cores = cores, quiet = quiet,
                             ... = ...)
       if(is.null(seqsplit)){
@@ -167,10 +162,19 @@ fork <- function(node, x, refine = "Viterbi", nstart = 10, iterations = 50,
         split_node <- FALSE
         break
       }else{
-        nclades <- nclades + 1
-        if(!quiet){
-          cat("Minimum performance criteria not reached\n")
-          cat("Attempting", nclades, "way split\n")
+        if(nclades == 2 & identical(allocation, "cluster")){
+          allocation <- "split"
+          if(!quiet){
+            cat("Minimum performance criteria not reached\n")
+            cat("Trying alternative initial grouping method\n")
+          }
+        }else{
+          nclades <- nclades + 1
+          allocation <- "cluster"
+          if(!quiet){
+            cat("Minimum performance criteria not reached\n")
+            cat("Attempting", nclades, "way split\n")
+          }
         }
       }
     }

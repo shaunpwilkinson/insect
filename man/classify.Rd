@@ -22,11 +22,7 @@ in which case it is the user's responsibility to close the socket
 connection at the conclusion of the operation,
 for example by running \code{parallel::stopCluster(cores)}.
 The string 'autodetect' is also accepted, in which case the maximum
-number of cores to use is one less than the total number of cores available.
-Note that in this case there
-may be a tradeoff in terms of speed depending on the number and size
-of sequences to be aligned, due to the extra time required to initialize
-the cluster.}
+number of cores to use is one less than the total number of cores available.}
 }
 \value{
 a character string giving the lineage of the input sequence

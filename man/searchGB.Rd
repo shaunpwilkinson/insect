@@ -46,7 +46,13 @@ a list of DNA sequences, either in \code{DNAbin} format or as
   may need to be opened with administrator privileges.
 }
 \details{
-TBA
+This function uses the Entrez e-utilities API to search and download
+  sequences from GenBank.
+  Occasionally users may encounter an unknown error that is not reproducible
+  and appears to be related to database records being updated in GenBank.
+  This can generally be remedied by re-running the function. If problems
+  persist please feel free to raise an issue on the package bug-reports page at
+  <http://github.com/shaunpwilkinson/insect/issues>.
 }
 \examples{
   ## Query the GenBank database for Eukaryote mitochondrial 16S sequences
@@ -58,7 +64,9 @@ TBA
   }
 }
 \references{
-TBA
+NCBI Resource Coordinators (2012) Database resources of the National
+  Center for Biotechnology Information. \emph{Nucleic Acids Research},
+   \strong{41} (Database issue): D8–D20.
 }
 \seealso{
 \code{\link{readGB}} and \code{\link[ape]{read.GenBank}} (ape)

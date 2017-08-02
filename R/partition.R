@@ -103,18 +103,34 @@ partition <- function(x, model = NULL, K = 2,
     tmp[2] <- 2
   }else if(nseq == K){
     tmp <- 1:nseq
-  }else if(identical(allocation, "cluster")){
+  }else if(identical(allocation, "cluster") | identical(allocation, "split")){
     if(!quiet) cat("Clustering sequences into", K, "groups\n")
-    #if(is.null(distances)) distances <- phylogram::mbed(x)
     if(is.null(kmers)){
       if(!quiet) cat("Counting k-mers\n")
-      kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4)#k-1=3
+      kmers <- round(phylogram::kcount(x, k = 5))
     }
-    #tmp <- kmeans(freqs, centers = K)$cluster
-    if(!quiet) cat("Assigning sequences to groups\n")
-    tmp <- tryCatch(kmeans(kmers, centers = K, nstart = nstart)$cluster,
-                    error = function(er) sample(rep(1:K, nseq)[1:nseq]),
-                    warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))
+    if(!quiet) cat("Assigning sequences to groups ")
+    if(identical(allocation, "split")){
+      infocols <- apply(kmers, 2, function(v) length(unique(v))) == 2
+      if(sum(infocols) > 100 & K == 2){
+        if(!quiet) cat("using k-mer splitting method\n")
+        hash <- function(v) paste(openssl::md5(as.raw(v == v[1])))
+        hashes <- apply(kmers[, infocols], 2, hash)
+        hfac <- factor(hashes)
+        infocol <- match(levels(hfac)[which.max(tabulate(hfac))], hashes)
+        tmp <- kmers[, infocols][, infocol]
+        tmp <- unname(tmp == tmp[1]) + 1 ## converts from logical to integer
+      }else{
+        allocation <- "cluster"
+      }
+    }
+    if(identical(allocation, "cluster")){
+      if(!quiet) cat("using k-means algorithm\n")
+      kmers <- kmers/(sapply(x, length) - 4)## k - 1 = 3
+      tmp <- tryCatch(kmeans(kmers, centers = K, nstart = nstart)$cluster,
+                      error = function(er) sample(rep(1:K, nseq)[1:nseq]),
+                      warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))
+    }
   }else{
     if(length(allocation) != nseq) stop("Invalid argument given for 'allocation'")
     tmp <- allocation
@@ -189,7 +205,8 @@ partition <- function(x, model = NULL, K = 2,
       # if(!quiet) cat("Calculating sequence weights given child model", j, "\n")
       seqweightsj <- seqweights[membership == j]
       seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
-      seqweightsj <- seqweightsj * mcn/seq_numbers[j] # scale so that weights reflect smallest clade size
+      seqweightsj <- seqweightsj * mcn/seq_numbers[j]
+      # scale so that weights reflect smallest clade size
       #seqweights <- weight(x[membership == j]) * mcn/seq_numbers[j]
       if(!quiet) cat("Training child model", j, "\n")
       # res[[pnms[j]]] <- aphid::train(res[[pnms[j]]], x[membership == j], #model
