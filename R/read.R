@@ -154,7 +154,7 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
   a <- 0
   b <- 1
   repeat{
-    x <- scan(file = path, what = "", sep = "\n", skip = a, nlines = nlines, ##################
+    x <- scan(file = path, what = "", sep = "\n", skip = a, nlines = nlines,
               quiet = TRUE, ... = ...)
     # For 747555 sequences, created 2990220 element vector at 616.6Mb. Took ~ 1 min
     if(identical(x, character(0))) break
@@ -174,9 +174,10 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
       tmp <- mapply(read1, x[seqalongx %% 3 == 2], x[seqalongx %% 3 == 0],
                     "(.*)", 0, DNA, SIMPLIFY = FALSE, USE.NAMES = FALSE)
       #names(tmp) <- x[seqalongx %% 3 == 1]
-      res[b:(b + nseq - 1)] <- tmp
-      resnames[b:(b + nseq - 1)] <- x[seqalongx %% 3 == 1]
-      b <- b + nseq
+      nseqi <- nseq
+      res[b:(b + nseqi - 1)] <- tmp
+      resnames[b:(b + nseqi - 1)] <- x[seqalongx %% 3 == 1]
+      # b <- b + nseqi
       #res <- c(res, tmp)
     }else{
       for(i in 1:nrow(sheet)){
@@ -211,7 +212,7 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
           res[b:(b + nseqi - 1)] <- tmp
           resnames[b:(b + nseqi - 1)] <- gsub(":[0123456789 ]+$",
                                               paste0(":", sheet[i, 1]), x[whichnames])
-          b <- b + nseqi
+          # b <- b + nseqi
           #res <- c(res, tmp)
           x <- x[-(c(whichnames, whichseqs, whichquals))]
         }else{
@@ -223,6 +224,7 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
     }
     if(nseq < nlines/4) break
     a <- a + nlines
+    b <- b + nseqi
   }
   if(length(res) > 0){
     res <- res[1:b]
