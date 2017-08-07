@@ -39,9 +39,6 @@
 #'   for the optimal alignment) between the forward primer and a reverse-
 #'   complemented sequence for that sequence to be retained. Only applicable
 #'   if \code{reversecheck = TRUE}.
-#' @param rm.duplicates logical indicating whether amplicon sequences that
-#'   have identical nucleotide composition to one that is already in the
-#'   dataset should be removed (TRUE) or retained (FALSE; default).
 #' @param cores integer giving the number of CPUs to parallelize the operation
 #'   over. Defaults to 1, and reverts to 1 if x is not a list.
 #'   This argument may alternatively be a 'cluster' object,
@@ -66,7 +63,7 @@
 virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
                        minfsc = 70, minrevsc = 70, minamplen = 50,
                        maxamplen = 2000, partialbind = TRUE, reversecheck = TRUE,
-                       reversethresh = 90, rm.duplicates = FALSE, cores = 1,
+                       reversethresh = 90, cores = 1,
                        quiet = FALSE){
   nseq <- length(x)
   if(nseq == 0) stop("No sequences provided\n")
@@ -214,11 +211,6 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   }
   if(para & stopclustr) parallel::stopCluster(cores)
   if(is.null(x)) return(x)
-  #### remove duplicate sequences
-  if(rm.duplicates){
-    x <- unique.DNAbin(x)
-    if(!quiet) cat("Retained", length(x), "sequences after duplicate analysis\n")
-  }
   if(!quiet) cat("Done\n")
   return(x)
 }
