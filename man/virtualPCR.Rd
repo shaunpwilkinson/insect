@@ -6,8 +6,7 @@
 \usage{
 virtualPCR(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   minfsc = 70, minrevsc = 70, minamplen = 50, maxamplen = 2000,
-  partialbind = TRUE, reversecheck = TRUE, reversethresh = 90,
-  cores = 1, quiet = FALSE)
+  partialbind = TRUE, cores = 1, quiet = FALSE)
 }
 \arguments{
 \item{x}{a list of DNA sequences in \code{DNAbin} format.}
@@ -43,17 +42,6 @@ limits.}
 
 \item{partialbind}{logical indicating whether partial primer matching is
 accepted.}
-
-\item{reversecheck}{logical indicating whether the sequences should be
-aligned to the primers in both forward and reverse directions.
-Increases running time but necessary if some of the sequences in the
-input list are suspected to  be oriented in the 3' -> 5' direction
-(as is often the case with DNA sequences in GenBank).}
-
-\item{reversethresh}{numeric, the minimum specificity (log-odds score
-for the optimal alignment) between the forward primer and a reverse-
-complemented sequence for that sequence to be retained. Only applicable
-if \code{reversecheck = TRUE}.}
 
 \item{cores}{integer giving the number of CPUs to parallelize the operation
 over. Defaults to 1, and reverts to 1 if x is not a list.
