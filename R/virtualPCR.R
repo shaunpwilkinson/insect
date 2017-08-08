@@ -30,15 +30,6 @@
 #'   limits.
 #' @param partialbind logical indicating whether partial primer matching is
 #'   accepted.
-#' @param reversecheck logical indicating whether the sequences should be
-#'   aligned to the primers in both forward and reverse directions.
-#'   Increases running time but necessary if some of the sequences in the
-#'   input list are suspected to  be oriented in the 3' -> 5' direction
-#'   (as is often the case with DNA sequences in GenBank).
-#' @param reversethresh numeric, the minimum specificity (log-odds score
-#'   for the optimal alignment) between the forward primer and a reverse-
-#'   complemented sequence for that sequence to be retained. Only applicable
-#'   if \code{reversecheck = TRUE}.
 #' @param cores integer giving the number of CPUs to parallelize the operation
 #'   over. Defaults to 1, and reverts to 1 if x is not a list.
 #'   This argument may alternatively be a 'cluster' object,
@@ -62,8 +53,7 @@
 ################################################################################
 virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
                        minfsc = 70, minrevsc = 70, minamplen = 50,
-                       maxamplen = 2000, partialbind = TRUE, reversecheck = TRUE,
-                       reversethresh = 90, cores = 1,
+                       maxamplen = 2000, partialbind = TRUE, cores = 1,
                        quiet = FALSE){
   nseq <- length(x)
   if(nseq == 0) stop("No sequences provided\n")
@@ -86,33 +76,6 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
     }else{
       para <- FALSE
       stopclustr <- FALSE
-    }
-  }
-  if(reversecheck){
-    if(!quiet) cat("Checking for reversed sequences\n")
-    #forscoresRC <- numeric(nseq)
-    revx <- ape::complement(x)
-    revcheck <- function(rs, up) aphid::Viterbi(up, rs, type = "semiglobal", odds = TRUE)$score
-    if(para){
-      forscoresRC <- parallel::parSapply(cores, revx, revcheck, up = up)
-    }else{
-      forscoresRC <- sapply(revx, revcheck, up = up)
-    }
-    # for(i in 1:nseq) {
-    #   forscoresRC[i] <- aphid::Viterbi(up, ape::complement(x[i]),
-    #                                    type = "semiglobal")$score
-    # }
-    revxTF <- forscoresRC > reversethresh
-    numreversed <- sum(revxTF)
-    if(!quiet) cat("Detected", numreversed, "reversed sequences\n")
-    if(numreversed > 0){
-      if(!quiet) cat("Reverse complementing", numreversed, "sequences\n")
-      tmpattr <- attributes(x)
-      # x[forscoresRC > minfsc] <- lapply(x[forscoresRC > minfsc], ape::complement)
-      x[revxTF] <- revx[revxTF] #ape::complement(x[forscoresRC > minfsc])
-      attributes(x) <- tmpattr
-      # test forward primer against seqs and select positive hits (eg >70)
-      if(!quiet) cat("Reverse complementing complete\n")
     }
   }
   # trim all nucleotides to left of forward primer bind site, including primer if specified
