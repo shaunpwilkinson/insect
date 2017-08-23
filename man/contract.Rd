@@ -31,7 +31,7 @@ TBA
 TBA
 }
 \seealso{
-\code{\link{expand}}, \code{\link{purge}}
+\code{\link{expand}}
 }
 \author{
 Shaun Wilkinson

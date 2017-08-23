@@ -1,26 +1,26 @@
 ################################################################################
 ################################################################################
-# Expand an existing classification tree.
-#
-# This function is used to grow an existing classification tree, typically
-#   using more relaxed settings to those used when the tree was created.
-#
-# @param tree an object of class \code{"insect"}.
-# @param clades a vector of character strings giving the binary indices
-#   matching the labels of the nodes that are to be collapsed.
-# @param recursive logical indicating whether the splitting process
-#   should continue recursively until the discrimination criteria
-#   are not met (TRUE; default), or whether a single split should
-#   take place at each of the nodes specified in \code{clades}.
-# @param ... further arguments to be passed to \code{\link{fork}}.
-# @inheritParams learn
-# @return an object of class \code{"insect"}.
-# @details TBA
-# @author Shaun Wilkinson
-# @references TBA
-# @seealso \code{\link{contract}}, \code{\link{learn}}, \code{\link{purge}}
-# @examples
-#   ## TBA
+#' Expand an existing classification tree.
+#'
+#' This function is used to grow an existing classification tree, typically
+#'   using more relaxed settings to those used when the tree was created.
+#'
+#' @param tree an object of class \code{"insect"}.
+#' @param clades a vector of character strings giving the binary indices
+#'   matching the labels of the nodes that are to be collapsed.
+#' @param recursive logical indicating whether the splitting process
+#'   should continue recursively until the discrimination criteria
+#'   are not met (TRUE; default), or whether a single split should
+#'   take place at each of the nodes specified in \code{clades}.
+#' @param ... further arguments to be passed to \code{\link{fork}}.
+#' @inheritParams learn
+#' @return an object of class \code{"insect"}.
+#' @details TBA
+#' @author Shaun Wilkinson
+#' @references TBA
+#' @seealso \code{\link{contract}}, \code{\link{learn}}
+#' @examples
+#'   ## TBA
 ################################################################################
 expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
                    nstart = 10, minK = 2, maxK = 2, minscore = 0.9, probs = 0.1,
@@ -345,7 +345,7 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
 #' @details TBA
 #' @author Shaun Wilkinson
 #' @references TBA
-#' @seealso \code{\link{expand}}, \code{\link{purge}}
+#' @seealso \code{\link{expand}}
 #' @examples
 #'   ## TBA
 ################################################################################
@@ -392,23 +392,23 @@ contract <- function(tree, clades = "", quiet = FALSE){
 }
 ################################################################################
 ################################################################################
-#' Find and collapse over-extended nodes
-#'
-#' This function tests each node of a classification tree
-#'   for over-extension by checking if all sequences belonging
-#'   to the node have identical lineage metadata. Over-extended
-#'   nodes are collapsed and the simplified tree returned.
-#'
-#' @param tree an object of class \code{"insect"}.
-#' @param quiet logical indicating whether feedback should be printed
-#'   to the console.
-#' @return an object of class \code{"insect"}.
-#' @details TBA
-#' @author Shaun Wilkinson
-#' @references TBA
-#' @seealso \code{\link{expand}}, \code{\link{contract}}
-#' @examples
-#'   ## TBA
+# Find and collapse over-extended nodes
+#
+# This function tests each node of a classification tree
+#   for over-extension by checking if all sequences belonging
+#   to the node have identical lineage metadata. Over-extended
+#   nodes are collapsed and the simplified tree returned.
+#
+# @param tree an object of class \code{"insect"}.
+# @param quiet logical indicating whether feedback should be printed
+#   to the console.
+# @return an object of class \code{"insect"}.
+# @details TBA
+# @author Shaun Wilkinson
+# @references TBA
+# @seealso \code{\link{expand}}, \code{\link{contract}}
+# @examples
+#   ## TBA
 ################################################################################
 # purge <- function(tree, quiet = FALSE){
 #   purge1 <- function(node, lineages){
