@@ -4,15 +4,19 @@
 \alias{fork}
 \title{Split nodes of a classification tree.}
 \usage{
-fork(node, x, refine = "Viterbi", nstart = 10, iterations = 50,
-  minK = 2, maxK = 2, minscore = 0.9, probs = 0.05, resize = TRUE,
-  maxsize = NULL, kmers = NULL, seqweights = "Gerstein", cores = 1,
-  quiet = FALSE, ...)
+fork(node, x, lineages, refine = "Viterbi", nstart = 10, iterations = 50,
+  minK = 2, maxK = 2, minscore = 0.9, probs = 0.05, retry = TRUE,
+  resize = TRUE, maxsize = NULL, kmers = NULL, seqweights = "Gerstein",
+  cores = 1, quiet = FALSE, ...)
 }
 \arguments{
 \item{node}{an object of class \code{"insect"}.}
 
 \item{x}{an object of class \code{"DNAbin"}.}
+
+\item{lineages}{a character vector (the same length as x) of
+semi-colon delimited strings providing the lineage metadata
+for each sequence.}
 
 \item{refine}{character string giving the iterative model refinement
 method to be used in the partitioning process. Valid options are
@@ -51,6 +55,13 @@ terminate and the function will simply return the unsplit root node.}
 \item{probs}{numeric between 0 and 1. The percentile of Akaike weights
 to test against the minimum score threshold given in \code{"minscore"}.}
 
+\item{retry}{logical indicating whether failure to split a node based on
+the criteria outlined in 'minscore' and 'probs' should prompt a second
+attempt with different initial groupings. These groupings are based on
+maximum kmer frequencies rather than k-means division, which can give
+suboptimal groupings when the cluster sizes are different (due to
+the up-weighting of larger clusters in the k-means algorithm).}
+
 \item{resize}{logical indicating whether the models should be free to
 change size during the training process or if the number of modules
 should be fixed. Defaults to TRUE. Only applicable if
@@ -63,17 +74,7 @@ in the PHMMs. If NULL (default) no maximum size is enforced.}
 initial assignment of sequences to groups via k-means clustering.
 Rows should sum to one to account for differences in sequence length.
 Defaults to NULL, in which case k-mers are automatically
-counted (using k = 4) and normalized to sequence length.}
-
-\item{seqweights}{an optional numeric vector the same length as the
-sequence list giving the weights to use when training the
-PHMMs. Alternatively its length can be the same as the total number
-of unique sequences as specified in \code{duplicates}.
-The character string "Gerstein" is also valid, which calls
-the \code{\link[aphid]{weight}} function in the
-\code{\link[aphid]{aphid}} package to derive the weights using the
-algorithm of Gerstein et al. 1994.
-If NULL, all sequences are given weights of 1.}
+counted (using k = 5) and normalized to sequence length.}
 
 \item{cores}{integer giving the number of CPUs to use
 when training the models (only applicable if

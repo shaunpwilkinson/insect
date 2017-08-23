@@ -5,8 +5,8 @@
 \title{Informatic sequence classification tree learning.}
 \usage{
 learn(x, model = NULL, refine = "Viterbi", iterations = 50, nstart = 10,
-  minK = 2, maxK = 2, minscore = 0.9, probs = 0.1, resize = TRUE,
-  maxsize = NULL, seqweights = "Gerstein", recursive = TRUE, cores = 1,
+  minK = 2, maxK = 2, minscore = 0.9, probs = 0.1, retry = TRUE,
+  resize = TRUE, maxsize = NULL, recursive = TRUE, cores = 1,
   quiet = FALSE, ...)
 }
 \arguments{
@@ -58,6 +58,13 @@ terminate and the function will simply return the unsplit root node.}
 \item{probs}{numeric between 0 and 1. The percentile of Akaike weights
 to test against the minimum score threshold given in \code{"minscore"}.}
 
+\item{retry}{logical indicating whether failure to split a node based on
+the criteria outlined in 'minscore' and 'probs' should prompt a second
+attempt with different initial groupings. These groupings are based on
+maximum kmer frequencies rather than k-means division, which can give
+suboptimal groupings when the cluster sizes are different (due to
+the up-weighting of larger clusters in the k-means algorithm).}
+
 \item{resize}{logical indicating whether the models should be free to
 change size during the training process or if the number of modules
 should be fixed. Defaults to TRUE. Only applicable if
@@ -65,16 +72,6 @@ should be fixed. Defaults to TRUE. Only applicable if
 
 \item{maxsize}{integer giving the upper bound on the number of modules
 in the PHMMs. If NULL (default) no maximum size is enforced.}
-
-\item{seqweights}{an optional numeric vector the same length as the
-sequence list giving the weights to use when training the
-PHMMs. Alternatively its length can be the same as the total number
-of unique sequences as specified in \code{duplicates}.
-The character string "Gerstein" is also valid, which calls
-the \code{\link[aphid]{weight}} function in the
-\code{\link[aphid]{aphid}} package to derive the weights using the
-algorithm of Gerstein et al. 1994.
-If NULL, all sequences are given weights of 1.}
 
 \item{recursive}{logical indicating whether the splitting process
 should continue recursively until the discrimination criteria

@@ -5,11 +5,14 @@
 #'
 #' @param node an object of class \code{"insect"}.
 #' @param x an object of class \code{"DNAbin"}.
+#' @param lineages a character vector (the same length as x) of
+#'   semi-colon delimited strings providing the lineage metadata
+#'   for each sequence.
 #' @param kmers an optional matrix of k-mer frequencies used for
 #'   initial assignment of sequences to groups via k-means clustering.
 #'   Rows should sum to one to account for differences in sequence length.
 #'   Defaults to NULL, in which case k-mers are automatically
-#'   counted (using k = 4) and normalized to sequence length.
+#'   counted (using k = 5) and normalized to sequence length.
 #' @inheritParams learn
 #' @return an object of class \code{"insect"}.
 #' @details Note that seqweights argument should have the same length as x.
@@ -23,46 +26,38 @@
 #' @examples
 #'   ## TBA
 ################################################################################
-fork <- function(node, x, refine = "Viterbi", nstart = 10, iterations = 50,
-                 minK = 2, maxK = 2, minscore = 0.9, probs = 0.05,
-                 resize = TRUE, maxsize = NULL, kmers = NULL,
-                 seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
-  if(!is.list(node) & is.null(attr(node, "lock"))){ # fork leaves only
-    seqs <- x[attr(node, "sequences")]
-    nseq <- length(seqs)
+fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
+                 iterations = 50, minK = 2, maxK = 2, minscore = 0.9,
+                 probs = 0.05, retry = TRUE, resize = TRUE, maxsize = NULL,
+                 kmers = NULL, seqweights = "Gerstein", cores = 1,
+                 quiet = FALSE, ...){
+  if(!is.list(node) & is.null(attr(node, "lock")) & is.null(attr(node, "onespp"))){
+    # fork leaves only
+    indices <- attr(node, "sequences")
+    # seqs <- x[attr(node, "sequences")]
+    #lins <- lineages[attr(node, "sequences")]
+    nseq <- length(indices)
     if(minK == 1 | nseq < minK){
-      if(!is.null(attr(node, "phmm"))) attr(node, "phmm")$alignment <- NULL
+      if(!is.null(attr(node, "model"))) attr(node, "model")$alignment <- NULL
       return(node)
     }
     if(nseq < maxK) maxK <- nseq
     if(is.null(seqweights)){
       seqweights <- rep(1, nseq)
     }else if(identical(seqweights, "Gerstein")){
-      seqweights <- aphid::weight(x[attr(node, "sequences")], method = "Gerstein")
+      seqweights <- aphid::weight(x[indices], method = "Gerstein")
     }else if(length(seqweights) == length(x)){
-      seqweights <- seqweights[attr(node, "sequences")]
-      ### scale weights to average 1
-      seqweights <- seqweights/mean(seqweights)
+      seqweights <- seqweights[indices]
+      seqweights <- seqweights/mean(seqweights) ##scale weights to average 1
     }else stop("Invalid seqweights argument")
-    if(!is.null(kmers)){
-      if(nrow(kmers) == length(x)){
-        kmers <- kmers[attr(node, "sequences"), ]
-      }else{
-        stopifnot(nrow(kmers) == length(attr(node, "sequences")))
-      }
+    if(is.null(kmers)){# generally will be NULL due to large size
+      if(!quiet) cat("\nCounting kmers\n")
+      kmers <- phylogram::kcount(x[indices], k = 5)
+    }else{
+      if(nrow(kmers) == length(x)) kmers <- kmers[indices, ]
     }
-
-    # if(is.null(kmers)){
-    #   # distances <- phylogram::mbed(x[attr(node, "sequences")])
-    #   if(!quiet) cat("Counting k-mers\n")
-    #   kmers <- phylogram::kcount(seqs, k = 5)/(sapply(seqs, length) - 4)#k-1=3
-    # # }else if(nrow(distances) == length(x)){
-    #   # distances <- distances[attr(node, "sequences"), ]
-    # }else if(nrow(kmers) == length(x)){
-    #   kmers <- kmers[attr(node, "sequences"), ]
-    # }else stop("Invalid kmers argument")
-
-    ### set up multithread
+    stopifnot(nrow(kmers) == length(indices))
+    ## set up multithread
     if(inherits(cores, "cluster") | identical(cores, 1)){
       stopclustr <- FALSE
     }else{ # create cluster object
@@ -79,24 +74,24 @@ fork <- function(node, x, refine = "Viterbi", nstart = 10, iterations = 50,
         stopclustr <- TRUE
       }
     }
-    ### Split clade
-    if(!quiet) cat("\nAttempting to split node", attr(node, "clade"), "\n")
-    if(is.null(attr(node, "phmm"))){
+
+    ## Split clade
+    if(!quiet) cat("Attempting to split node", attr(node, "clade"), "\n")
+    if(is.null(attr(node, "model"))){
       # should only happen at top level and if a PHMM is not provided
       mod <- NULL
     }else{
-      mod <- attr(node, "phmm")
-      attr(node, "phmm")$alignment <- NULL ## save on memory
+      mod <- attr(node, "model")
+      attr(node, "model")$alignment <- NULL ## save on memory
       ins <- mod$inserts
       toosparse <- if(is.null(ins)) FALSE else sum(ins)/length(ins) > 0.5
       if(resize & toosparse & !quiet) cat("Skipping resize step\n")
       if(resize & attr(node, "clade") != "" & !toosparse){
-        #don't need to retrain top level model
-        # if mod was truncated then no need to resize
+        ## don't need to retrain top level model
+        ## if mod was truncated then no need to resize
         if(!quiet) cat("Resizing parent model\n")
-        ### model is allowed to change size here
         alig <- mod$alignment
-        if(is.null(alig)) alig <- aphid::align(seqs, model = mod, cores = cores)
+        if(is.null(alig)) alig <- aphid::align(x[indices], model = mod, cores = cores)
         mod <- aphid::derivePHMM.default(alig, seqweights = seqweights,
                                          inserts = if(nseq < 1000) "map" else "threshold",
                                          maxsize = maxsize)
@@ -107,43 +102,44 @@ fork <- function(node, x, refine = "Viterbi", nstart = 10, iterations = 50,
     }
     split_node <- FALSE
     nclades <- minK
-    allocation <- "cluster"
     repeat{
-      seqsplit <- partition(seqs, model = mod, refine = refine, K = nclades,
-                            allocation = allocation, nstart = nstart,
+      seqsplit <- partition(x[indices], model = mod, refine = refine, K = nclades,
+                            allocation = "cluster", nstart = nstart,
                             iterations = iterations, kmers = kmers,
                             seqweights = seqweights, cores = cores, quiet = quiet,
                             ... = ...)
       if(is.null(seqsplit)){
         if(!quiet) cat("Sequence splitting failed, returning unsplit node\n")
         if(stopclustr) parallel::stopCluster(cores)
-        if(!is.null(attr(node, "phmm"))) attr(node, "phmm")$alignment <- NULL
+        #if(!is.null(attr(node, "model"))) attr(node, "model")$alignment <- NULL
+        ## already done in previous block
         return(node)
       }
-      if(is.null(attr(node, "phmm"))){ # should only be TRUE at top level
+      if(is.null(attr(node, "model"))){
+        # should only be TRUE at top level- and even then not usually
         if(!quiet) cat("Assigning top-level model\n")
-        attr(node, "phmm") <- seqsplit$phmm0
+        attr(node, "model") <- seqsplit$model0
       }
-      if(is.null(attr(node, "scores"))){ # should only be TRUE at top level
-        if(!quiet) cat("Calculating top-level scores\n")
-        fscore <- function(s, model) aphid::forward(model, s, odds = FALSE)$score
-        attr(node, "scores") <- if(inherits(cores, "cluster")){
-          parallel::parSapply(cores, seqs, fscore, model = seqsplit$phmm0)
-        }else{
-          sapply(seqs, fscore, model = seqsplit$phmm0)
-        }
-      }
+      # if(is.null(attr(node, "scores"))){ # should only be TRUE at top level
+      #   if(!quiet) cat("Calculating top-level scores\n")
+      #   fscore <- function(s, model) aphid::forward(model, s, odds = FALSE)$score
+      #   attr(node, "scores") <- if(inherits(cores, "cluster")){
+      #     parallel::parSapply(cores, x[indices], fscore, model = seqsplit$model0)
+      #   }else{
+      #     sapply(x[indices], fscore, model = seqsplit$model0)
+      #   }
+      # }
       membership <- seqsplit$membership
       scores <- seqsplit$scores
       total_scores <- apply(scores, 2, aphid::logsum)
       akwgts <- t(exp(t(scores) - total_scores))
       performances <- numeric(nseq)
       for(i in 1:nseq) performances[i] <- akwgts[membership[i], i]
-      if(!quiet) cat("Akaike weights:", performances, "\n")
       minperfs <- numeric(nclades)
       for(i in 1:nclades){
         minperfs[i] <- quantile(performances[membership == i], probs = probs)
         if(!quiet){
+          if(i == 1) cat("Akaike weights:", performances, "\n")
           cat("Group", i, "size =", sum(membership == i), "\n")
           cat(sum(performances[membership == i] > minscore), "of",
               sum(membership == i), "correctly predicted with Akaike weight >",
@@ -154,6 +150,61 @@ fork <- function(node, x, refine = "Viterbi", nstart = 10, iterations = 50,
           cat("Minimum Akaike weight:", min(performances[membership == i]), "\n")
         }
       }
+      if(nclades == 2 & retry & min(minperfs) < 0.999){
+        infocols <- apply(kmers, 2, function(v) length(unique(v))) == 2
+        if(sum(infocols) > 50){
+          if(!quiet) cat("Comparing result with alternative grouping method\n")
+          hash <- function(v) paste(openssl::md5(as.raw(v == v[1])))
+          hashes <- apply(kmers[, infocols], 2, hash)
+          hfac <- factor(hashes)
+          infocol <- match(levels(hfac)[which.max(tabulate(hfac))], hashes)
+          alloc2 <- kmers[, infocols][, infocol]
+          ## convert from logical to integer
+          alloc2 <- unname(alloc2 == alloc2[1]) + 1
+          if(!all(alloc2 == membership) & !all(alloc2 == seqsplit$init_membership)){
+            seqsplit2 <- partition(x[indices], model = mod, refine = refine, K = 2,
+                                   allocation = alloc2, nstart = nstart,
+                                   iterations = iterations, kmers = kmers,
+                                   seqweights = seqweights, cores = cores,
+                                   quiet = quiet, ... = ...)
+            if(!is.null(seqsplit2)){
+              membership2 <- seqsplit2$membership
+              if(!all(membership2 == membership)){
+                scores2 <- seqsplit2$scores
+                total_scores2 <- apply(scores2, 2, aphid::logsum)
+                akwgts2 <- t(exp(t(scores2) - total_scores2))
+                performances2 <- numeric(nseq)
+                for(i in 1:nseq) performances2[i] <- akwgts2[membership2[i], i]
+                minperfs2 <- numeric(nclades)
+                for(i in 1:nclades){
+                  minperfs2[i] <- quantile(performances2[membership2 == i], probs = probs)
+                  if(!quiet){
+                    if(i == 1) cat("Akaike weights:", performances2, "\n")
+                    cat("Group", i, "size =", sum(membership == i), "\n")
+                    cat(sum(performances[membership == i] > minscore), "of",
+                        sum(membership == i), "correctly predicted with Akaike weight >",
+                        minscore, "\n")
+                    cat(sum(performances[membership == i] > 0.5), "of",
+                        sum(membership == i), "correctly predicted with Akaike weight > 0.5\n")
+                    cat("Lower", probs, "quantile of Akaike weights:", minperfs[i], "\n")
+                    cat("Minimum Akaike weight:", min(performances[membership == i]), "\n")
+                  }
+                }
+                if(quantile(performances2, probs = probs) > quantile(performances, probs = probs)){
+                  if(!quiet) cat("Improvement found using alternative grouping\n")
+                  seqsplit <- seqsplit2
+                  membership <- membership2
+                  scores <- scores2
+                  total_scores <- total_scores2
+                  akwgts <- akwgts2
+                  performances <- performances2
+                  minperfs <- minperfs2
+                }else if(!quiet) cat("No improvement found using alternative grouping\n")
+              }else if(!quiet) cat("Alternative grouping method gave same clusters\n")
+            }else if(!quiet) cat("Alternative grouping gave null result\n")
+          }else if(!quiet) cat("Alternative grouping method duplicated k-means\n")
+        }else if(!quiet) cat("Insufficient informative columns for alternative grouping\n")
+      }
       if(all(minperfs > minscore)){
         split_node <- TRUE
         break
@@ -162,19 +213,10 @@ fork <- function(node, x, refine = "Viterbi", nstart = 10, iterations = 50,
         split_node <- FALSE
         break
       }else{
-        if(nclades == 2 & identical(allocation, "cluster")){
-          allocation <- "split"
-          if(!quiet){
-            cat("Minimum performance criteria not reached\n")
-            cat("Trying alternative initial grouping method\n")
-          }
-        }else{
-          nclades <- nclades + 1
-          allocation <- "cluster"
-          if(!quiet){
-            cat("Minimum performance criteria not reached\n")
-            cat("Attempting", nclades, "way split\n")
-          }
+        nclades <- nclades + 1
+        if(!quiet){
+          cat("Minimum performance criteria not reached\n")
+          cat("Attempting", nclades, "way split\n")
         }
       }
     }
@@ -189,21 +231,30 @@ fork <- function(node, x, refine = "Viterbi", nstart = 10, iterations = 50,
       node <- vector(mode = "list", length = nclades)
       attributes(node) <- tmpattr
       attr(node, "leaf") <- NULL
-      # attr(node, "Akaike") <- akwgts #(nclades x nseq matrix of Akaike weights for the new sub-models)
+      onespecies <- all(lineages[indices] == lineages[indices[1]])
       for(i in 1:nclades){
         node[[i]] <- 1
         attr(node[[i]], "height") <- attr(node, "height") - 1
         attr(node[[i]], "leaf") <- TRUE
         #attr(node[[i]], "label") <- paste0(attr(node, "label"), i)
         attr(node[[i]], "clade") <- paste0(attr(node, "clade"), i)
-        attr(node[[i]], "sequences") <- attr(node, "sequences")[membership == i]
-        attr(node[[i]], "scores") <- scores[i, membership == i]
-        attr(node[[i]], "Akweights") <- performances[membership == i]
-        attr(node[[i]], "phmm") <- seqsplit[[paste0("phmm", i)]]
+        attr(node[[i]], "sequences") <- indices[membership == i]
+        # attr(node[[i]], "scores") <- scores[i, membership == i]
+        # attr(node[[i]], "Akweights") <- performances[membership == i]
+        attr(node[[i]], "model") <- seqsplit[[paste0("model", i)]]
+        if(onespecies){
+          attr(node[[i]], "onespp") <- TRUE
+          attr(node[[i]], "lineage") <- lineages[indices[1]]
+        }else{
+          attr(node[[i]], "lineage") <- .ancestor(lineages[indices[membership == i]])
+        }
+        ## prevents unnecessary recursion, but should have at least one split
+        ## within each species
       }
-    }else{
-      attr(node, "phmm")$alignment <- NULL
-    }
+    } # else{
+    #   attr(node, "model")$alignment <- NULL
+    # }
+    attr(node, "model")$alignment <- NULL
   }
   return(node)
 }

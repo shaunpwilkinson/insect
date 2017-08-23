@@ -83,7 +83,8 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
     objnames <- character(N)
     objdef <- character(N)
     objorg <- character(N)
-    objlineage <- character(N)
+    objtax <- integer(N)
+    objlin <- character(N)
     discards <- logical(N)
   }
   counter <- 1
@@ -173,6 +174,8 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
         if(length(orglines) != 1) seqok <- FALSE
         reflines <- grep("^REFERENCE", tmp2[[j]])
         if(length(reflines) > 1) reflines <- reflines[1] else if(length(reflines) < 1) seqok <- FALSE
+        taxlines <- grep("/db_xref=\"taxon:", tmp2[[j]])
+        if(length(taxlines) != 1) seqok <- FALSE
         seqlines <- grep("^ORIGIN", tmp2[[j]])
         if(length(seqlines) == 1) seqlines <- seqlines + 1 else seqok <- FALSE
         endlines <- grep("^//", tmp2[[j]])
@@ -192,6 +195,9 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
           org <- tmp2[[j]][orglines]
           org <- gsub("  ORGANISM *", "", org)
           objorg[counter] <- org
+          tax <- tmp2[[j]][taxlines]
+          tax <- as.integer(gsub(".+taxon:([[:digit:]]+).+", "\\1", tax))
+          objtax[counter] <- tax
           linseq <- seq(orglines + 1, reflines - 1)
           for(l in linseq){
             if(!(grepl("^ {12}Eukaryota", tmp2[[j]][l]) |
@@ -210,7 +216,7 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
             lineage <- gsub("  +", " ", lineage)
             lineage <- gsub("\\(.+\\)", "", lineage)
             lineage <- gsub(" +\\.", "\\.", lineage)
-            objlineage[counter] <- lineage
+            objlin[counter] <- lineage
           }
         }else{
           discards[counter] <- TRUE
@@ -226,9 +232,13 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
     }
     obj <- obj[!discards]
     names(obj) <- objnames[!discards]
-    attr(obj, "species") <- objorg[!discards]
+    objlin <- objlin[!discards]
+    objorg <- objorg[!discards]
+    objlin <- gsub("\\.$", "", objlin)
+    # attr(obj, "species") <- objorg[!discards]
+    attr(obj, "lineage") <- paste0(objlin, "; ", objorg, ".")
     attr(obj, "definition") <- objdef[!discards]
-    attr(obj, "lineage") <- objlineage[!discards]
+    attr(obj, "taxon") <- objtax[!discards]
     if(DNA) class(obj) <- "DNAbin"
   }
   if(!quiet){
@@ -280,7 +290,8 @@ readGB <- function(accs, DNA = TRUE, prompt = FALSE,
   objnames <- character(N)
   objdef <- character(N)
   objorg <- character(N)
-  objlineage <- character(N)
+  objtax <- integer(N)
+  objlin <- character(N)
   discards <- logical(N)
   counter <- 1
   if(!quiet) {
@@ -306,13 +317,23 @@ readGB <- function(accs, DNA = TRUE, prompt = FALSE,
     runs <- mapply(":", starts, ends, SIMPLIFY = FALSE)
     tmp2 <- lapply(runs, function(e) tmp[e])
     for(j in seq_along(tmp2)){
-      acclines <- which(grepl("^ACCESSION", tmp2[[j]]))
-      deflines <- which(grepl("^DEFINITION", tmp2[[j]]))
-      orglines <- which(grepl("^  ORGANISM", tmp2[[j]]))
-      seqlines <- which(grepl("^ORIGIN", tmp2[[j]])) + 1
-      endlines <- which(grepl("^//", tmp2[[j]])) - 1
-      if(length(acclines) == 1 & length(deflines) == 1 & length(orglines) == 1 &
-         length(seqlines) == 1 & length(endlines) == 1){
+      seqok <- TRUE
+      deflines <- grep("^DEFINITION", tmp2[[j]])
+      if(length(deflines) != 1) seqok <- FALSE
+      acclines <- grep("^ACCESSION", tmp2[[j]])
+      if(length(acclines) != 1) seqok <- FALSE
+      # verlines <- acclines + 1 # can throw error if acclines is char(0)
+      orglines <- grep("^  ORGANISM", tmp2[[j]])
+      if(length(orglines) != 1) seqok <- FALSE
+      reflines <- grep("^REFERENCE", tmp2[[j]])
+      if(length(reflines) > 1) reflines <- reflines[1] else if(length(reflines) < 1) seqok <- FALSE
+      taxlines <- grep("/db_xref=\"taxon:", tmp2[[j]])
+      if(length(taxlines) != 1) seqok <- FALSE
+      seqlines <- grep("^ORIGIN", tmp2[[j]])
+      if(length(seqlines) == 1) seqlines <- seqlines + 1 else seqok <- FALSE
+      endlines <- grep("^//", tmp2[[j]])
+      if(length(endlines) == 1) endlines <- endlines - 1 else seqok <- FALSE
+      if(seqok){
         seqj <- paste0(tmp2[[j]][seqlines:endlines], collapse = "")
         seqj <- gsub("[ 0123456789]", "", seqj)
         seqj <- strsplit(seqj, split = "")[[1]]
@@ -327,16 +348,24 @@ readGB <- function(accs, DNA = TRUE, prompt = FALSE,
         org <- tmp2[[j]][orglines]
         org <- gsub("  ORGANISM *", "", org)
         objorg[counter] <- org
-        if(grepl(";", tmp2[[j]][orglines + 1])){
-          linlines_s <- orglines + 1
-          linlines_e <- linlines_s
-          while(!grepl("\\.", tmp2[[j]][linlines_e])) linlines_e <- linlines_e + 1
-          lineage <- paste0(tmp2[[j]][linlines_s:linlines_e], collapse = "")
+        tax <- tmp2[[j]][taxlines]
+        tax <- as.integer(gsub(".+taxon:([[:digit:]]+).+", "\\1", tax))
+        objtax[counter] <- tax
+        linseq <- seq(orglines + 1, reflines - 1)
+        for(l in linseq){
+          if(!(grepl("^ {12}Eukaryota", tmp2[[j]][l]) |
+               grepl("^ {12}Bacteria", tmp2[[j]][l]) |
+               grepl("^ {12}Archaea", tmp2[[j]][l]))){
+            linseq <- linseq[-1]
+          }else break
+        }
+        if(length(linseq) > 0){
+          lineage <- paste0(tmp2[[j]][linseq], collapse = "")
           lineage <- gsub("^ +", "", lineage)
           lineage <- gsub("  +", " ", lineage)
           lineage <- gsub("\\(.+\\)", "", lineage)
           lineage <- gsub(" +\\.", "\\.", lineage)
-          objlineage[counter] <- lineage
+          objlin[counter] <- lineage
         }
       }else{
         discards[counter] <- TRUE
@@ -352,10 +381,24 @@ readGB <- function(accs, DNA = TRUE, prompt = FALSE,
   }
   obj <- obj[!discards]
   names(obj) <- objnames[!discards]
-  attr(obj, "species") <- objorg[!discards]
+  objlin <- objlin[!discards]
+  objorg <- objorg[!discards]
+  objlin <- gsub("\\.$", "", objlin)
+  # attr(obj, "species") <- objorg[!discards]
+  attr(obj, "lineage") <- paste0(objlin, "; ", objorg, ".")
   attr(obj, "definition") <- objdef[!discards]
-  attr(obj, "lineage") <- objlineage[!discards]
+  attr(obj, "taxon") <- objtax[!discards]
   if(DNA) class(obj) <- "DNAbin"
+  if(!quiet){
+    if(any(discards)){
+      cat("\n", sum(discards), "sequences are invalid and were discarded:\n ")
+      for(i in which(discards)) cat(i, " ")
+      cat("\n")
+    }
+  }
+  nolength <- sapply(obj, length) == 0
+  noclass <- sapply(obj, class) == "NULL"
+  if(any(nolength | noclass)) warning("Some sequences failed to download\n")
   return(obj)
 }
 ################################################################################

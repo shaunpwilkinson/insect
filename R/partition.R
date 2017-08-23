@@ -75,10 +75,10 @@
 #' @examples
 #'   ## TBA
 ################################################################################
-partition <- function(x, model = NULL, K = 2,
-                      allocation = "cluster", refine = "Viterbi",
-                      nstart = 10, iterations = 50, kmers = NULL,
-                      seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
+partition <- function(x, model = NULL, K = 2, allocation = "cluster",
+                      refine = "Viterbi", nstart = 10, iterations = 50,
+                      kmers = NULL, seqweights = "Gerstein", cores = 1,
+                      quiet = FALSE, ...){
   ### x is a DNAbin object
   # model is a starting model to be trained on each side
   # assumes all seqs are unique
@@ -95,7 +95,6 @@ partition <- function(x, model = NULL, K = 2,
     stop("Invalid sequence weights passed to 'partition'")
   }
   if(nseq == 1) return(NULL)
-  #if(is.null(distances)) distances <- phylogram::mbed(x)
   tmp <- integer(nseq)
   if(nseq == 2){
     group1 <- c(TRUE, FALSE)
@@ -107,12 +106,12 @@ partition <- function(x, model = NULL, K = 2,
     if(!quiet) cat("Clustering sequences into", K, "groups\n")
     if(is.null(kmers)){
       if(!quiet) cat("Counting k-mers\n")
-      kmers <- round(phylogram::kcount(x, k = 5))
+      kmers <- phylogram::kcount(x, k = 5)
     }
     if(!quiet) cat("Assigning sequences to groups ")
     if(identical(allocation, "split")){
       infocols <- apply(kmers, 2, function(v) length(unique(v))) == 2
-      if(sum(infocols) > 100 & K == 2){
+      if(sum(infocols) > 30 & K == 2){
         if(!quiet) cat("using k-mer splitting method\n")
         hash <- function(v) paste(openssl::md5(as.raw(v == v[1])))
         hashes <- apply(kmers[, infocols], 2, hash)
@@ -136,9 +135,10 @@ partition <- function(x, model = NULL, K = 2,
     tmp <- allocation
   }
   res$membership <- integer(0)
+  res$init_membership <- tmp
   #res$success <- NA
   res$scores <- numeric(0)   # just so they're in the right order
-  if(!quiet) {
+  if(!quiet){
     if(length(tmp) > 50){
       cat("Initial membership: ", paste0(head(tmp, 50), collapse = ""), ".......\n")
     }else{
@@ -149,7 +149,7 @@ partition <- function(x, model = NULL, K = 2,
     cat("\n")
   }
   scores <- matrix(nrow = K, ncol = nseq)
-  pnms <- paste0("phmm", 1:K) # profile HMM names
+  pnms <- paste0("model", 1:K) # profile HMM names
   rownames(scores) <- pnms
   colnames(scores) <- names(x) ### these have been changed to S1, S2, ... ?
   ### set up multithread
@@ -189,12 +189,12 @@ partition <- function(x, model = NULL, K = 2,
                           cores = cores, quiet = quiet, inserts = "inherited",
                           alignment = TRUE, ... = ...)
   }
-  res[["phmm0"]] <- model
+  res[["model0"]] <- model
   for(j in 1:K) res[[pnms[j]]] <- model
   seq_numbers <- integer(K)
   finetune <- FALSE
   md5s <- paste(openssl::md5(as.raw(tmp)))
-  fscore <- function(s, model) aphid::forward(model, s, odds = FALSE)$score #TODO dots?
+  fscore <- function(s, model) aphid::forward(model, s, odds = FALSE)$score
   for(i in 1:iterations){
     if(!quiet) cat("Insect iteration", i, "\n")
     membership <- tmp
@@ -213,11 +213,18 @@ partition <- function(x, model = NULL, K = 2,
       #                         method = refine, seqweights = seqweightsj,
       #                         inserts = if(refine == "Viterbi") "inherited" else "map",
       #                         ... = ...)
-      res[[pnms[j]]] <- aphid::train(if(finetune) res[[pnms[j]]] else model,
-                                     x[membership == j], #model
-                                     method = refine, seqweights = seqweightsj,
-                                     inserts = "inherited", alignment = TRUE,
-                                     cores = cores, quiet = quiet, ... = ...)
+      modelj <- aphid::train(if(finetune) res[[pnms[j]]] else model,
+                             x[membership == j], #model
+                             method = refine, seqweights = seqweightsj,
+                             inserts = "inherited", alignment = TRUE,
+                             cores = cores, quiet = quiet, ... = ...)
+      modelj$weights <- NULL
+      modelj$mask <- NULL
+      modelj$map <- NULL
+      modelj$reference <- NULL
+      modelj$insertlengths <- NULL
+      modelj$name <- NULL
+      res[[pnms[j]]] <- modelj
       if(!quiet) cat("Calculating sequence probabilities given child model", j, "\n")
       scores[j, ] <- if(inherits(cores, "cluster")){
         parallel::parSapply(cores, x, fscore, model = res[[pnms[j]]])

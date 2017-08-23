@@ -4,7 +4,7 @@
 \alias{classify}
 \title{Taxonomic classification for DNA barcode sequences.}
 \usage{
-classify(x, tree, threshold = 0.999, cores = 1)
+classify(x, tree, threshold = 0.99, decay = TRUE, cores = 1)
 }
 \arguments{
 \item{x}{a \code{"DNAbin"} object, either as a vector or a list of vectors.}
@@ -14,6 +14,13 @@ classify(x, tree, threshold = 0.999, cores = 1)
 \item{threshold}{numeric value between 0 and 1 giving the minimum
 Akaike weight for the recursive classification procedure
 to continue toward the leaves of the tree.}
+
+\item{decay}{logical indicating whether the decision to terminate the
+classification process should occur based on decaying Akaike weights
+(at each node, the Akaike weight of the selected model is multiplied by
+the Akaike weight of the selected model at the parent node) or whether
+each Akaike weight should be calculated independently of that of the
+parent node. Defaults to the latter (FALSE).}
 
 \item{cores}{integer giving the number of CPUs to parallelize the operation
 over. Defaults to 1, and reverts to 1 if x is not a list.
@@ -28,9 +35,10 @@ number of cores to use is one less than the total number of cores available.}
 a character string giving the lineage of the input sequence
 }
 \description{
-\code{"classify"} probabilistically assigns a DNA barcode or other
+\code{"classify"} assigns a DNA barcode or other
   taxonomically-informative sequence to a node of a classification
-  tree using a series of nested profile hidden Markov models.
+  tree probabilistically, using a series of nested profile
+  hidden Markov models.
 }
 \details{
 TBA

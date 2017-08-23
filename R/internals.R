@@ -59,19 +59,24 @@
 }
 
 
-.learn1 <- function(tree, x, refine = "Viterbi", nstart = 10, iterations = 50, minK = 2, maxK = 2,
-                    minscore = 0.9, probs = 0.05, resize = TRUE, maxsize = NULL, kmers = NULL,
-                    seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
-  #tree is a "dendrogram" object (can be a node)
-  # x is a DNAbin object - should not contain duplicates
-  tree <- fork(tree, x = x, refine = refine, nstart = nstart, iterations = iterations, minK = minK,
-               maxK = maxK, minscore = minscore, probs = probs, resize = resize, maxsize = maxsize,
+## tree is a "dendrogram" object (can be a node)
+## x is a DNAbin object - should not contain duplicates, must have lineage attrs
+.forkr <- function(tree, x, lineages, refine = "Viterbi", nstart = 10,
+                   iterations = 50, minK = 2, maxK = 2,
+                   minscore = 0.9, probs = 0.05, retry = TRUE, resize = TRUE,
+                   maxsize = NULL, kmers = NULL,
+                   seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
+  tree <- fork(tree, x, lineages, refine = refine, nstart = nstart,
+               iterations = iterations, minK = minK,
+               maxK = maxK, minscore = minscore, probs = probs,
+               retry = retry, resize = resize, maxsize = maxsize,
                kmers = kmers, seqweights = seqweights, cores = cores,
                quiet = quiet, ... = ...)
-  if(is.list(tree)) tree[] <- lapply(tree, .learn1, x = x, refine = refine, nstart = nstart,
+  if(is.list(tree)) tree[] <- lapply(tree, .forkr, x = x, lineages = lineages,
+                                     refine = refine, nstart = nstart,
                                      iterations = iterations, minK = minK, maxK = maxK,
-                                     probs = probs, resize = resize, maxsize = maxsize,
-                                     minscore = minscore,
+                                     probs = probs, retry = retry, resize = resize,
+                                     maxsize = maxsize, minscore = minscore,
                                      kmers = kmers, seqweights = seqweights,
                                      cores = cores, quiet = quiet, ... = ...)
   return(tree)
@@ -95,14 +100,6 @@
   return(names(indices))
 }
 
-# # find the optimum number of cores to use
-# .optcores <- function(maxcores, nseq){
-#   if(maxcores == 1) return(1)
-#   navailcores <- parallel::detectCores()
-#   ocores <- if(nseq > 10000) 8 else if(nseq > 5000) 6 else if(nseq > 200) 4 else 1
-#   ncores <- min(navailcores, maxcores, ocores)
-#   return(ncores)
-# }
 
 .digest <- function(x, simplify = TRUE){
   digest1 <- function(s){
@@ -123,4 +120,18 @@
   }else{
     return(digest1(x))
   }
+}
+
+.ancestor <- function(lineages){
+  # takes and returns semicolon-delimited character string(s)
+  lineages <- gsub("\\.$", "", lineages)
+  splitfun <- function(s) strsplit(s, split = "; ")[[1]]
+  linvecs <- lapply(lineages, splitfun)
+  guide <- linvecs[[which.min(sapply(linvecs, length))]]
+  a <- 0
+  for(l in guide) if(all(sapply(linvecs, function(e) l %in% e))) a <- a + 1
+  guide <- if(a > 0) guide[1:a] else character(0)
+  lineage <- paste(guide, collapse = "; ")
+  lineage <- paste0(lineage, ".")
+  return(lineage)
 }

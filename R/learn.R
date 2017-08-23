@@ -42,21 +42,18 @@
 #'   terminate and the function will simply return the unsplit root node.
 #' @param probs numeric between 0 and 1. The percentile of Akaike weights
 #'   to test against the minimum score threshold given in \code{"minscore"}.
+#' @param retry logical indicating whether failure to split a node based on
+#'   the criteria outlined in 'minscore' and 'probs' should prompt a second
+#'   attempt with different initial groupings. These groupings are based on
+#'   maximum kmer frequencies rather than k-means division, which can give
+#'   suboptimal groupings when the cluster sizes are different (due to
+#'   the up-weighting of larger clusters in the k-means algorithm).
 #' @param resize logical indicating whether the models should be free to
 #'   change size during the training process or if the number of modules
 #'   should be fixed. Defaults to TRUE. Only applicable if
 #'   \code{refine = "Viterbi"}.
 #' @param maxsize integer giving the upper bound on the number of modules
 #'   in the PHMMs. If NULL (default) no maximum size is enforced.
-#' @param seqweights an optional numeric vector the same length as the
-#'   sequence list giving the weights to use when training the
-#'   PHMMs. Alternatively its length can be the same as the total number
-#'   of unique sequences as specified in \code{duplicates}.
-#'   The character string "Gerstein" is also valid, which calls
-#'   the \code{\link[aphid]{weight}} function in the
-#'   \code{\link[aphid]{aphid}} package to derive the weights using the
-#'   algorithm of Gerstein et al. 1994.
-#'   If NULL, all sequences are given weights of 1.
 #' @param recursive logical indicating whether the splitting process
 #'   should continue recursively until the discrimination criteria
 #'   are not met (TRUE; default), or whether a single split should
@@ -118,226 +115,281 @@
 ################################################################################
 learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                   nstart = 10, minK = 2, maxK = 2, minscore = 0.9, probs = 0.1,
-                  resize = TRUE, maxsize = NULL, seqweights = "Gerstein",
+                  retry = TRUE, resize = TRUE, maxsize = NULL,
                   recursive = TRUE, cores = 1, quiet = FALSE, ...){
   # x is a "DNAbin" object
-  tmpxattr <- attributes(x)
-  nseq <- length(x)
-  x <- x[] # removes attributes
-  if(is.null(seqweights)) seqweights <- rep(1, length(x))
-  # First initialize the tree
+  # tmpxattr <- attributes(x)
+  # nseq <- length(x)
+  # x <- x[] # removes attributes
+  # if(is.null(seqweights)) seqweights <- rep(1, length(x))
+  ## First initialize the tree as a dendrogram object
   tree <- 1
-  attr(tree, "clade") <- ""
   attr(tree, "leaf") <- TRUE
-  #distances <- phylogram::mbed(x)
-  #duplicates <- attr(distances, "duplicates")
-  #pointers <- attr(distances, "pointers")
-  #hashes <- attr(distances, "hashes")
-  if(!quiet) cat("Finding duplicates\n")
-  hashes <- .digest(x, simplify = TRUE)
-  duplicates <- duplicated(hashes) # logical length x
-  pointers <- integer(length(x))
-  dhashes <- hashes[duplicates]
-  uhashes <- hashes[!duplicates]
-  pointers[!duplicates] <- seq_along(uhashes)
-  pd <- integer(length(dhashes))
-  for(i in unique(dhashes)) pd[dhashes == i] <- match(i, uhashes)
-  pointers[duplicates] <- pd
-  #distances <- distances[!duplicates, ]
-  nuseq <- sum(!duplicates)
-  has_duplicates <- any(duplicates)
-  if(has_duplicates){
-    fullseqset <- x #excludes attributes
-    # x <- x[!duplicates]
-    x <- x[!duplicates] #subset.DNAbin(x, subset = !duplicates)  #exc attributes
-    if(length(seqweights) == nseq) seqweights <- seqweights[!duplicates]
-  }
-  if(identical(seqweights, "Gerstein")){
-    if(!quiet) cat("Deriving sequence weights\n")
-    seqweights <- aphid::weight(x, "Gerstein")
-  }
-  attr(tree, "sequences") <- seq_along(x) # tmp-eventually replaced by DNAbin
-  stopifnot(length(seqweights) == length(x))
-  ### integer vector of indices pointing to x arg
-  attr(tree, "phmm") <- model
   attr(tree, "height") <- 0
-  ### set up multithread
-  if(inherits(cores, "cluster")){
-    ncores <- length(cores)
-    stopclustr <- FALSE
-  }else if(identical(cores, 1)){
-    ncores <- 1
-    stopclustr <- FALSE
-  }else{ # create cluster object
-    navailcores <- parallel::detectCores() # relatively costly ~ 0.06s
-    if(identical(cores, "autodetect")) cores <- navailcores - 1
-    if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
-    if(cores > navailcores) stop("Number of cores is more than the number available")
-    # if(!quiet) cat("Multithreading over", cores, "cores\n")
-    if(cores == 1){
-      ncores <- 1
-      stopclustr <- FALSE
-    }else{
-      ncores <- cores
-      if(!quiet) cat("Initializing cluster with", ncores, "cores\n")
-      cores <- parallel::makeCluster(cores)
-      stopclustr <- TRUE
-    }
-  }
-  if(ncores == 1){
-    if(!quiet) cat("Counting k-mers\n")
-    ## kmers are actually frequencies not counts
-    ## could offer option to specify k here eventually but 4 is ok for now
-    kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4) #k-1=4
-  }else kmers <- NULL
-  if(recursive){
-    if(!quiet) cat("Learning tree\n")
-    if(ncores == 1){
-      tree <- .learn1(tree, x = x, refine = refine, iterations = iterations,
-                      nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
-                      probs = probs, resize = resize, maxsize = maxsize,
-                      kmers = kmers, seqweights = seqweights, cores = cores,
-                      quiet = quiet, ... = ...)
-    }else{
-      findnmembers <- function(node){
-        if(!is.list(node)){
-          numberofseqs <- length(attr(node, "sequences"))
-          names(numberofseqs) <- attr(node, "clade")
-          nmembers <<- c(nmembers, numberofseqs)
-          eligible <<- c(eligible, is.null(attr(node, "lock")))
-        }
-        return(node)
-      }
-      fm1 <- function(node){
-        node <- findnmembers(node)
-        if(is.list(node)) node[] <- lapply(node, fm1)
-        return(node)
-      }
-      if(!quiet) cat("Recursively partitioning basal tree branches\n")
-      repeat{
-        nmembers <- integer(0)
-        eligible <- logical(0)
-        tmp <- fm1(tree)
-        rm(tmp)
-        nmembers <- nmembers[eligible]
-        # if(!any(eligible) | length(nmembers) >= 2 * ncores) break
-        if(!any(eligible) | all(nmembers < 50)) break
-        whichclade <- names(nmembers)[which.max(nmembers)]
-        index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
-        toeval <- paste0("tree", index, "<- fork(tree",
-                         index, ", x, refine = refine, ",
-                         "iterations = iterations, nstart = nstart, minK = minK, maxK = maxK, ",
-                         "minscore = minscore, probs = probs, resize = resize, ",
-                         "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
-                         "cores = cores, quiet = quiet, ... = ...)")
-        eval(parse(text = toeval))
-        ss <- FALSE # split success; prevents build note due to lack of visible binding
-        eval(parse(text = paste0("ss <- is.list(tree", index, ")")))
-        # prevent multiple attempts to split the same node
-        if(!ss) eval(parse(text = paste0("attr(tree", index, ", 'lock') <-TRUE")))
-      }
-      clades <- names(nmembers)
-      indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
-      rm(nmembers)
-      rm(eligible)
-      trees <- vector(mode = "list", length = length(clades))
-      for(i in seq_along(indices)){
-        eval(parse(text = paste0("trees[[", i, "]] <- tree", indices[i])))
-      }
-      if(!quiet) {
-        cat("Recursively partitioning terminal tree branches\n")
-        cat("Feedback suppressed, this could take a while...\n")
-      }
-      trees <- parallel::parLapply(cores, trees, .learn1,
-                                   x, refine = refine, iterations = iterations, nstart = nstart,
-                                   minK = minK, maxK = maxK, minscore = minscore,
-                                   probs = probs, resize = resize, maxsize = maxsize,
-                                   kmers = kmers, seqweights = seqweights,
-                                   cores = 1, quiet = TRUE, ... = ...)
-      for(i in seq_along(trees)){
-        eval(parse(text = paste0("tree", indices[i], "<- trees[[", i, "]]")))
-        trees[[i]] <- NA
-        gc()
-      }
-    }
-  }else{
-    tree <- fork(tree, x = x, refine = refine, iterations = iterations,
-                 minK = minK, maxK = maxK, minscore = minscore,
-                 probs = probs, resize = resize, maxsize = maxsize,
-                 kmers = kmers, seqweights = seqweights, cores = cores,
-                 quiet = quiet, ... = ...)
-  }
-  if(stopclustr) parallel::stopCluster(cores)
-  ### remove kmers since can be memory hungry, prevent next operations
-  rm(kmers)
-  gc()
-  ### fix midpoints, members, heights and leaf integers
-  ### note changes here also apply to 'expand' function
-  if(!quiet) cat("Setting midpoints and members attributes\n")
-  #tree <- settreeattr(tree)
-  tree <- phylogram::remidpoint(tree)
+  attr(tree, "midpoint") <- 0
+  attr(tree, "members") <- 1
   class(tree) <- "dendrogram"
-  rm_locks <- function(node){
-    attr(node, "lock") <- NULL
-    return(node)
+  attr(tree, "clade") <- ""
+  attr(tree, "sequences") <- seq_along(x)
+  attr(tree, "lineage") <- .ancestor(attr(x, "lineage"))
+  # don't need to include species metadata above
+  if(is.null(attr(x, "weights"))){
+    if(!quiet) cat("Deriving sequence weights\n")
+    attr(x, "weights") <- aphid::weight(x, k = 5)
   }
-  tree <- dendrapply(tree, rm_locks)
-  reduplicate <- function(node, pointers){
-    seqs <- attr(node, "sequences")
-    akws <- attr(node, "Akweights")
-    scrs <- attr(node, "scores")
-    attr(node, "nunique") <- length(seqs)
-    #newseqs <- which(pointers %in% seqs)
-    newseqs <- newakws <- newscrs <- vector(mode = "list", length = length(seqs))
-    for(i in seq_along(seqs)){
-      newseqs[[i]] <- which(pointers == seqs[i])
-      if(!is.null(akws)) newakws[[i]] <- rep(akws[i], length(newseqs[[i]]))
-      if(!is.null(scrs)) newscrs[[i]] <- rep(scrs[i], length(newseqs[[i]]))
-      # newakweights[newseqs == seqs[i]] <- akweights[i]
+  if(is.null(model)){
+    if(!quiet) cat("Deriving top level model\n")
+    if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- .digest(x, simplify = TRUE)
+    if(is.null(attr(x, "duplicates"))) attr(x, "duplicates") <- duplicated(attr(x, "hashes"))
+    if(is.null(attr(x, "pointers"))){
+      pointers <- integer(length(x))
+      dhashes <- attr(x, "hashes")[attr(x, "duplicates")]
+      uhashes <- attr(x, "hashes")[!attr(x, "duplicates")]
+      pointers[!attr(x, "duplicates")] <- seq_along(uhashes)
+      pd <- integer(length(dhashes))
+      for(i in unique(dhashes)) pd[dhashes == i] <- match(i, uhashes)
+      pointers[attr(x, "duplicates")] <- pd
+      attr(x, "pointers") <- pointers
     }
-    attr(node, "sequences") <- unlist(newseqs, use.names = FALSE)
-    if(!is.null(akws)) attr(node, "Akweights") <- unlist(akws, use.names = FALSE)
-    if(!is.null(scrs)) attr(node, "scores") <- unlist(scrs, use.names = FALSE)
-    attr(node, "ntotal") <- length(attr(node, "sequences"))
-    return(node)
-  }
-  if(!quiet) cat("Repatriating duplicate sequences with tree\n")
-  tree <- dendrapply(tree, reduplicate, pointers)
-  if(has_duplicates) x <- fullseqset
-  attributes(x) <- tmpxattr
-  if(!quiet) cat("Resetting node heights\n")
-  tree <- phylogram::reposition(tree)
-  if(!quiet) cat("Making tree ultrametric\n")
-  tree <- phylogram::ultrametricize(tree)
-  if(!quiet) cat("Labelling nodes\n")
-  lineages <- gsub("\\.", "", attr(x, "lineage"))
-  lineages <- paste0(lineages, "; ~", attr(x, "species"), "~")
-  attachlins <- function(node, lineages){
-    splitfun <- function(s) strsplit(s, split = "; ")[[1]]
-    linvecs <- lapply(lineages[attr(node, "sequences")], splitfun)
-    guide <- linvecs[[which.min(sapply(linvecs, length))]]
-    counter <- 0
-    for(l in guide){
-      if(all(sapply(linvecs, function(e) l %in% e))) counter <- counter + 1
+    xu <- x[!attr(x, "duplicates")]
+    xuw <- sapply(split(attr(x, "weights"), attr(x, "pointers")), sum)
+    if(length(xu) > 1000){
+      # progressive model training to avoid excessive memory use
+      samp <- sample(seq_along(xu), size = 1000)
+      model <- aphid::derivePHMM(xu[samp], refine = refine,
+                                 seqweights = xuw[samp], maxsize = maxsize,
+                                 inserts = "inherited", alignment = FALSE,
+                                 quiet = quiet, cores = cores, maxiter = 20)
+      model <- aphid::train(model, xu, method = refine, seqweights = xuw,
+                            inserts = "inherited", alignment = FALSE,
+                            cores = cores, quiet = quiet, maxiter = 20)
+    }else{
+      model <- aphid::derivePHMM(xu, refine = refine, seqweights = xuw,
+                                 inserts = "inherited", alignment = FALSE,
+                                 quiet = quiet, cores = cores, maxiter = 20)
     }
-    guide <- if(counter > 0) guide[1:counter] else character(0)
-    lineage <- paste(guide, collapse = "; ")
-    attr(node, "lineage") <- lineage
-    attr(node, "label") <- paste0(guide[length(guide)], " (",
-                                  attr(node, "nunique"), ",",
-                                  attr(node, "ntotal"), ")")
-    return(node)
+    ## strip memory intensive elements
+    model$weights <- NULL
+    model$mask <- NULL
+    model$map <- NULL
+    model$reference <- NULL
+    model$insertlengths <- NULL
+    model$name <- NULL
   }
-  tree <- dendrapply(tree, attachlins, lineages)
-  attr(tree, "sequences") <- x # must happen after attaching lineages
-  attr(tree, "duplicates") <- duplicates # length is length(x)
-  attr(tree, "pointers") <- pointers # length is length(x)
-  #attr(tree, "kmers") <- kmers # number of rows is number of unique seqs
-  attr(tree, "weights") <- seqweights # length is number of unique seqs
-  attr(tree, "hashes") <- hashes # length is length(x)
-  #attr(tree, "indices") <- .reindex(tree)
-  if(!quiet) cat("Done\n")
-  class(tree) <- c("insect", "dendrogram")
+  attr(tree, "model") <- model
+  tree <- expand(tree, x, clades = "", refine = refine, iterations = iterations,
+                 nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
+                 probs = probs, retry = retry, resize = resize, maxsize = maxsize,
+                 recursive = recursive, cores = cores, quiet = quiet, ... = ...)
+  # #distances <- phylogram::mbed(x)
+  # #duplicates <- attr(distances, "duplicates")
+  # #pointers <- attr(distances, "pointers")
+  # #hashes <- attr(distances, "hashes")
+  # if(!quiet) cat("Finding duplicates\n")
+  # hashes <- .digest(x, simplify = TRUE)
+  # duplicates <- duplicated(hashes) # logical length x
+  # pointers <- integer(length(x))
+  # dhashes <- hashes[duplicates]
+  # uhashes <- hashes[!duplicates]
+  # pointers[!duplicates] <- seq_along(uhashes)
+  # pd <- integer(length(dhashes))
+  # for(i in unique(dhashes)) pd[dhashes == i] <- match(i, uhashes)
+  # pointers[duplicates] <- pd
+  # #distances <- distances[!duplicates, ]
+  # nuseq <- sum(!duplicates)
+  # has_duplicates <- any(duplicates)
+  # if(has_duplicates){
+  #   fullseqset <- x #excludes attributes
+  #   # x <- x[!duplicates]
+  #   x <- x[!duplicates] #subset.DNAbin(x, subset = !duplicates)  #exc attributes
+  #   if(length(seqweights) == nseq) seqweights <- seqweights[!duplicates]
+  # }
+  # if(identical(seqweights, "Gerstein")){
+  #   if(!quiet) cat("Deriving sequence weights\n")
+  #   seqweights <- aphid::weight(x, "Gerstein")
+  # }
+  # attr(tree, "sequences") <- seq_along(x) # tmp-eventually replaced by DNAbin
+  # stopifnot(length(seqweights) == length(x))
+  # ### integer vector of indices pointing to x arg
+  # attr(tree, "model") <- model
+  # attr(tree, "height") <- 0
+  # ### set up multithread
+  # if(inherits(cores, "cluster")){
+  #   ncores <- length(cores)
+  #   stopclustr <- FALSE
+  # }else if(identical(cores, 1)){
+  #   ncores <- 1
+  #   stopclustr <- FALSE
+  # }else{ # create cluster object
+  #   navailcores <- parallel::detectCores() # relatively costly ~ 0.06s
+  #   if(identical(cores, "autodetect")) cores <- navailcores - 1
+  #   if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
+  #   if(cores > navailcores) stop("Number of cores is more than the number available")
+  #   # if(!quiet) cat("Multithreading over", cores, "cores\n")
+  #   if(cores == 1){
+  #     ncores <- 1
+  #     stopclustr <- FALSE
+  #   }else{
+  #     ncores <- cores
+  #     if(!quiet) cat("Initializing cluster with", ncores, "cores\n")
+  #     cores <- parallel::makeCluster(cores)
+  #     stopclustr <- TRUE
+  #   }
+  # }
+  # if(ncores == 1){
+  #   if(!quiet) cat("Counting k-mers\n")
+  #   ## kmers are actually frequencies not counts
+  #   ## could offer option to specify k here eventually but 4 is ok for now
+  #   kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4) #k-1=4
+  # }else kmers <- NULL
+  # if(recursive){
+  #   if(!quiet) cat("Learning tree\n")
+  #   if(ncores == 1){
+  #     tree <- .learn1(tree, x = x, refine = refine, iterations = iterations,
+  #                     nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
+  #                     probs = probs, resize = resize, maxsize = maxsize,
+  #                     kmers = kmers, seqweights = seqweights, cores = cores,
+  #                     quiet = quiet, ... = ...)
+  #   }else{
+  #     findnmembers <- function(node){
+  #       if(!is.list(node)){
+  #         numberofseqs <- length(attr(node, "sequences"))
+  #         names(numberofseqs) <- attr(node, "clade")
+  #         nmembers <<- c(nmembers, numberofseqs)
+  #         eligible <<- c(eligible, is.null(attr(node, "lock")))
+  #       }
+  #       return(node)
+  #     }
+  #     fm1 <- function(node){
+  #       node <- findnmembers(node)
+  #       if(is.list(node)) node[] <- lapply(node, fm1)
+  #       return(node)
+  #     }
+  #     if(!quiet) cat("Recursively partitioning basal tree branches\n")
+  #     repeat{
+  #       nmembers <- integer(0)
+  #       eligible <- logical(0)
+  #       tmp <- fm1(tree)
+  #       rm(tmp)
+  #       nmembers <- nmembers[eligible]
+  #       # if(!any(eligible) | length(nmembers) >= 2 * ncores) break
+  #       if(!any(eligible) | all(nmembers < 50)) break
+  #       whichclade <- names(nmembers)[which.max(nmembers)]
+  #       index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
+  #       toeval <- paste0("tree", index, "<- fork(tree",
+  #                        index, ", x, refine = refine, ",
+  #                        "iterations = iterations, nstart = nstart, minK = minK, maxK = maxK, ",
+  #                        "minscore = minscore, probs = probs, resize = resize, ",
+  #                        "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
+  #                        "cores = cores, quiet = quiet, ... = ...)")
+  #       eval(parse(text = toeval))
+  #       ss <- FALSE # split success; prevents build note due to lack of visible binding
+  #       eval(parse(text = paste0("ss <- is.list(tree", index, ")")))
+  #       # prevent multiple attempts to split the same node
+  #       if(!ss) eval(parse(text = paste0("attr(tree", index, ", 'lock') <-TRUE")))
+  #     }
+  #     clades <- names(nmembers)
+  #     indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
+  #     rm(nmembers)
+  #     rm(eligible)
+  #     trees <- vector(mode = "list", length = length(clades))
+  #     for(i in seq_along(indices)){
+  #       eval(parse(text = paste0("trees[[", i, "]] <- tree", indices[i])))
+  #     }
+  #     if(!quiet) {
+  #       cat("Recursively partitioning terminal tree branches\n")
+  #       cat("Feedback suppressed, this could take a while...\n")
+  #     }
+  #     trees <- parallel::parLapply(cores, trees, .learn1,
+  #                                  x, refine = refine, iterations = iterations, nstart = nstart,
+  #                                  minK = minK, maxK = maxK, minscore = minscore,
+  #                                  probs = probs, resize = resize, maxsize = maxsize,
+  #                                  kmers = kmers, seqweights = seqweights,
+  #                                  cores = 1, quiet = TRUE, ... = ...)
+  #     for(i in seq_along(trees)){
+  #       eval(parse(text = paste0("tree", indices[i], "<- trees[[", i, "]]")))
+  #       trees[[i]] <- NA
+  #       gc()
+  #     }
+  #   }
+  # }else{
+  #   tree <- fork(tree, x = x, refine = refine, iterations = iterations,
+  #                minK = minK, maxK = maxK, minscore = minscore,
+  #                probs = probs, resize = resize, maxsize = maxsize,
+  #                kmers = kmers, seqweights = seqweights, cores = cores,
+  #                quiet = quiet, ... = ...)
+  # }
+  # if(stopclustr) parallel::stopCluster(cores)
+  # ### remove kmers since can be memory hungry, prevent next operations
+  # rm(kmers)
+  # gc()
+  # ### fix midpoints, members, heights and leaf integers
+  # ### note changes here also apply to 'expand' function
+  # if(!quiet) cat("Setting midpoints and members attributes\n")
+  # #tree <- settreeattr(tree)
+  # tree <- phylogram::remidpoint(tree)
+  # class(tree) <- "dendrogram"
+  # rm_locks <- function(node){
+  #   attr(node, "lock") <- NULL
+  #   return(node)
+  # }
+  # tree <- dendrapply(tree, rm_locks)
+  # reduplicate <- function(node, pointers){
+  #   seqs <- attr(node, "sequences")
+  #   akws <- attr(node, "Akweights")
+  #   scrs <- attr(node, "scores")
+  #   attr(node, "nunique") <- length(seqs)
+  #   #newseqs <- which(pointers %in% seqs)
+  #   newseqs <- newakws <- newscrs <- vector(mode = "list", length = length(seqs))
+  #   for(i in seq_along(seqs)){
+  #     newseqs[[i]] <- which(pointers == seqs[i])
+  #     if(!is.null(akws)) newakws[[i]] <- rep(akws[i], length(newseqs[[i]]))
+  #     if(!is.null(scrs)) newscrs[[i]] <- rep(scrs[i], length(newseqs[[i]]))
+  #     # newakweights[newseqs == seqs[i]] <- akweights[i]
+  #   }
+  #   attr(node, "sequences") <- unlist(newseqs, use.names = FALSE)
+  #   if(!is.null(akws)) attr(node, "Akweights") <- unlist(akws, use.names = FALSE)
+  #   if(!is.null(scrs)) attr(node, "scores") <- unlist(scrs, use.names = FALSE)
+  #   attr(node, "ntotal") <- length(attr(node, "sequences"))
+  #   return(node)
+  # }
+  # if(!quiet) cat("Repatriating duplicate sequences with tree\n")
+  # tree <- dendrapply(tree, reduplicate, pointers)
+  # if(has_duplicates) x <- fullseqset
+  # attributes(x) <- tmpxattr
+  # if(!quiet) cat("Resetting node heights\n")
+  # tree <- phylogram::reposition(tree)
+  # if(!quiet) cat("Making tree ultrametric\n")
+  # tree <- phylogram::ultrametricize(tree)
+  # if(!quiet) cat("Labelling nodes\n")
+  # lineages <- gsub("\\.", "", attr(x, "lineage"))
+  # lineages <- paste0(lineages, "; ~", attr(x, "species"), "~")
+  # attachlins <- function(node, lineages){
+  #   splitfun <- function(s) strsplit(s, split = "; ")[[1]]
+  #   linvecs <- lapply(lineages[attr(node, "sequences")], splitfun)
+  #   guide <- linvecs[[which.min(sapply(linvecs, length))]]
+  #   counter <- 0
+  #   for(l in guide){
+  #     if(all(sapply(linvecs, function(e) l %in% e))) counter <- counter + 1
+  #   }
+  #   guide <- if(counter > 0) guide[1:counter] else character(0)
+  #   lineage <- paste(guide, collapse = "; ")
+  #   attr(node, "lineage") <- lineage
+  #   attr(node, "label") <- paste0(guide[length(guide)], " (",
+  #                                 attr(node, "nunique"), ",",
+  #                                 attr(node, "ntotal"), ")")
+  #   return(node)
+  # }
+  # tree <- dendrapply(tree, attachlins, lineages)
+  # attr(tree, "sequences") <- x # must happen after attaching lineages
+  # attr(tree, "duplicates") <- duplicates # length is length(x)
+  # attr(tree, "pointers") <- pointers # length is length(x)
+  # #attr(tree, "kmers") <- kmers # number of rows is number of unique seqs
+  # attr(tree, "weights") <- seqweights # length is number of unique seqs
+  # attr(tree, "hashes") <- hashes # length is length(x)
+  # #attr(tree, "indices") <- .reindex(tree)
+  # if(!quiet) cat("Done\n")
+  # class(tree) <- c("insect", "dendrogram")
   return(tree)
 }
 ################################################################################

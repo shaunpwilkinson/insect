@@ -13,7 +13,7 @@
 #' @param attrs logical indicating whether the attributes of the input object
 #'   whose length match the object length (or number of rows if it is a matrix)
 #'   should be retained and subsetted along with the object.
-#'   This is useful if the input object has species, definition and/or lineage
+#'   This is useful if the input object has definition and/or lineage
 #'   metadata that need to be retained following the duplicate analysis.
 #' @param drop logical; indicates whether the input matrix (assuming one is
 #'   passed) should be reduced to a vector if subset to a single sequence.
