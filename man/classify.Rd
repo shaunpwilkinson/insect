@@ -4,7 +4,7 @@
 \alias{classify}
 \title{Taxonomic classification for DNA barcode sequences.}
 \usage{
-classify(x, tree, threshold = 0.99, decay = TRUE, cores = 1)
+classify(x, tree, threshold = 0.9, decay = TRUE, cores = 1)
 }
 \arguments{
 \item{x}{a \code{"DNAbin"} object, either as a vector or a list of vectors.}
