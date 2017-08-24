@@ -15,7 +15,7 @@
 #' @param ... further arguments to be passed to \code{\link{fork}}.
 #' @inheritParams learn
 #' @return an object of class \code{"insect"}.
-#' @details TBA
+#' @details Leaf node labels are not included in order to save on memory.
 #' @author Shaun Wilkinson
 #' @references TBA
 #' @seealso \code{\link{contract}}, \code{\link{learn}}

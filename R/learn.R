@@ -89,8 +89,7 @@
 #'   is a duplicate of. If there are no duplicates this is simply
 #'   \code{1:length(x)}.
 #'
-#' @details
-#'   TBA.
+#' @details Leaf node labels are not included in order to save on memory.
 #' @author Shaun Wilkinson
 #' @references
 #'   Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
@@ -132,7 +131,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "clade") <- ""
   attr(tree, "sequences") <- seq_along(x)
   attr(tree, "lineage") <- .ancestor(attr(x, "lineage"))
-  # don't need to include species metadata above
+  attr(tree, "minscore") <- -1E06 # nominal
   if(is.null(attr(x, "weights"))){
     if(!quiet) cat("Deriving sequence weights\n")
     attr(x, "weights") <- aphid::weight(x, k = 5)

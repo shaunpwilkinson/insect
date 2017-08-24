@@ -250,7 +250,6 @@ partition <- function(x, model = NULL, K = 2, allocation = "cluster",
       }else{
         cat("Membership: ", paste0(tmp, collapse = ""), "\n")
       }
-      #cat("Membership: ", paste0(head(tmp, 50), collapse = ""), ".......", "\n")
       cat("Group sizes ")
       for(i in 1:K) cat(i, ":", sum(tmp == i), " ")
       cat("\n")

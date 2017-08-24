@@ -118,7 +118,7 @@ This function creates classification trees using recursive
   partitioning and nested profile hidden Markov models.
 }
 \details{
-TBA.
+Leaf node labels are not included in order to save on memory.
 }
 \examples{
   ## TBA

@@ -152,8 +152,8 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
           cat(sum(performances[membership == i] > minscore), "of",
               sum(membership == i), "correctly predicted with Akaike weight >",
               minscore, "\n")
-          cat(sum(performances[membership == i] > 0.5), "of",
-              sum(membership == i), "correctly predicted with Akaike weight > 0.5\n")
+          # cat(sum(performances[membership == i] > 0.5), "of",
+          #     sum(membership == i), "correctly predicted with Akaike weight > 0.5\n")
           cat("Lower", probs, "quantile of Akaike weights:", minperfs[i], "\n")
           cat("Minimum Akaike weight:", min(performances[membership == i]), "\n")
         }
@@ -247,7 +247,8 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
         #attr(node[[i]], "label") <- paste0(attr(node, "label"), i)
         attr(node[[i]], "clade") <- paste0(attr(node, "clade"), i)
         attr(node[[i]], "sequences") <- indices[membership == i]
-        # attr(node[[i]], "scores") <- scores[i, membership == i]
+        attr(node[[i]], "minscore") <- min(scores[i, membership == i]) - 1
+        # above nominal amount just to ensure equality
         # attr(node[[i]], "Akweights") <- performances[membership == i]
         attr(node[[i]], "model") <- seqsplit[[paste0("model", i)]]
         if(onespecies){

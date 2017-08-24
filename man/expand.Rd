@@ -102,7 +102,7 @@ This function is used to grow an existing classification tree, typically
   using more relaxed settings to those used when the tree was created.
 }
 \details{
-TBA
+Leaf node labels are not included in order to save on memory.
 }
 \examples{
   ## TBA
