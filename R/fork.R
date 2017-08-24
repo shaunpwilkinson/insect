@@ -39,12 +39,14 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
                  probs = 0.05, retry = TRUE, resize = TRUE, maxsize = NULL,
                  kmers = NULL, seqweights = "Gerstein", cores = 1,
                  quiet = FALSE, ...){
-  if(!is.list(node) & is.null(attr(node, "lock")) & is.null(attr(node, "onespp"))){
+  #if(!is.list(node) & is.null(attr(node, "lock")) & is.null(attr(node, "onespp"))){
+  indices <- attr(node, "sequences")
+  nseq <- length(indices)
+  lineages <- lineages[indices]
+  if(!is.list(node) & is.null(attr(node, "lock")) & !all(lineages == lineages[1])){
     # fork leaves only
-    indices <- attr(node, "sequences")
     # seqs <- x[attr(node, "sequences")]
     #lins <- lineages[attr(node, "sequences")]
-    nseq <- length(indices)
     if(minK == 1 | nseq < minK){
       if(!is.null(attr(node, "model"))) attr(node, "model")$alignment <- NULL
       return(node)
@@ -239,7 +241,7 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
       node <- vector(mode = "list", length = nclades)
       attributes(node) <- tmpattr
       attr(node, "leaf") <- NULL
-      onespecies <- all(lineages[indices] == lineages[indices[1]])
+      # onespecies <- all(lineages[indices] == lineages[indices[1]])
       for(i in 1:nclades){
         node[[i]] <- 1
         attr(node[[i]], "height") <- attr(node, "height") - 1
@@ -251,12 +253,13 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
         # above nominal amount just to ensure equality
         # attr(node[[i]], "Akweights") <- performances[membership == i]
         attr(node[[i]], "model") <- seqsplit[[paste0("model", i)]]
-        if(onespecies){
-          attr(node[[i]], "onespp") <- TRUE
-          attr(node[[i]], "lineage") <- lineages[indices[1]]
-        }else{
-          attr(node[[i]], "lineage") <- .ancestor(lineages[indices[membership == i]])
-        }
+        # if(onespecies){
+        #   attr(node[[i]], "onespp") <- TRUE
+        #   attr(node[[i]], "lineage") <- lineages[indices[1]]
+        # }else{
+        #   attr(node[[i]], "lineage") <- .ancestor(lineages[indices[membership == i]])
+        # }
+        attr(node[[i]], "lineage") <- .ancestor(lineages[membership == i])
         ## prevents unnecessary recursion, but should have at least one split
         ## within each species
       }

@@ -124,6 +124,7 @@
 
 .ancestor <- function(lineages){
   # takes and returns semicolon-delimited character string(s)
+  if(all(lineages == lineages[1])) return(lineages[1])
   lineages <- gsub("\\.$", "", lineages)
   splitfun <- function(s) strsplit(s, split = "; ")[[1]]
   linvecs <- lapply(lineages, splitfun)
