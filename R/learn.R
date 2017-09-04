@@ -158,14 +158,14 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
       model <- aphid::derivePHMM(xu[samp], refine = refine,
                                  seqweights = xuw[samp], maxsize = maxsize,
                                  inserts = "inherited", alignment = FALSE,
-                                 quiet = quiet, cores = cores, maxiter = 20)
+                                 quiet = TRUE, cores = cores, maxiter = 20)
       model <- aphid::train(model, xu, method = refine, seqweights = xuw,
                             inserts = "inherited", alignment = FALSE,
-                            cores = cores, quiet = quiet, maxiter = 20)
+                            cores = cores, quiet = TRUE, maxiter = 20)
     }else{
       model <- aphid::derivePHMM(xu, refine = refine, seqweights = xuw,
                                  inserts = "inherited", alignment = FALSE,
-                                 quiet = quiet, cores = cores, maxiter = 20)
+                                 quiet = TRUE, cores = cores, maxiter = 20)
     }
     ## strip memory intensive elements
     model$weights <- NULL

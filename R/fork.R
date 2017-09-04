@@ -112,6 +112,7 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
     }
     split_node <- FALSE
     nclades <- minK
+    alternative <- FALSE
     repeat{
       seqsplit <- partition(x[indices], model = mod, refine = refine, K = nclades,
                             allocation = "cluster", nstart = nstart,
@@ -125,11 +126,11 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
         ## already done in previous block
         return(node)
       }
-      if(is.null(attr(node, "model"))){
-        # should only be TRUE at top level- and even then not usually
-        if(!quiet) cat("Assigning top-level model\n")
-        attr(node, "model") <- seqsplit$model0
-      }
+      # if(is.null(attr(node, "model"))){
+      #   # should only be TRUE at top level- and even then not usually
+      #   if(!quiet) cat("Assigning top-level model\n")
+      #   attr(node, "model") <- seqsplit$model0
+      # }
       # if(is.null(attr(node, "scores"))){ # should only be TRUE at top level
       #   if(!quiet) cat("Calculating top-level scores\n")
       #   fscore <- function(s, model) aphid::forward(model, s, odds = FALSE)$score
@@ -209,6 +210,7 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
                   akwgts <- akwgts2
                   performances <- performances2
                   minperfs <- minperfs2
+                  alternative <- TRUE
                 }else if(!quiet) cat("No improvement found using alternative grouping\n")
               }else if(!quiet) cat("Alternative grouping method gave same clusters\n")
             }else if(!quiet) cat("Alternative grouping gave null result\n")
@@ -241,6 +243,7 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
       node <- vector(mode = "list", length = nclades)
       attributes(node) <- tmpattr
       attr(node, "leaf") <- NULL
+      attr(node, "alternative") <- alternative
       # onespecies <- all(lineages[indices] == lineages[indices[1]])
       for(i in 1:nclades){
         node[[i]] <- 1

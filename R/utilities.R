@@ -17,13 +17,13 @@ join <- function(...){
   if(nlsts == 0) return(NULL)
   #spec <- defn <- lnge <- character(nseq)
   #res <- vector(mode = "list", length = nseq)
-  spec <- attr(dots[[1]], "species")
+  spec <- attr(dots[[1]], "taxon")
   defn <- attr(dots[[1]], "definition")
   lnge <- attr(dots[[1]], "lineage")
   res <- if(is.list(dots[[1]])) dots[[1]] else structure(list(dots[[1]]), class = "DNAbin")
   # attrs <- c("species", "definition", "lineage")
   for(i in seq_along(dots)[-1]){
-    spec <- c(spec, attr(dots[[i]], "species"))
+    spec <- c(spec, attr(dots[[i]], "taxon"))
     defn <- c(defn, attr(dots[[i]], "definition"))
     lnge <- c(lnge, attr(dots[[i]], "lineage"))
     if(!is.list(dots[[i]])) dots[[i]] <- structure(list(dots[[i]]), class = "DNAbin")
@@ -34,7 +34,7 @@ join <- function(...){
        length(lnge) == length(res))){
     warning("invalid or missing attributes in at lest one of the DNAbin objects")
   }
-  attr(res, "species") <- spec
+  attr(res, "taxon") <- spec
   attr(res, "definition") <- defn
   attr(res, "lineage") <- lnge
   attr(res, "class") <- "DNAbin"

@@ -222,9 +222,10 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
         }
       }
     }
-    if(nseq < nlines/4) break
+    ## moved if() stmt from here Sep 4 2017
     a <- a + nlines
     b <- b + nseqi
+    if(nseq < nlines/4) break
   }
   if(length(res) > 0){
     res <- res[1:b]
