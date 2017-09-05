@@ -83,7 +83,7 @@ virtualFISH <- function(x, probe, minscore = 0, minamplen = 50,
     navailcores <- parallel::detectCores()
     if(identical(cores, "autodetect")) cores <- navailcores - 1
     if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores'")
-    if(cores > navailcores) stop("Number of cores is more than available")
+    # if(cores > navailcores) stop("Number of cores is more than available")
     if(cores > 1){
       cl <- parallel::makeCluster(cores)
       x <- parallel::parLapply(cl, x, vf1, probe, minscore, minamplen, maxamplen)

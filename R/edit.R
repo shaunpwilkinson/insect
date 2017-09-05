@@ -122,7 +122,7 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
     navailcores <- parallel::detectCores()
     if(identical(cores, "autodetect")) cores <- navailcores - 1
     if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
-    if(cores > navailcores) stop("Number of cores is more than the number available")
+    # if(cores > navailcores) stop("Number of cores is more than the number available")
     # if(!quiet) cat("Multithreading over", cores, "cores\n")
     if(cores == 1){
       ncores <- 1

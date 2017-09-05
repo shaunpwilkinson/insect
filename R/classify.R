@@ -81,7 +81,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, cores = 1){
       navailcores <- parallel::detectCores()
       if(identical(cores, "autodetect")) cores <- navailcores - 1
       if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
-      if(cores > navailcores) stop("Insufficient CPUs available")
+      # if(cores > navailcores) stop("Insufficient CPUs available")
       if(cores > 1){
         cl <- parallel::makeCluster(cores)
         res <- parallel::parSapply(cl, x, classify1, tree, threshold, decay)
