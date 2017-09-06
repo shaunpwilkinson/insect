@@ -228,8 +228,8 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
     if(nseq < nlines/4) break
   }
   if(length(res) > 0){
-    res <- res[1:b]
-    names(res) <- resnames[1:b]
+    res <- res[1:(b - 1)]
+    names(res) <- resnames[1:(b - 1)]
     if(!quiet){
       if(!is.null(sheet)){
         cat("Retained", b - 1, "out of", tnseq,
@@ -237,7 +237,7 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
         cat("Distribution of retained sequences across samples:\n")
         for(i in 1:nrow(sheet)) cat("Sample", sheet[i, 1], "=", counts[i], "sequences\n")
       }else{
-        cat("Successfully imported", b, "sequences from file\n")
+        cat("Successfully imported", b - 1, "sequences from file\n")
       }
     }
   }else return(NULL)
