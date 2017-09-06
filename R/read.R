@@ -116,7 +116,8 @@
 readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
                       minqual = 30, maxambigs = 0, mincount = 2,
                       DNA = TRUE, nlines = 1E07, quiet = FALSE, ...){
-  maxlen <- as.integer(file.size(path) * 0.002)
+  if(nlines %% 4 != 0) stop("nlines must be divisible by 4")
+  maxlen <- min(1000, as.integer(file.size(path) * 0.002)) # approx output length
   res <- vector(mode = "list", length = maxlen)
   resnames <- vector(mode = "character", length = maxlen)
   tnseq <- 0 # total number of seqs
@@ -126,8 +127,6 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
     if(!grepl(pattern, s)) stop(qual)
     s <- gsub(pattern, "\\1", s)[[1]]
     s <- if(DNA) .char2dna(s) else strsplit(s, "")[[1]]
-    #p2 <- if(AL == 0) "(.*)" else paste0(".{", AL, "}(.{", length(s), "}).*")
-    #qual <- gsub(p2, "\\1", qual)[[1]]
     qual <- if(DNA) .char2qual(qual) else strsplit(qual, "")[[1]]
     if(AL > 0) qual <- qual[-(1:AL)]
     qual <- qual[1:length(s)]
@@ -144,6 +143,7 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
     if(!ncol(sheet) == 13) stop("Sample sheet is invalid, please see
                                 ?readFASTQ for instructions on correct
                                 formatting")
+    if(!quiet) cat("Sample sheet OK\n")
     facs <- sapply(sheet, is.factor)
     sheet[facs] <- lapply(sheet[facs], as.character)
     counts <- integer(nrow(sheet))
@@ -151,20 +151,16 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
     if(!quiet) cat("Reading FASTQ file\n")
     if(!quiet) cat("Matching and trimming indices and primers\n")
   }
-  a <- 0
+  # a <- 0
   b <- 1
   repeat{
-    x <- scan(file = path, what = "", sep = "\n", skip = a, nlines = nlines,
+    x <- scan(file = path, what = "", sep = "\n", skip = b - 1, nlines = nlines,
               quiet = TRUE, ... = ...)
-    # For 747555 sequences, created 2990220 element vector at 616.6Mb. Took ~ 1 min
+    # For 747555 sequences, created 2990220 element vector of 616.6Mb. Took ~ 1 min
     if(identical(x, character(0))) break
     stopifnot(length(x) %% 4 == 0)
     nseq <- length(x)/4
     tnseq <- tnseq + nseq
-    # cat("nseq =", nseq, "\n")
-    # cat("tnseq =", tnseq, "\n")
-    # cat("a =", a, "\n")
-    #if(!quiet) cat(nseq, "sequences detected\n")
     x <- x[seq_along(x) %% 4 != 3] # gets rid of +'s
     # Instrument <- gsub("@([[:alnum:]]+):.+", "\\1", x[1])
     # RunID <- gsub("@[[:alnum:]]+:([[:alnum:]]+):.+", "\\1", x[1])
@@ -174,10 +170,10 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
       tmp <- mapply(read1, x[seqalongx %% 3 == 2], x[seqalongx %% 3 == 0],
                     "(.*)", 0, DNA, SIMPLIFY = FALSE, USE.NAMES = FALSE)
       #names(tmp) <- x[seqalongx %% 3 == 1]
-      nseqi <- nseq
-      res[b:(b + nseqi - 1)] <- tmp
-      resnames[b:(b + nseqi - 1)] <- x[seqalongx %% 3 == 1]
-      # b <- b + nseqi
+      # nseqi <- nseq
+      res[b:(b + nseq - 1)] <- tmp
+      resnames[b:(b + nseq - 1)] <- x[seqalongx %% 3 == 1]
+      b <- b + nseq
       #res <- c(res, tmp)
     }else{
       for(i in 1:nrow(sheet)){
@@ -212,8 +208,7 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
           res[b:(b + nseqi - 1)] <- tmp
           resnames[b:(b + nseqi - 1)] <- gsub(":[0123456789 ]+$",
                                               paste0(":", sheet[i, 1]), x[whichnames])
-          # b <- b + nseqi
-          #res <- c(res, tmp)
+          b <- b + nseqi
           x <- x[-(c(whichnames, whichseqs, whichquals))]
         }else{
           # if(!quiet) cat("Extracted 0 sequences from",
@@ -223,11 +218,11 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
       }
     }
     ## moved if() stmt from here Sep 4 2017
-    a <- a + nlines
-    b <- b + nseqi
+    #a <- a + nlines
+    # b <- b + nseq
     if(nseq < nlines/4) break
   }
-  if(length(res) > 0){
+  if(b > 1){
     res <- res[1:(b - 1)]
     names(res) <- resnames[1:(b - 1)]
     if(!quiet){
