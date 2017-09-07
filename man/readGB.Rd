@@ -4,13 +4,10 @@
 \alias{readGB}
 \title{Read DNA sequences from GenBank.}
 \usage{
-readGB(accs, DNA = TRUE, prompt = FALSE, contact = NULL, quiet = FALSE)
+readGB(accs, prompt = FALSE, contact = NULL, quiet = FALSE)
 }
 \arguments{
 \item{accs}{character vector or GenBank accession numbers.}
-
-\item{DNA}{logical indicating whether the sequences should be returned
-as a \code{DNAbin} object.}
 
 \item{prompt}{logical indicating whether the user should be prompted with
 the total number of sequences to download before commencing.}
@@ -22,8 +19,7 @@ emil address to send on the web form.}
 to the console.}
 }
 \value{
-an object of class \code{DNAbin} if \code{DNA = TRUE}, or a
-  list of character vectors otherwise.
+a list of DNA sequences as a \code{DNAbin} object.
 }
 \description{
 This function downloads DNA sequence data from GenBank via the Entrez API.

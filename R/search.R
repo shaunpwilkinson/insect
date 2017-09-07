@@ -1,8 +1,8 @@
 #' Query GenBank and download matching sequences.
 #'
 #' \code{searchGB} searches the NCBI GenBank database using the Entrez
-#'   utilities, and downloads the matching sequences either as a
-#'   \code{"DNAbin"} object or a list of character vectors. Note
+#'   utilities, and downloads the matching sequences as a
+#'   \code{"DNAbin"} object. Note
 #'   that an internet connection is required when using this function.
 #'   In some cases depending on the user security settings the R session
 #'   may need to be opened with administrator privileges.
@@ -14,11 +14,6 @@
 #' @param onlyID logical. Should just the GenBank accession numbers be
 #'   returned (FALSE) or should the function return the entire sequences
 #'   and their metadata (TRUE; default)?
-#' @param DNA logical indicating whether the returned value should be of
-#'   class \code{DNAbin} (TRUE; defult). If \code{FALSE} a list of character
-#'   vectors is returned. \code{DNA = TRUE} is recommended for memory and speed
-#'   efficiency and compatibility with other functions in the \code{insect}
-#'   package.
 #' @param prompt logical indicating whether to check with the user before
 #'   downloading sequences.
 #' @param contact an optional character string with the users email address.
@@ -26,8 +21,7 @@
 #'   the user if the application causes unintended issues.
 #' @param quiet logical indicating whether the progress should be printed
 #'   to the console.
-#' @return a list of DNA sequences, either in \code{DNAbin} format or as
-#'   character vectors if \code{DNA} is set to \code{FALSE}.
+#' @return a list of DNA sequences as a \code{DNAbin} object.
 #' @details
 #'   This function uses the Entrez e-utilities API to search and download
 #'   sequences from GenBank.
@@ -52,10 +46,8 @@
 #'     x <- searchGB(query)
 #'   }
 ################################################################################
-searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
+searchGB <- function(query, onlyID = FALSE, prompt = TRUE,
                      contact = NULL, quiet = FALSE){
-  # input a string
-  # output a DNAbin list object or character equivalent
   query <- paste0("term=", query, "&", collapse = "")
   URL1 <- paste("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
                 "esearch.fcgi?",
@@ -184,7 +176,7 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
           seqj <- paste0(tmp2[[j]][seqlines:endlines], collapse = "")
           seqj <- gsub("[ 0123456789]", "", seqj)
           seqj <- strsplit(seqj, split = "")[[1]]
-          obj[[counter]] <- if(DNA) unclass(ape::as.DNAbin(seqj)) else seqj
+          obj[[counter]] <- unclass(ape::as.DNAbin(seqj))
           # objnames[counter] <- gsub("^ACCESSION *", "", tmp2[[j]][acclines])
           name <- gsub("^VERSION *", "", tmp2[[j]][acclines + 1])
           objnames[counter] <- gsub("\\.[0123456789]+ *", "", name)
@@ -239,7 +231,7 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
     attr(obj, "lineage") <- paste0(objlin, "; ", objorg, ".")
     attr(obj, "definition") <- objdef[!discards]
     attr(obj, "taxon") <- objtax[!discards]
-    if(DNA) class(obj) <- "DNAbin"
+    class(obj) <- "DNAbin"
   }
   if(!quiet){
     if(any(discards)){
@@ -259,16 +251,13 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
 #' This function downloads DNA sequence data from GenBank via the Entrez API.
 #'
 #' @param accs character vector or GenBank accession numbers.
-#' @param DNA logical indicating whether the sequences should be returned
-#'   as a \code{DNAbin} object.
 #' @param prompt logical indicating whether the user should be prompted with
 #'  the total number of sequences to download before commencing.
 #' @param contact character string, giving users the option to provide an
 #'   emil address to send on the web form.
 #' @param quiet logical indicating whether feedback should be printed
 #'   to the console.
-#' @return an object of class \code{DNAbin} if \code{DNA = TRUE}, or a
-#'   list of character vectors otherwise.
+#' @return a list of DNA sequences as a \code{DNAbin} object.
 #' @details TBA
 #' @author Shaun Wilkinson
 #' @references TBA
@@ -276,10 +265,7 @@ searchGB <- function(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
 #' @examples
 #'   ## TBA
 ################################################################################
-readGB <- function(accs, DNA = TRUE, prompt = FALSE,
-                   contact = NULL, quiet = FALSE){
-  # input a character vector of access IDs
-  # output a DNAbin list object or character equivalent
+readGB <- function(accs, prompt = FALSE, contact = NULL, quiet = FALSE){
   N <- length(accs)
   if(prompt){
     decision <- readline(paste(N, "sequences will be downloaded, continue? (y/n): "))
@@ -337,8 +323,7 @@ readGB <- function(accs, DNA = TRUE, prompt = FALSE,
         seqj <- paste0(tmp2[[j]][seqlines:endlines], collapse = "")
         seqj <- gsub("[ 0123456789]", "", seqj)
         seqj <- strsplit(seqj, split = "")[[1]]
-        obj[[counter]] <- if(DNA) unclass(ape::as.DNAbin(seqj)) else seqj
-        # objnames[counter] <- gsub("^ACCESSION *", "", tmp2[[j]][acclines])
+        obj[[counter]] <- unclass(ape::as.DNAbin(seqj))
         name <- gsub("^VERSION *", "", tmp2[[j]][acclines + 1])
         objnames[counter] <- gsub("\\.[0123456789]+ *", "", name)
         defn <- paste0(tmp2[[j]][deflines:(acclines - 1)], collapse = "")
@@ -388,7 +373,7 @@ readGB <- function(accs, DNA = TRUE, prompt = FALSE,
   attr(obj, "lineage") <- paste0(objlin, "; ", objorg, ".")
   attr(obj, "definition") <- objdef[!discards]
   attr(obj, "taxon") <- objtax[!discards]
-  if(DNA) class(obj) <- "DNAbin"
+  class(obj) <- "DNAbin"
   if(!quiet){
     if(any(discards)){
       cat("\n", sum(discards), "sequences are invalid and were discarded:\n ")
@@ -400,5 +385,75 @@ readGB <- function(accs, DNA = TRUE, prompt = FALSE,
   noclass <- sapply(obj, class) == "NULL"
   if(any(nolength | noclass)) warning("Some sequences failed to download\n")
   return(obj)
+}
+################################################################################
+#' Query the BOLD database and download matching sequences.
+#'
+#' This function searches the barcode of life (BOLD) database using the public
+#'   API, and downloads the matching sequences as a \code{"DNAbin"} object.
+#'   Note that an internet connection is required when using this function.
+#'   In some cases depending on the user security settings the R session
+#'   may need to be opened with administrator privileges.
+#' @param taxon a recognized scientific taxon name.
+#' @param markers character string or vector giving the genetic marker(s)
+#'   to limit the result to. Can be any or all of: "COI-5P", "COI-3P", "28S",
+#'   "16S", "COII", "CYTB", "atp6", "COXIII", "18S", "ITS", "ITS2", "ITS1", "5.8S".
+#' @return a list of DNA sequences as a \code{DNAbin} object.
+#' @details
+#'   This function calls the BOLD API
+#'   (\url{http://www.boldsystems.org/index.php/resources/api?type=webservices})
+#'   to search and download DNA barcode sequences from the BOLD database
+#'   (Ratnasingham & Hebert 2007).
+#' @author Shaun Wilkinson
+#' @references
+#'   Ratnasingham S & Hebert PDN (2007) BOLD: the barcode of life data
+#'   system (www.barcodinglife.org). \emph{Molecular Ecology Notes},
+#'   \strong{7}, 355–364.
+#' @seealso \code{\link{searchGB}} for downloading DNA sequences from GenBank.
+#' @examples
+#'   ## Query the BOLD database for Saccharomycetes ITS2 sequences
+#'   \dontrun{
+#'     x <- searchBOLD("Saccharomycetes", markers = "ITS2")
+#'   }
+################################################################################
+searchBOLD <- function(taxon, markers = c("COI-5P", "COI-3P", "28S", "16S",
+                                          "COII", "CYTB", "atp6", "COXIII",
+                                          "18S", "ITS", "ITS2", "ITS1", "5.8S")){
+  bq <- "http://v3.boldsystems.org/index.php/API_Public/combined?taxon="
+  eq <- "&format=tsv"
+  URL <- paste0(bq, taxon, eq)
+  X <- scan(file = URL, what = "", quote = "", sep = "\t", quiet = TRUE)
+  ncols <- grep("marker_codes", X)[1]
+  if(is.na(ncols)) stop("Error 1")
+  if(length(X) %% ncols != 0) stop("Error 2")
+  Xm <- matrix(X, ncol = ncols, byrow = TRUE)
+  colnames(Xm) <- Xm[1, ]
+  Xm <- Xm[-1, ]
+  if(nrow(Xm) == 0) return(NULL)
+  spc <- match("species_name", colnames(Xm))
+  Xm <- Xm[Xm[, spc] != " ",]
+  if(nrow(Xm) == 0) return(NULL)
+  gbc <- match("genbank_accession", colnames(Xm))
+  Xm <- Xm[Xm[, gbc] == " ",]
+  if(nrow(Xm) == 0) return(NULL)
+  mac <- match("markercode", colnames(Xm))
+  Xm <- Xm[Xm[, mac] %in% markers,]
+  if(nrow(Xm) == 0) return(NULL)
+  dnac <- match("nucleotides", colnames(Xm))
+  seqs <- gsub("-", "", Xm[, dnac])
+  seqs <- strsplit(seqs, split = "")
+  out <- ape::as.DNAbin(seqs)
+  rec <- match("recordID", colnames(Xm))
+  recs <- Xm[, rec]
+  names(out) <- paste0("BOLD", recs)
+  lins <- paste(Xm[, match("phylum_name", colnames(Xm))],
+                Xm[, match("class_name", colnames(Xm))],
+                Xm[, match("order_name", colnames(Xm))],
+                Xm[, match("family_name", colnames(Xm))],
+                Xm[, match("genus_name", colnames(Xm))],
+                Xm[, match("species_name", colnames(Xm))],
+                sep = "; ")
+  attr(out, "lineage") <- paste0(lins, ".")
+  return(out)
 }
 ################################################################################

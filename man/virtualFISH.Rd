@@ -4,26 +4,45 @@
 \alias{virtualFISH}
 \title{Virtual \emph{in situ} hybridization.}
 \usage{
-virtualFISH(x, probe, minscore = 0, minamplen = 50, maxamplen = 2000,
+virtualFISH(x, probe, minscore = 100, minamplen = 50, maxamplen = 500,
+  up = NULL, down = NULL, rcdown = FALSE, minfsc = 60, minrsc = 60,
   cores = 1, quiet = FALSE)
 }
 \arguments{
 \item{x}{a list of DNA sequences in \code{DNAbin} format.}
 
 \item{probe}{a DNA sequence ("DNAbin" object) or profile hidden
-Markov model ("PHMM" object) to use as the probe.}
+Markov model ("PHMM" object) to use as the virtual hybridization probe.}
 
 \item{minscore}{numeric; the minimum specificity (log-odds score
 for the optimal alignment) between the query sequence and the probe
-for the former to be retained.}
+for the former to be retained in the output object.}
 
 \item{minamplen, maxamplen}{integers giving the minimum and maximum
 acceptable amplicon lengths. Sequences are discarded if the number
 of base pairs between the primer-binding sites falls outside of these
 limits.}
 
+\item{up, down}{optional objects of class \code{DNAbin} or \code{PHMM}
+giving the virtual forward and reverse primer sequences with which
+to query the sequence list following virtual probe hybridization.}
+
+\item{rcdown}{logical indicating whether the reverse primer should be
+reverse-complemented prior to aligning with the input sequences. Set
+to TRUE only if \code{down} is not NULL, is of class \code{DNAbin}, and
+is the reverse complement of the target sequence (e.g. the sequence of
+a reverse primer as would be ordered from an oligo supplier).}
+
+\item{minfsc}{numeric, giving the minimum specificity(log-odds score
+for the optimal alignment) between the forward primer and a sequence
+for that sequence to be retained.}
+
+\item{minrsc}{numeric, the minimum specificity (log-odds score for
+the optimal alignment) between the reverse primer (if provided) and
+a sequence for that sequence to be retained.}
+
 \item{cores}{integer giving the number of CPUs to parallelize the operation
-over. Defaults to 1, and reverts to 1 if x is not a list.
+over. Defaults to 1, and reverts to 1 if \code{x} is not a list.
 This argument may alternatively be a 'cluster' object,
 in which case it is the user's responsibility to close the socket
 connection at the conclusion of the operation,

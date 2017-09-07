@@ -4,8 +4,8 @@
 \alias{searchGB}
 \title{Query GenBank and download matching sequences.}
 \usage{
-searchGB(query, onlyID = FALSE, DNA = TRUE, prompt = TRUE,
-  contact = NULL, quiet = FALSE)
+searchGB(query, onlyID = FALSE, prompt = TRUE, contact = NULL,
+  quiet = FALSE)
 }
 \arguments{
 \item{query}{an Entrez query provided as a character string. For help
@@ -16,12 +16,6 @@ and \url{https://www.ncbi.nlm.nih.gov/books/NBK49540/}.}
 \item{onlyID}{logical. Should just the GenBank accession numbers be
 returned (FALSE) or should the function return the entire sequences
 and their metadata (TRUE; default)?}
-
-\item{DNA}{logical indicating whether the returned value should be of
-class \code{DNAbin} (TRUE; defult). If \code{FALSE} a list of character
-vectors is returned. \code{DNA = TRUE} is recommended for memory and speed
-efficiency and compatibility with other functions in the \code{insect}
-package.}
 
 \item{prompt}{logical indicating whether to check with the user before
 downloading sequences.}
@@ -34,13 +28,12 @@ the user if the application causes unintended issues.}
 to the console.}
 }
 \value{
-a list of DNA sequences, either in \code{DNAbin} format or as
-  character vectors if \code{DNA} is set to \code{FALSE}.
+a list of DNA sequences as a \code{DNAbin} object.
 }
 \description{
 \code{searchGB} searches the NCBI GenBank database using the Entrez
-  utilities, and downloads the matching sequences either as a
-  \code{"DNAbin"} object or a list of character vectors. Note
+  utilities, and downloads the matching sequences as a
+  \code{"DNAbin"} object. Note
   that an internet connection is required when using this function.
   In some cases depending on the user security settings the R session
   may need to be opened with administrator privileges.
