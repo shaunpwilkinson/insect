@@ -4,11 +4,14 @@
 \alias{searchBOLD}
 \title{Query the BOLD database and download matching sequences.}
 \usage{
-searchBOLD(taxon, markers = c("COI-5P", "COI-3P", "28S", "16S", "COII",
-  "CYTB", "atp6", "COXIII", "18S", "ITS", "ITS2", "ITS1", "5.8S"))
+searchBOLD(taxon, GB = TRUE, markers = c("COI-5P", "COI-3P", "28S", "16S",
+  "COII", "CYTB", "atp6", "COXIII", "18S", "ITS", "ITS2", "ITS1", "5.8S"))
 }
 \arguments{
 \item{taxon}{a recognized scientific taxon name.}
+
+\item{GB}{logical indicating whether sequences also present in GenBank should
+be returned.}
 
 \item{markers}{character string or vector giving the genetic marker(s)
 to limit the result to. Can be any or all of: "COI-5P", "COI-3P", "28S",
