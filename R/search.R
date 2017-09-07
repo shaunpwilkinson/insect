@@ -395,6 +395,8 @@ readGB <- function(accs, prompt = FALSE, contact = NULL, quiet = FALSE){
 #'   In some cases depending on the user security settings the R session
 #'   may need to be opened with administrator privileges.
 #' @param taxon a recognized scientific taxon name.
+#' @param GB logical indicating whether sequences also present in GenBank should
+#'   be returned.
 #' @param markers character string or vector giving the genetic marker(s)
 #'   to limit the result to. Can be any or all of: "COI-5P", "COI-3P", "28S",
 #'   "16S", "COII", "CYTB", "atp6", "COXIII", "18S", "ITS", "ITS2", "ITS1", "5.8S".
@@ -416,9 +418,10 @@ readGB <- function(accs, prompt = FALSE, contact = NULL, quiet = FALSE){
 #'     x <- searchBOLD("Saccharomycetes", markers = "ITS2")
 #'   }
 ################################################################################
-searchBOLD <- function(taxon, markers = c("COI-5P", "COI-3P", "28S", "16S",
-                                          "COII", "CYTB", "atp6", "COXIII",
-                                          "18S", "ITS", "ITS2", "ITS1", "5.8S")){
+searchBOLD <- function(taxon, GB = TRUE, markers = c("COI-5P", "COI-3P", "28S",
+                                                     "16S", "COII", "CYTB", "atp6",
+                                                     "COXIII", "18S", "ITS",
+                                                     "ITS2", "ITS1", "5.8S")){
   bq <- "http://v3.boldsystems.org/index.php/API_Public/combined?taxon="
   eq <- "&format=tsv"
   URL <- paste0(bq, taxon, eq)
@@ -433,9 +436,11 @@ searchBOLD <- function(taxon, markers = c("COI-5P", "COI-3P", "28S", "16S",
   spc <- match("species_name", colnames(Xm))
   Xm <- Xm[Xm[, spc] != " ",]
   if(nrow(Xm) == 0) return(NULL)
-  gbc <- match("genbank_accession", colnames(Xm))
-  Xm <- Xm[Xm[, gbc] == " ",]
-  if(nrow(Xm) == 0) return(NULL)
+  if(!GB){
+    gbc <- match("genbank_accession", colnames(Xm))
+    Xm <- Xm[Xm[, gbc] == " ",]
+    if(nrow(Xm) == 0) return(NULL)
+  }
   mac <- match("markercode", colnames(Xm))
   Xm <- Xm[Xm[, mac] %in% markers,]
   if(nrow(Xm) == 0) return(NULL)
