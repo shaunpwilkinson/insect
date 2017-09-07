@@ -396,7 +396,7 @@ readGB <- function(accs, prompt = FALSE, contact = NULL, quiet = FALSE){
 #'   may need to be opened with administrator privileges.
 #' @param taxon a recognized scientific taxon name.
 #' @param GB logical indicating whether sequences also present in GenBank should
-#'   be returned.
+#'   be included in the output object.
 #' @param markers character string or vector giving the genetic marker(s)
 #'   to limit the result to. Can be any or all of: "COI-5P", "COI-3P", "28S",
 #'   "16S", "COII", "CYTB", "atp6", "COXIII", "18S", "ITS", "ITS2", "ITS1", "5.8S".
@@ -418,46 +418,44 @@ readGB <- function(accs, prompt = FALSE, contact = NULL, quiet = FALSE){
 #'     x <- searchBOLD("Saccharomycetes", markers = "ITS2")
 #'   }
 ################################################################################
-searchBOLD <- function(taxon, GB = TRUE, markers = c("COI-5P", "COI-3P", "28S",
-                                                     "16S", "COII", "CYTB", "atp6",
-                                                     "COXIII", "18S", "ITS",
-                                                     "ITS2", "ITS1", "5.8S")){
-  bq <- "http://v3.boldsystems.org/index.php/API_Public/combined?taxon="
-  eq <- "&format=tsv"
-  URL <- paste0(bq, taxon, eq)
-  X <- scan(file = URL, what = "", quote = "", sep = "\t", quiet = TRUE)
-  ncols <- grep("marker_codes", X)[1]
-  if(is.na(ncols)) stop("Error 1")
-  if(length(X) %% ncols != 0) stop("Error 2")
-  Xm <- matrix(X, ncol = ncols, byrow = TRUE)
-  colnames(Xm) <- Xm[1, ]
-  Xm <- Xm[-1, ]
-  if(nrow(Xm) == 0) return(NULL)
-  spc <- match("species_name", colnames(Xm))
-  Xm <- Xm[Xm[, spc] != " ",]
-  if(nrow(Xm) == 0) return(NULL)
-  if(!GB){
-    gbc <- match("genbank_accession", colnames(Xm))
-    Xm <- Xm[Xm[, gbc] == " ",]
-    if(nrow(Xm) == 0) return(NULL)
+searchBOLD <- function(taxon, GB = TRUE, markers = NULL){
+  if(is.null(markers)){
+    markers <- c("COI-5P", "COI-3P", "28S", "16S", "COII", "CYTB", "atp6",
+                "COXIII", "18S", "ITS", "ITS2", "ITS1", "5.8S")
   }
-  mac <- match("markercode", colnames(Xm))
-  Xm <- Xm[Xm[, mac] %in% markers,]
+  mk <- paste0(markers, collapse = "|")
+  bq <- "http://boldsystems.org/index.php/API_Public/combined?taxon="
+  eq <- "&format=tsv"
+  URL <- paste0(bq, taxon, "&marker=", mk, eq)
+  # X <- scan(file = URL, what = "", quote = "", sep = "\t", quiet = TRUE)
+  X <- httr::GET(URL)
+  X <- paste0(rawToChar(X$content, multiple = TRUE), collapse = "")
+  Xm <- utils::read.delim(text = X, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  # ncols <- grep("marker_codes", X)[1]
+  # if(is.na(ncols)) stop("Error 1")
+  # if(length(X) %% ncols != 0) stop("Error 2")
+  # Xm <- matrix(X, ncol = ncols, byrow = TRUE)
+  #colnames(Xm) <- Xm[1, ]
+  #Xm <- Xm[-1, ]
   if(nrow(Xm) == 0) return(NULL)
-  dnac <- match("nucleotides", colnames(Xm))
-  seqs <- gsub("-", "", Xm[, dnac])
+  # spc <- match("species_name", colnames(Xm))
+  Xm <- Xm[grepl("[[:alpha:]]", Xm$species_name), ]
+  if(nrow(Xm) == 0) return(NULL)
+  if(!GB) Xm <- Xm[Xm$genbank_accession == " ",]
+    # gbc <- match("genbank_accession", colnames(Xm))
+  if(nrow(Xm) == 0) return(NULL)
+  #mac <- match("markercode", colnames(Xm))
+  Xm <- Xm[Xm$markercode %in% markers, ] # poss bug in API returns additional markers
+  if(nrow(Xm) == 0) return(NULL)
+  # dnac <- match("nucleotides", colnames(Xm))
+  seqs <- gsub("-", "", Xm$nucleotides)
   seqs <- strsplit(seqs, split = "")
   out <- ape::as.DNAbin(seqs)
   rec <- match("recordID", colnames(Xm))
   recs <- Xm[, rec]
-  names(out) <- paste0("BOLD", recs)
-  lins <- paste(Xm[, match("phylum_name", colnames(Xm))],
-                Xm[, match("class_name", colnames(Xm))],
-                Xm[, match("order_name", colnames(Xm))],
-                Xm[, match("family_name", colnames(Xm))],
-                Xm[, match("genus_name", colnames(Xm))],
-                Xm[, match("species_name", colnames(Xm))],
-                sep = "; ")
+  names(out) <- paste0("BOLD", Xm$recordID)
+  lins <- paste(Xm$phylum_name, Xm$class_name, Xm$order_name, Xm$family_name,
+                Xm$genus_name, Xm$species_name, sep = "; ")
   attr(out, "lineage") <- paste0(lins, ".")
   return(out)
 }

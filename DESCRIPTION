@@ -21,6 +21,7 @@ Depends:
 Imports:
     ape (>= 3.0.0),
     aphid (>= 0.0.0.9000),
+    httr,
     openssl, 
     phylogram (>= 1.0.0),
     Rcpp (>= 0.12.9),
