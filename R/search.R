@@ -441,7 +441,7 @@ searchBOLD <- function(taxon, GB = TRUE, markers = NULL){
   # spc <- match("species_name", colnames(Xm))
   Xm <- Xm[grepl("[[:alpha:]]", Xm$species_name), ]
   if(nrow(Xm) == 0) return(NULL)
-  if(!GB) Xm <- Xm[Xm$genbank_accession == " ",]
+  if(!GB) Xm <- Xm[!grepl("[[:alnum:]]", Xm$genbank_accession), ]
     # gbc <- match("genbank_accession", colnames(Xm))
   if(nrow(Xm) == 0) return(NULL)
   #mac <- match("markercode", colnames(Xm))
