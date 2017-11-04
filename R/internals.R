@@ -123,7 +123,7 @@
 }
 
 .ancestor <- function(lineages){
-  # takes and returns semicolon-delimited character string(s)
+  # input and output both semicolon-delimited character string(s)
   if(all(lineages == lineages[1])) return(lineages[1])
   lineages <- gsub("\\.$", "", lineages)
   splitfun <- function(s) strsplit(s, split = "; ")[[1]]
@@ -135,4 +135,15 @@
   lineage <- paste(guide, collapse = "; ")
   lineage <- paste0(lineage, ".")
   return(lineage)
+}
+
+.ldistance <- function(x, y){
+  # x and y are lineage strings (semicolon delim)
+  # returns a rough distance measure based on relatedness
+  getlinlen <- function(l) sum(gregexpr(";", l, fixed = TRUE)[[1]] > 0) + 1
+  if(x == y) return(0)
+  minlinlen <- min(sapply(c(x, y), getlinlen))
+  anc <- .ancestor(c(x, y))
+  anlen <- getlinlen(anc)
+  return(1 - anlen/minlinlen)
 }

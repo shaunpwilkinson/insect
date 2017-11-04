@@ -7,7 +7,7 @@ using namespace Rcpp;
 
 // placeholder
 int placeholder();
-RcppExport SEXP insect_placeholder() {
+RcppExport SEXP _insect_placeholder() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
