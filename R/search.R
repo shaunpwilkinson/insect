@@ -80,6 +80,7 @@ searchGB <- function(query, onlyID = FALSE, prompt = TRUE,
     discards <- logical(N)
   }
   counter <- 1
+  discat <- ""
   if(!quiet) {
     cat("Downloading", N, "DNA sequences from GenBank\n")
     cat("Showing download progress\n")
@@ -212,7 +213,8 @@ searchGB <- function(query, onlyID = FALSE, prompt = TRUE,
           }
         }else{
           discards[counter] <- TRUE
-          #if(!quiet) cat("Sequence", counter, "is invalid and will be discarded\n")
+          # if(!quiet) cat(tmp2[[j]][acclines], "is invalid and will be discarded\n")
+          discat <- paste0(discat, gsub("ACCESSION   ", "", tmp2[[j]][acclines]), ", ")
         }
         counter <- counter + 1
       }
@@ -235,9 +237,9 @@ searchGB <- function(query, onlyID = FALSE, prompt = TRUE,
   }
   if(!quiet){
     if(any(discards)){
-      cat("\n", sum(discards), "sequences are invalid and were discarded:\n ")
-      for(i in which(discards)) cat(i, " ")
-      cat("\n")
+      cat("\nThe following sequences are invalid and were discarded: ", gsub(", $", "", discat))
+      #for(i in which(discards)) cat(i, " ")
+      #cat("\n")
     }
   }
   nolength <- sapply(obj, length) == 0

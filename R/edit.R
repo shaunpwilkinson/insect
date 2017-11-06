@@ -279,6 +279,7 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
   tree <- phylogram::reposition(tree)
   if(!quiet) cat("Making tree ultrametric\n")
   tree <- phylogram::ultrametricize(tree)
+  if(!quiet) cat("Done\n")
   # if(!quiet) cat("Labelling nodes\n")
   # lineages <- gsub("\\.", "", attr(x, "lineage"))
   # #lineages <- paste0(lineages, "; ", attr(x, "species"))

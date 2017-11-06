@@ -14,6 +14,7 @@
 join <- function(...){
   dots <- list(...)
   nlsts <- length(dots)
+  DNA <- any(sapply(dots, class) == "DNAbin")
   if(nlsts == 0) return(NULL)
   if(nlsts == 1) return(dots[[1]])
   islist <- sapply(dots, is.list)
@@ -22,27 +23,19 @@ join <- function(...){
     attributes(dots[[i]]) <- NULL
     dots[[i]] <- list(dots[[i]])
     attributes(dots[[i]]) <- tmpattr
-    class(dots[[i]]) <- "DNAbin"
   }
-  longest1 <- which.max(sapply(dots, length))
-  tmpattr <- attributes(dots[[longest1]])
-  whichattr <- which(sapply(tmpattr, length) == length(dots[[longest1]]))
-  if(length(dots[[longest1]]) == 1) whichattr <- whichattr[whichattr != 1] #class
-  res <- dots[[1]]
-  attrs_to_rm <- integer(0)
-  for(i in 2:nlsts){
-    res <- c(res, dots[[i]])
-    for(j in whichattr){
-      attrij <- attributes(dots[[i]])[[j]]
-      if(length(attrij) != length(dots[[i]])){
-        warning("Invalid or missing attributes in object ", i, "\n")
-        attrs_to_rm <- c(attrs_to_rm, j)
-      }
-      tmpattr[[j]] <- c(tmpattr[[j]], attrij)
-    }
+  dots <- lapply(dots, unclass)
+  findattr <- function(x){
+    names(attributes(x))[sapply(attributes(x), length) == length(x)]
   }
-  tmpattr <- tmpattr[-(unique(attrs_to_rm))]
-  attributes(res) <- tmpattr
+  attrlist <- lapply(dots, findattr)
+  ual <- unique(unlist(attrlist, use.names = FALSE))
+  validattrs <- ual[sapply(ual, function(e) all(sapply(attrlist, function(g) e %in% g)))]
+  validattrs <- validattrs[!validattrs %in% c("names", "class")]
+  res <- unlist(dots, recursive = FALSE, use.names = TRUE)
+  for(i in validattrs){
+    attr(res, i) <- unlist(lapply(dots, attr, i), use.names = FALSE)
+  }
   return(res)
 }
 ################################################################################

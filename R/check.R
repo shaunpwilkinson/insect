@@ -20,16 +20,14 @@
 check_metadata <- function(x, threshold = 5){
   lins <- attr(x, "lineage")
   names(lins) <- names(x)
-
   seqhashes <- unname(sapply(x, function(s) paste(openssl::md5(as.vector(s)))))
   linhashes <- unname(sapply(lins, function(s) paste(openssl::md5(s))))
   comhashes <- paste0(seqhashes, linhashes)
   discards <- duplicated(comhashes)
-  xu <- subset.DNAbin(x, subset = !discards) #47664
+  xu <- subset.DNAbin(x, subset = !discards) #42092
   linsu <- lins[!discards]
   shu <- seqhashes[!discards]
   lhu <- linhashes[!discards]
-
   dupes <- duplicated(shu) # logical length x
   seqpointers <- integer(length(shu))
   dupehashes <- shu[dupes]
@@ -38,7 +36,6 @@ check_metadata <- function(x, threshold = 5){
   pd <- integer(length(dupehashes))
   for(i in unique(dupehashes)) pd[dupehashes == i] <- match(i, uniquehashes)
   seqpointers[dupes] <- pd
-
   dupes <- duplicated(lhu) # logical length x
   linpointers <- integer(length(lhu))
   dupehashes <- lhu[dupes]
@@ -47,23 +44,18 @@ check_metadata <- function(x, threshold = 5){
   pd <- integer(length(dupehashes))
   for(i in unique(dupehashes)) pd[dupehashes == i] <- match(i, uniquehashes)
   linpointers[dupes] <- pd
-
-
-  # duplicates <- duplicated.DNAbin(x, point = TRUE)
-  # pointers <- attr(duplicates, "pointers")
-
   linlist <- split(linsu, seqpointers)
   linlist <- linlist[sapply(linlist, length) > 1]
   getlinlen <- function(l) sum(gregexpr(";", l, fixed = TRUE)[[1]] > 0) + 1
   minlinlens <- sapply(linlist, function(e) min(sapply(e, getlinlen)))
-  comlins <- sapply(linlist, insect:::.ancestor)
+  comlins <- sapply(linlist, .ancestor)
   comlinlens <- sapply(comlins, getlinlen)
   diflens <- minlinlens - comlinlens
   mismatches <- diflens > 2 & sapply(linlist, length) > threshold
   linlist2 <- linlist[mismatches]
   checkmd1 <- function(l, threshold){
     # l is a vector of semicolon-delimited lineage strings
-    d <- as.dist(outer(l, l, FUN = Vectorize(insect:::.ldistance)))
+    d <- as.dist(outer(l, l, FUN = Vectorize(.ldistance)))
     tree <- as.dendrogram(hclust(d, method = "average"))
     wgts <- aphid::weight(tree)
     dodgyseqs <- names(wgts)[wgts > threshold]
@@ -71,10 +63,7 @@ check_metadata <- function(x, threshold = 5){
   }
   dodgies <- unlist(lapply(linlist2, checkmd1, threshold), use.names = FALSE)
   # now switch to grouping sequences by lineage
-
-
   seqlist <- split(xu, linpointers)
-  #hashes <- sapply(x, function(s) paste(openssl::md5(as.vector(s))))
   hashlist <- split(shu, linpointers)
   mismatches2 <- sapply(lapply(hashlist, unique), length) > threshold
   seqlist2 <- seqlist[mismatches2]
