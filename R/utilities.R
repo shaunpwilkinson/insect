@@ -85,17 +85,27 @@ join <- function(...){
 #'   ## TBA
 ################################################################################
 trim <- function(x, motif, direction = "both", cores = 1, ...){
-  classx <- class(x)
+  tmpattr <- attributes(x)
+  tmpattr <- tmpattr[names(tmpattr) != "quality"]
+ #classx <- class(x)
   trim1 <- function(x, motif, direction){
     vit <- aphid::Viterbi(motif, x, type = "semiglobal", ... = ...)
+    p <- attr(x, "quality") # trim quality scores too
+    if(!is.null(p)) stopifnot(length(x) == length(p))
     if(identical(direction, "forward")){
       ntotrim <- match(c(0, 1), rev(vit$path)) - 1
       ntotrim <- min(ntotrim[!is.na(ntotrim)])
       res <- x[1:(length(x) - ntotrim)]
+      if(!is.null(p)) attr(res, "quality") <- p[1:(length(x) - ntotrim)]
     }else if(identical(direction, "reverse")){
       ntotrim <- match(c(0, 1), vit$path) - 1
       ntotrim <- min(ntotrim[!is.na(ntotrim)])
-      res <- if(ntotrim > 0) x[-(1:ntotrim)] else x
+      if(ntotrim > 0){
+        res <- x[-(1:ntotrim)]
+        if(!is.null(p)) attr(res, "quality") <- p[-(1:ntotrim)]
+      }else{
+        res <- x
+      }
     }else if(identical(direction, "both")){
       ntotrimf <- match(c(0, 1), rev(vit$path)) - 1
       ntotrimf <- min(ntotrimf[!is.na(ntotrimf)])
@@ -103,7 +113,9 @@ trim <- function(x, motif, direction = "both", cores = 1, ...){
       begin <- match(c(0, 1), vit$path)
       begin <- min(begin[!is.na(begin)])
       res <- x[begin:last]
+      if(!is.null(p)) attr(res, "quality") <- p[begin:last]
     }else stop("Invalid argument for 'direction'")
+    attr(res, "score") <- vit$score
     return(res)
   }
   if(is.list(x)){
@@ -125,13 +137,19 @@ trim <- function(x, motif, direction = "both", cores = 1, ...){
         res <- lapply(x, trim1, motif, direction, ...)
       }
     }
-    return(res)
+    # return(res)
+    # scores <- numeric(length(x))
+    # for(i in seq_along(scores)){
+    #   scores[i] <- attr(res[[i]], "scores")
+    #   attr(res[[i]], "scores") <- NULL
+    # }
+    # attr(res, "scores") <- scores
   }else{
-    return(trim1(x, motif, direction, ...))
+    res <- trim1(x, motif, direction, ...)
+    tmpattr$quality <- attr(res, "quality")
+    tmpattr$score <- attr(res, "score")
   }
-  #res <- if(is.list(x)) lapply(x, trim1, motif, direction) else trim1(x, motif, direction)
-  attributes(res) <- attributes(x)
-  class(res) <- classx
+  attributes(res) <- tmpattr
   return(res)
 }
 ################################################################################

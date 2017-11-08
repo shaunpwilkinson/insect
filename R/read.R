@@ -1,6 +1,6 @@
 #' Read and filter FASTQ files.
 #'
-#' \code{readFASTQ} is a text parser/filter that reads file in the FASTQ
+#' \code{readFASTQ} is a text parser/filter that reads files in the FASTQ
 #'   format into R, during which it optionally applies various sequence
 #'   editing procedures and filters. If a valid sample sheet is provided
 #'   (\code{sheet} is not NULL), any sequence that does not feature a motif
@@ -117,7 +117,7 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
                       minqual = 30, maxambigs = 0, mincount = 2,
                       DNA = TRUE, nlines = 1E07, quiet = FALSE, ...){
   if(nlines %% 4 != 0) stop("nlines must be divisible by 4")
-  maxlen <- min(1000, as.integer(file.size(path) * 0.002)) # approx output length
+  maxlen <- max(1000, as.integer(file.size(path) * 0.002)) # approx output length
   res <- vector(mode = "list", length = maxlen)
   resnames <- vector(mode = "character", length = maxlen)
   tnseq <- 0 # total number of seqs
@@ -151,33 +151,32 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
     if(!quiet) cat("Reading FASTQ file\n")
     if(!quiet) cat("Matching and trimming indices and primers\n")
   }
-  # a <- 0
+  a <- 0
   b <- 1
   repeat{
-    x <- scan(file = path, what = "", sep = "\n", skip = b - 1, nlines = nlines,
+    # cat("scanning", nlines, " lines starting at line", a + 1, "\n") ##############
+    x <- scan(file = path, what = "", sep = "\n", skip = a, nlines = nlines,
               quiet = TRUE, ... = ...)
+    # cat("Successfully read lines\n")#####################
+    a <- a + nlines
     # For 747555 sequences, created 2990220 element vector of 616.6Mb. Took ~ 1 min
     if(identical(x, character(0))) break
     stopifnot(length(x) %% 4 == 0)
     nseq <- length(x)/4
     tnseq <- tnseq + nseq
     x <- x[seq_along(x) %% 4 != 3] # gets rid of +'s
-    # Instrument <- gsub("@([[:alnum:]]+):.+", "\\1", x[1])
-    # RunID <- gsub("@[[:alnum:]]+:([[:alnum:]]+):.+", "\\1", x[1])
-    # FlowID <- gsub("@[[:alnum:]]+:[[:alnum:]]+:([^:]+):.+", "\\1", x[1])
     if(is.null(sheet)){
       seqalongx <- seq_along(x)
       tmp <- mapply(read1, x[seqalongx %% 3 == 2], x[seqalongx %% 3 == 0],
                     "(.*)", 0, DNA, SIMPLIFY = FALSE, USE.NAMES = FALSE)
-      #names(tmp) <- x[seqalongx %% 3 == 1]
-      # nseqi <- nseq
       res[b:(b + nseq - 1)] <- tmp
       resnames[b:(b + nseq - 1)] <- x[seqalongx %% 3 == 1]
       b <- b + nseq
       #res <- c(res, tmp)
     }else{
       for(i in 1:nrow(sheet)){
-        ##TODO should move all this out of the loop to increase speed
+        cat("Scanning sheet row", i, "\n")
+        ##TODO move all this out of the loop to increase speed
         ftag <- strsplit(sheet[i, 8], "")[[1]]
         ftag <- ftag[ftag != " "]
         fprim <- strsplit(sheet[i, 10], "")[[1]]
@@ -191,35 +190,18 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
         if(nseqi > 0){
           whichseqs <- whichquals - 1
           whichnames <- whichseqs - 1
-          # if(!quiet) cat("Extracted", length(whichseqs), "sequences from",
-          #                sheet[i, 3], "with target", sheet[i, 5], "(tags",
-          #                sheet[i, 6], "&", sheet[i, 7], ")\n")
           counts[i] <- counts[i] + nseqi
-          # AL <- length(strsplit(index1, split = "")[[1]]) - 1
           pattern <- paste0(index1, "([ACGTN]+)", index2, "[ACGTN]*")
           tmp <- mapply(read1, x[whichseqs], x[whichquals], pattern, AL, DNA,
                         SIMPLIFY = FALSE, USE.NAMES = FALSE)
-          # nameprefix <- paste(sheet[i, 5], sheet[i, 6], sheet[i, 7], sep = ":")
-          # #Target:Ftag:Rtag
-          # namesuffix <- gsub(".+(:[^:]:[^:]+:[^:]+:[^:]+) .+", "\\1", x[whichnames])
-          # #Lane:TileNo:Xcoord:Ycoord
-          # names(tmp) <- paste0(nameprefix, namesuffix)
-          # names(tmp) <- gsub(":[0123456789 ]+$", paste0(":", sheet[i, 1]), x[whichnames])
           res[b:(b + nseqi - 1)] <- tmp
           resnames[b:(b + nseqi - 1)] <- gsub(":[0123456789 ]+$",
                                               paste0(":", sheet[i, 1]), x[whichnames])
           b <- b + nseqi
           x <- x[-(c(whichnames, whichseqs, whichquals))]
-        }else{
-          # if(!quiet) cat("Extracted 0 sequences from",
-          #                sheet[i, 3], "with target", sheet[i, 5], "(tags",
-          #                sheet[i, 6], "and", sheet[i, 7], ")\n")
         }
       }
     }
-    ## moved if() stmt from here Sep 4 2017
-    #a <- a + nlines
-    # b <- b + nseq
     if(nseq < nlines/4) break
   }
   if(b > 1){
@@ -268,11 +250,8 @@ readFASTQ <- function(path, sheet = NULL, filter = TRUE, minlength = 50,
     if(!quiet) cat("Creating 'DNAbin' object\n")
     class(res) <- "DNAbin"
   }
-  # attr(res, "Instrument") <- Instrument
-  # attr(res, "RunID") <- RunID
-  # attr(res, "FlowID") <- FlowID
-  # 357187 seqs retained
   if(!quiet) cat("Done\n")
   return(res)
 }
 
+################################################################################

@@ -33,7 +33,7 @@
 writeFASTQ <- function(x, file = "", append = FALSE){
   res <- vector(mode = "character", length = length(x) * 4)
   sar <- seq_along(res)
-  res[sar %% 4 == 1] <- names(x)
+  res[sar %% 4 == 1] <- paste0("@", names(x))
   res[sar %% 4 == 2] <- sapply(x, .dna2char)
   res[sar %% 4 == 3] <- rep("+", length(x))
   res[sar %% 4 == 0] <- sapply(lapply(x, attr, "quality"), .qual2char)

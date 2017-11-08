@@ -85,7 +85,7 @@ Returns a list of DNA sequences, either in \code{DNAbin} format
   file format.
 }
 \description{
-\code{readFASTQ} is a text parser/filter that reads file in the FASTQ
+\code{readFASTQ} is a text parser/filter that reads files in the FASTQ
   format into R, during which it optionally applies various sequence
   editing procedures and filters. If a valid sample sheet is provided
   (\code{sheet} is not NULL), any sequence that does not feature a motif
