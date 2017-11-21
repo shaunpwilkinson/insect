@@ -230,7 +230,7 @@ searchGB <- function(query, onlyID = FALSE, prompt = TRUE,
     objorg <- objorg[!discards]
     objlin <- gsub("\\.$", "", objlin)
     # attr(obj, "species") <- objorg[!discards]
-    attr(obj, "lineage") <- paste0(objlin, "; ", objorg, ".")
+    attr(obj, "lineage") <- paste0(objlin, "; ", objorg)
     attr(obj, "definition") <- objdef[!discards]
     attr(obj, "taxon") <- objtax[!discards]
     class(obj) <- "DNAbin"
@@ -372,7 +372,7 @@ readGB <- function(accs, prompt = FALSE, contact = NULL, quiet = FALSE){
   objorg <- objorg[!discards]
   objlin <- gsub("\\.$", "", objlin)
   # attr(obj, "species") <- objorg[!discards]
-  attr(obj, "lineage") <- paste0(objlin, "; ", objorg, ".")
+  attr(obj, "lineage") <- paste0(objlin, "; ", objorg)
   attr(obj, "definition") <- objdef[!discards]
   attr(obj, "taxon") <- objtax[!discards]
   class(obj) <- "DNAbin"

@@ -45,12 +45,14 @@ sift <- function(x, db, ranks = c("phylum", "class", "order"), threshold = 0.97)
     rnklist <- rnklist[tabulate(rnkotus) > 2]
     rnkout <- lapply(rnklist, sift1)
     rnkout <- rnkout[!sapply(rnkout, is.null)]
-    names(rnkout) <- NULL
-    rnkout <- do.call("rbind", rnkout)
-    rnkout <- cbind(data.frame(rank = rep(r, nrow(rnkout))), rnkout)
-    rnkout <- rnkout[!rownames(rnkout) %in% rownames(out), ] #
-    rnkout <- rnkout[order(rnkout$confidence, decreasing = TRUE), ]
-    out <- rbind(out, rnkout)
+    if(length(rnkout) > 0){
+      names(rnkout) <- NULL
+      rnkout <- do.call("rbind", rnkout)
+      rnkout <- cbind(data.frame(rank = rep(r, nrow(rnkout))), rnkout)
+      rnkout <- rnkout[!rownames(rnkout) %in% rownames(out), ] #
+      rnkout <- rnkout[order(rnkout$confidence, decreasing = TRUE), ]
+      out <- rbind(out, rnkout)
+    }
   }
   return(out)
 }
