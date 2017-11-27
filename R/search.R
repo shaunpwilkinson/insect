@@ -458,7 +458,7 @@ searchBOLD <- function(taxon, GB = TRUE, markers = NULL){
   names(out) <- paste0("BOLD", Xm$recordID)
   lins <- paste(Xm$phylum_name, Xm$class_name, Xm$order_name, Xm$family_name,
                 Xm$genus_name, Xm$species_name, sep = "; ")
-  attr(out, "lineage") <- paste0(lins, ".")
+  attr(out, "lineage") <- lins # paste0(lins, ".")
   return(out)
 }
 ################################################################################

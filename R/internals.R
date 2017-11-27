@@ -125,7 +125,7 @@
 .ancestor <- function(lineages){
   # input and output both semicolon-delimited character string(s)
   if(all(lineages == lineages[1])) return(lineages[1])
-  lineages <- gsub("\\.$", "", lineages)
+  # lineages <- gsub("\\.$", "", lineages)
   splitfun <- function(s) strsplit(s, split = "; ")[[1]]
   linvecs <- lapply(lineages, splitfun)
   guide <- linvecs[[which.min(sapply(linvecs, length))]]
@@ -133,7 +133,7 @@
   for(l in guide) if(all(sapply(linvecs, function(e) l %in% e))) a <- a + 1
   guide <- if(a > 0) guide[1:a] else character(0)
   lineage <- paste(guide, collapse = "; ")
-  lineage <- paste0(lineage, ".")
+  # lineage <- paste0(lineage, ".")
   return(lineage)
 }
 

@@ -126,20 +126,6 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
         ## already done in previous block
         return(node)
       }
-      # if(is.null(attr(node, "model"))){
-      #   # should only be TRUE at top level- and even then not usually
-      #   if(!quiet) cat("Assigning top-level model\n")
-      #   attr(node, "model") <- seqsplit$model0
-      # }
-      # if(is.null(attr(node, "scores"))){ # should only be TRUE at top level
-      #   if(!quiet) cat("Calculating top-level scores\n")
-      #   fscore <- function(s, model) aphid::forward(model, s, odds = FALSE)$score
-      #   attr(node, "scores") <- if(inherits(cores, "cluster")){
-      #     parallel::parSapply(cores, x[indices], fscore, model = seqsplit$model0)
-      #   }else{
-      #     sapply(x[indices], fscore, model = seqsplit$model0)
-      #   }
-      # }
       membership <- seqsplit$membership
       scores <- seqsplit$scores
       total_scores <- apply(scores, 2, aphid::logsum)
@@ -252,16 +238,13 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
         #attr(node[[i]], "label") <- paste0(attr(node, "label"), i)
         attr(node[[i]], "clade") <- paste0(attr(node, "clade"), i)
         attr(node[[i]], "sequences") <- indices[membership == i]
-        attr(node[[i]], "minscore") <- min(scores[i, membership == i]) - 1
+        attr(node[[i]], "minscore") <- min(scores[i, membership == i])
+        seqlengths <- sapply(x[attr(node[[i]], "sequences")], length)
+        attr(node[[i]], "minlength") <- min(seqlengths)
+        attr(node[[i]], "maxlength") <- max(seqlengths)
         # above nominal amount just to ensure equality
         # attr(node[[i]], "Akweights") <- performances[membership == i]
         attr(node[[i]], "model") <- seqsplit[[paste0("model", i)]]
-        # if(onespecies){
-        #   attr(node[[i]], "onespp") <- TRUE
-        #   attr(node[[i]], "lineage") <- lineages[indices[1]]
-        # }else{
-        #   attr(node[[i]], "lineage") <- .ancestor(lineages[indices[membership == i]])
-        # }
         attr(node[[i]], "lineage") <- .ancestor(lineages[membership == i])
         ## prevents unnecessary recursion, but should have at least one split
         ## within each species

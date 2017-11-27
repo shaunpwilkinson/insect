@@ -254,25 +254,18 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
   tree <- dendrapply(tree, rm_locks)
   reduplicate <- function(node, pointers){
     seqs <- attr(node, "sequences")
-    # akws <- attr(node, "Akweights")
-    # scrs <- attr(node, "scores")
     attr(node, "nunique") <- length(seqs)
     attr(node, "sequences") <- which(pointers %in% seqs)
-    # newseqs <- newakws <- newscrs <- vector(mode = "list", length = length(seqs))
-    # for(i in seq_along(seqs)){
-    #   newseqs[[i]] <- which(pointers == seqs[i])
-    #   if(!is.null(akws)) newakws[[i]] <- rep(akws[i], length(newseqs[[i]]))
-    #   if(!is.null(scrs)) newscrs[[i]] <- rep(scrs[i], length(newseqs[[i]]))
-    #   # newakweights[newseqs == seqs[i]] <- akweights[i]
-    # }
-    # attr(node, "sequences") <- unlist(newseqs, use.names = FALSE)
-    # if(!is.null(akws)) attr(node, "Akweights") <- unlist(akws, use.names = FALSE)
-    # if(!is.null(scrs)) attr(node, "scores") <- unlist(scrs, use.names = FALSE)
     attr(node, "ntotal") <- length(attr(node, "sequences"))
     return(node)
   }
   if(!quiet) cat("Repatriating duplicate sequences with tree\n")
   tree <- dendrapply(tree, reduplicate, pointers = pointers)
+  rmaligs <- function(node){
+    if(is.leaf(node)) attr(node, "model")$alignment <- NULL
+    return(node)
+  }
+  tree <- dendrapply(tree, rmaligs) # more memory efficient
   #if(has_duplicates) x <- fullseqset
   # attributes(x) <- tmpxattr
   if(!quiet) cat("Resetting node heights\n")
@@ -280,58 +273,9 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
   if(!quiet) cat("Making tree ultrametric\n")
   tree <- phylogram::ultrametricize(tree)
   if(!quiet) cat("Done\n")
-  # if(!quiet) cat("Labelling nodes\n")
-  # lineages <- gsub("\\.", "", attr(x, "lineage"))
-  # #lineages <- paste0(lineages, "; ", attr(x, "species"))
-  # lineages <- paste0(lineages, "; ~", attr(x, "species"), "~")
-  # attachlins <- function(node, lineages){
-  #   splitfun <- function(s) strsplit(s, split = "; ")[[1]]
-  #   linvecs <- lapply(lineages[attr(node, "sequences")], splitfun)
-  #   guide <- linvecs[[which.min(sapply(linvecs, length))]]
-  #   counter <- 0
-  #   for(l in guide){
-  #     if(all(sapply(linvecs, function(e) l %in% e))) counter <- counter + 1
-  #   }
-  #   guide <- if(counter > 0) guide[1:counter] else character(0)
-  #   lineage <- paste(guide, collapse = "; ")
-  #   attr(node, "lineage") <- lineage
-  #   attr(node, "label") <- paste0(guide[length(guide)], " (",
-  #                                 attr(node, "nunique"), ",",
-  #                                 attr(node, "ntotal"), ")")
-  #   return(node)
-  # }
-  # tree <- dendrapply(tree, attachlins, lineages)
-  # attr(tree, "sequences") <- x # must happen after attaching lineages
-  # # attr(tree, "kmers") <- kmers
-  # attr(tree, "duplicates") <- duplicates
-  # attr(tree, "pointers") <- pointers
-  # attr(tree, "weights") <- seqweights
-  # attr(tree, "hashes") <- hashes # length is length(x)
-  # if(!quiet) cat("Done\n")
   class(tree) <- c("insect", "dendrogram")
   return(tree)
 }
-
-
-#   attr(tree, "sequences") <- if(has_duplicates) fullseqset else x
-#   label <- function(node, x){ # node id dendro, x is DNAbin
-#     if(is.leaf(node)){
-#       if(length(attr(node, "sequences")) > 1){
-#         attr(node, "label") <- paste0(names(x)[attr(node, "sequences")[1]],
-#                                       "...(", attr(node, "nunique"), ",",
-#                                       attr(node, "ntotal"), ")")
-#       }else{
-#         attr(node, "label") <- names(x)[attr(node, "sequences")]
-#       }
-#     }
-#     return(node)
-#   }
-#   if(!quiet) cat("Labeling leaf nodes\n")
-#   tree <- dendrapply(tree, label, x = attr(tree, "sequences"))
-#   if(!quiet) cat("Done\n")
-#   return(tree)
-# }
-################################################################################
 ################################################################################
 #' Contract a classification tree based on pattern matching.
 #'
