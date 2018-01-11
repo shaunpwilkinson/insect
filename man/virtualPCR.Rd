@@ -5,7 +5,7 @@
 \title{Virtual PCR.}
 \usage{
 virtualPCR(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
-  minfsc = 70, minrevsc = 70, minamplen = 50, maxamplen = 2000,
+  minfsc = 70, minrsc = 70, minamplen = 50, maxamplen = 2000,
   partialbind = TRUE, cores = 1, quiet = FALSE)
 }
 \arguments{
@@ -31,7 +31,7 @@ should be removed from the sequences in the returned list.}
 for the optimal alignment) between the forward primer and a sequence
 for that sequence to be retained.}
 
-\item{minrevsc}{numeric, the minimum specificity (log-odds score for
+\item{minrsc}{numeric, the minimum specificity (log-odds score for
 the optimal alignment) between the reverse primer (if provided) and
 a sequence for that sequence to be retained.}
 
@@ -41,7 +41,7 @@ of base pairs between the primer-binding sites falls outside of these
 limits.}
 
 \item{partialbind}{logical indicating whether partial primer matching is
-accepted.}
+accepted. Defaults to TRUE.}
 
 \item{cores}{integer giving the number of CPUs to parallelize the operation
 over. Defaults to 1, and reverts to 1 if x is not a list.

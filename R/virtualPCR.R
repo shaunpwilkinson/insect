@@ -21,7 +21,7 @@
 #' @param minfsc numeric, giving the minimum specificity(log-odds score
 #'   for the optimal alignment) between the forward primer and a sequence
 #'   for that sequence to be retained.
-#' @param minrevsc numeric, the minimum specificity (log-odds score for
+#' @param minrsc numeric, the minimum specificity (log-odds score for
 #'   the optimal alignment) between the reverse primer (if provided) and
 #'   a sequence for that sequence to be retained.
 #' @param minamplen,maxamplen integers giving the minimum and maximum
@@ -29,7 +29,7 @@
 #'   of base pairs between the primer-binding sites falls outside of these
 #'   limits.
 #' @param partialbind logical indicating whether partial primer matching is
-#'   accepted.
+#'   accepted. Defaults to TRUE.
 #' @param cores integer giving the number of CPUs to parallelize the operation
 #'   over. Defaults to 1, and reverts to 1 if x is not a list.
 #'   This argument may alternatively be a 'cluster' object,
@@ -52,7 +52,7 @@
 #'   ## TBA
 ################################################################################
 virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
-                       minfsc = 70, minrevsc = 70, minamplen = 50,
+                       minfsc = 70, minrsc = 70, minamplen = 50,
                        maxamplen = 2000, partialbind = TRUE, cores = 1,
                        quiet = FALSE){
   nseq <- length(x)
@@ -81,7 +81,7 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   # trim all nucleotides to left of forward primer bind site, including primer if specified
   forfun <- function(s, up, trimprimers, minfsc, partialbind, minamplen){
     vit <- aphid::Viterbi(up, s, type = "semiglobal", odds = TRUE)
-    if(vit$score > minfsc){
+    if(vit$score >= minfsc){
       pl <- length(vit$path)
       if(partialbind | vit$path[1] != 0){
         zeroonestarts <- match(0:1, vit$path)
@@ -126,9 +126,9 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   # trim all nucleotides to right of reverse primer bind site, including primer if specified
   if(!is.null(down) & !is.null(x)){
     if(rcdown) down <- ape::complement(down)
-    revfun <- function(s, down, trimprimers, minrevsc, partialbind, minamplen, maxamplen){
+    revfun <- function(s, down, trimprimers, minrsc, partialbind, minamplen, maxamplen){
       vit <- aphid::Viterbi(down, s, type = "semiglobal", odds = TRUE)
-      if(vit$score > minrevsc){
+      if(vit$score >= minrsc){
         pl <- length(vit$path)
         if(partialbind | vit$path[pl] != 0){
           zeroonestarts <- match(0:1, rev(vit$path))
@@ -153,9 +153,9 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
     whichattr <- which(sapply(tmpattr, length) == length(x))
     if(!quiet) cat("Reverse trimming sequences\n")
     x <- if(para){
-      parallel::parLapply(cores, x, revfun, down, trimprimers, minrevsc, partialbind, minamplen, maxamplen)
+      parallel::parLapply(cores, x, revfun, down, trimprimers, minrsc, partialbind, minamplen, maxamplen)
     }else{
-      lapply(x, revfun, down, trimprimers, minrevsc, partialbind, minamplen, maxamplen)
+      lapply(x, revfun, down, trimprimers, minrsc, partialbind, minamplen, maxamplen)
     }
     discards <- sapply(x, is.null)
     nseq <- sum(!discards)
@@ -230,7 +230,7 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
 #   counter <- 1
 #   for(i in 1:nseq){
 #     vit_i <- aphid::Viterbi(down, x1[i], type = "semiglobal")
-#     if(vit_i$score > minrevsc){
+#     if(vit_i$score > minrsc){
 #       pl <- length(vit_i$path)
 #       if(partialbind | vit_i$path[pl] != 0){
 #         tmp <- x1[[i]]

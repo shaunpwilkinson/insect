@@ -51,8 +51,10 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, cores = 1){
       newcakw <- newakw * cakw
       threshold_met <- threshold <= if(decay) newcakw else newakw
       minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 1
-      minlength_met <- length(x) >= attr(tree[[best_model]], "minlength") - 1
-      maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength") + 1
+      #minlength_met <- length(x) >= attr(tree[[best_model]], "minlength") - 1
+      #maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength") + 1
+      minlength_met <- TRUE
+      maxlength_met <- TRUE
       if(!(threshold_met & minscore_met & minlength_met & maxlength_met)) break
       path <- paste0(path, best_model)
       akw <- newakw
@@ -69,8 +71,8 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, cores = 1){
   unpack <- function(v){# v is a vector of %-delimited strings
     v <- strsplit(v, split = "%")
     out <- sapply(v, function(s) s[1])
-    attr(out, "paths") <- sapply(v, function(s) s[2])
-    attr(out, "scores") <- as.numeric(sapply(v, function(s) s[3]))
+    attr(out, "path") <- unname(sapply(v, function(s) s[2]))
+    attr(out, "score") <- as.numeric(sapply(v, function(s) s[3]))
     attr(out, "threshold_met") <- as.logical(sapply(v, function(s) s[4]))
     attr(out, "minscore_met") <- as.logical(sapply(v, function(s) s[5]))
     attr(out, "minlength_met") <- as.logical(sapply(v, function(s) s[6]))
