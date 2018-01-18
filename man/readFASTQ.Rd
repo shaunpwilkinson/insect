@@ -4,75 +4,17 @@
 \alias{readFASTQ}
 \title{Read and filter FASTQ files.}
 \usage{
-readFASTQ(path, sheet = NULL, filter = TRUE, minlength = 50,
-  minqual = 30, maxambigs = 0, mincount = 2, DNA = TRUE,
-  nlines = 1e+07, quiet = FALSE, ...)
+readFASTQ(file, format = "DNAbin", ...)
 }
 \arguments{
-\item{path}{a character string giving the path to the FASTQ text file
-to be parsed.}
+\item{file}{the name of the FASTQ file from which the sequences are to be read.}
 
-\item{sheet}{either a character string giving the path to a valid sample
-sheet in csv format, or a similarly valid data frame object already
-stored in the R environment. The sheet should have one row for each
-unique index-primer-primer-index combination, and 13 cloumns labeled
-in the following order: 'Number', (sample number, these will be
-appended to the end of the names of the output sequences after the
-final colon), 'PCR #' (the PCR number), 'Extract' (a description of
-the sample), 'Sample' (the environment from where the sample was
-extracted), 'Target' (a name given to the primer pair), 'F Tag',
-'R Tag', (unique names given to the forward and reverse indexing tags,
-respectively), F Sequence', 'R Sequence' (the sequences of the forward
-and reverse index tags, respectively), 'Forward Primer', 'Reverse Primer'
-(the sequences of the forward and reverse primers, respectively), and
-'P7 Sequence'. All data in the tag, primer and P7 Sequence fields
-should be in upper case and should not contain gaps. If
-\code{sheet = NULL}, all sequences will be parsed without matching
-or trimming index tags and primers, and sequences will be named
-according to their names in the input fastq text file (the lines
-beginning with "@").}
-
-\item{filter}{logical indicating whether sequences should undergo length,
-quality and ambiguity filtering during the parse. Defaults to TRUE.}
-
-\item{minlength}{integer giving the minimum acceptable length (the
-number of base pairs after the removal of index tags and primers
-if applicable) for sequences to be retained. Defaults to 50.}
-
-\item{minqual}{numeric giving the minimum average Phred quality
-score (after trimming index tags and primers) for sequences to
-be retained. Defaults to 30.}
-
-\item{maxambigs}{integer giving the maximum acceptable number of
-ambiguous base calls (after trimming index tags and primers) for
-sequences to be retained. Defaults to 0.}
-
-\item{mincount}{integer giving the minimum number of occurrences of a
-sequence in the dataset for it to be retained. Defaults to 2
-(singletons are discarded).}
-
-\item{DNA}{logical indicating whether the returned object should be of
-class \code{"DNAbin"} as output by the \code{\link[ape]{as.DNAbin}}
-function in the \code{\link[ape]{ape}} package (defaults to TRUE;
-recommended for memory and speed efficiency). If set to FALSE, the
-function returns a list of character vectors containing residues from the
-set {ACGTN} with an associated character vector of "quality"
-attributes in the same ASCII coding scheme used in the FASTQ file format.}
-
-\item{nlines}{integer, the maximum number of text lines to be read and
-analysed in one batch. This may be reduced if importing large files and
-memory is limited. Typically a ten-million-line text file of ~500bp
-sequences with associated metadata (quality, run number, cluster
-coordinates, etc) will require around 2 GB of memory for the initial
-text import, and be reduced to around a quarter or this after the
-removal of index-mismatching sequences, short reads and singletons,
-and once the sequences and quality scores are compressed to
-raw bytes (assuming \code{DNA} is set to \code{TRUE}). Thus reducing
-\code{nlines} can prevent memory limits from being exceeded; however
-this can increase the computation time.}
-
-\item{quiet}{logical indicating whether the progress of the parse
-operation should be printed to the console.}
+\item{format}{the format of each element in the returned list. Accepted options are
+"string" (each sequence is a concatenated string with a similarly concatenated
+quality attribute comprised of metacharacters in the FASTQ coding scheme),
+"character" (each sequence is a character vector with one element for each
+nucleotide; quality attributes are integer vectors with values
+between 0 and 93), and "DNAbin" (each element is a raw vector in DNAbin format)}
 
 \item{...}{further arguments to be passed to \code{\link{scan}}.}
 }
@@ -87,36 +29,24 @@ Returns a list of DNA sequences, either in \code{DNAbin} format
 \description{
 \code{readFASTQ} is a text parser/filter that reads files in the FASTQ
   format into R, during which it optionally applies various sequence
-  editing procedures and filters. If a valid sample sheet is provided
-  (\code{sheet} is not NULL), any sequence that does not feature a motif
-  matching one of the index-primer-primer-index combinations from the
-  sheet are discarded during the parse.
+  editing procedures and filters.
 }
 \details{
-\subsection{Compatibility:}{The FASTQ convention remains somewhat
+\subsection{Compatibility:}{The FASTQ convention is somewhat
   ambiguous with several slightly different interpretations appearing
   in the literature. For now, this function only supports the Illumina
   convention for FASTQ files, where each sequence and its associated
   metadata occupies four line of the text file as follows : (1) the
   run and cluster metadata preceeded by an @ symbol; (2) the sequence
-  itself in capitals without spaces and containing only residues from
-  the set {ACGTN}; (3) a single "+" symbol; and (4) the Phred quality
+  itself in capitals without spaces;
+  (3) a single "+" symbol; and (4) the Phred quality
   scores from 0 to 93 represented as ASCII symbols. For more information
   on this convention see the Illumina help page
   \href{https://help.basespace.illumina.com/articles/descriptive/fastq-files/}{here}
   .}
   \subsection{Speed and Memory Requirements:}{This function can
-  take a while to process larger FASTQ files, particularly
-  if index matching and filtering is required (\code{sheet} is
-  not \code{NULL} and \code{filter = TRUE}). As an example, a FASTQ text
-  file with four-million lines (one million 500bp sequences with
-  associated metadata), with a sample sheet specifying
-  48 unique index-primer-primer-index combinations, and using the
-  default fitering parameters took around 10 minutes on a single core
-  of a Lenovo T530 Thinkpad laptop (Intel i7 2.6GHz w 16GB RAM running
-  64 bit Ubuntu 16.04). The operation required ~ 2.5 GB of free memory and
-  the output \code{"DNAbin"} object containing ~ 400,000 sequences and
-  asociated quality scores occupied ~250 Mb memory.}
+  take a while to process larger FASTQ files, a multithreading option
+  will be available in a future version.}
 }
 \examples{
   \dontrun{

@@ -28,21 +28,23 @@
   return(qbytes[match(strsplit(x, split = "")[[1]], qchars)])
 }
 
+
 .rc <- function(s){
   # a string of A, C, G, T, and N's
   s <- strsplit(s, split = "")[[1]]
   s <- rev(s)
   dchars <- strsplit("ACGTMRWSYKVHDBN", split = "")[[1]]
   comps <- strsplit("TGCAKYWSRMBDHVN", split = "")[[1]]
-  s <- s[s %in% dchars] # rmove spaces etc
+  s <- s[s %in% dchars] # remove spaces etc
   s <- dchars[match(s, comps)]
   s <- paste0(s, collapse = "")
   return(s)
 }
 
 .disambiguate <- function(s){
-  s <- gsub("[^ACGTMRWSYKVHDBN]", "", s)
-  if(grepl("[MRWSYKVHDBN]", s)){
+  if(is.null(s)) return(NULL)
+  s <- gsub("[^ACGTMRWSYKVHDBNI]", "", s)
+  if(grepl("[MRWSYKVHDBNI]", s)){
     s <- gsub("M", "[AC]", s)
     s <- gsub("R", "[AG]", s)
     s <- gsub("W", "[AT]", s)
@@ -53,7 +55,8 @@
     s <- gsub("H", "[ACT]", s)
     s <- gsub("D", "[AGT]", s)
     s <- gsub("B", "[CGT]", s)
-    s <- gsub("N", "[ACGT]", s)
+    s <- gsub("N|I", "[ACGT]", s)
+    #s <- gsub("I", "[ACGT]", s)
   }
   return(s)
 }
