@@ -11,20 +11,19 @@ readFASTQ(file, format = "DNAbin", ...)
 
 \item{format}{the format of each element in the returned list. Accepted options are
 "string" (each sequence is a concatenated string with a similarly concatenated
-quality attribute comprised of metacharacters in the FASTQ coding scheme),
+quality attribute comprised of the same ASCII metacharacters used in the FASTQ coding scheme),
+"DNAbin" (each element is a raw vector in DNAbin format; quality attributes
+are also raw vectors), and
 "character" (each sequence is a character vector with one element for each
 nucleotide; quality attributes are integer vectors with values
-between 0 and 93), and "DNAbin" (each element is a raw vector in DNAbin format)}
+between 0 and 93). The latter is perhaps the most intuitive, but the least memory
+efficient, occupying around four times the memory of the other formats.}
 
 \item{...}{further arguments to be passed to \code{\link{scan}}.}
 }
 \value{
-Returns a list of DNA sequences, either in \code{DNAbin} format
-  or as character vectors if \code{DNA} is set to \code{FALSE}. In either
-  case the sequences in the returned list each have a "quality" attribute,
-  which is a vector of quality scores between 0 and 93 either in raw bytes
-  (if DNA = TRUE) or in the same ASCII coding scheme as used in the FASTQ
-  file format.
+Returns a list of DNA sequences, either as strings, character vectors or
+  raw ("DNAbin") vectors, each with a "quality" attribute.
 }
 \description{
 \code{readFASTQ} is a text parser/filter that reads files in the FASTQ

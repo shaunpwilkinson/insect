@@ -7,17 +7,16 @@
 #' @param file the name of the FASTQ file from which the sequences are to be read.
 #' @param format the format of each element in the returned list. Accepted options are
 #'   "string" (each sequence is a concatenated string with a similarly concatenated
-#'   quality attribute comprised of metacharacters in the FASTQ coding scheme),
+#'   quality attribute comprised of the same ASCII metacharacters used in the FASTQ coding scheme),
+#'   "DNAbin" (each element is a raw vector in DNAbin format; quality attributes
+#'   are also raw vectors), and
 #'   "character" (each sequence is a character vector with one element for each
 #'   nucleotide; quality attributes are integer vectors with values
-#'   between 0 and 93), and "DNAbin" (each element is a raw vector in DNAbin format)
+#'   between 0 and 93). The latter is perhaps the most intuitive, but the least memory
+#'   efficient, occupying around four times the memory of the other formats.
 #' @param ... further arguments to be passed to \code{\link{scan}}.
-#' @return Returns a list of DNA sequences, either in \code{DNAbin} format
-#'   or as character vectors if \code{DNA} is set to \code{FALSE}. In either
-#'   case the sequences in the returned list each have a "quality" attribute,
-#'   which is a vector of quality scores between 0 and 93 either in raw bytes
-#'   (if DNA = TRUE) or in the same ASCII coding scheme as used in the FASTQ
-#'   file format.
+#' @return Returns a list of DNA sequences, either as strings, character vectors or
+#'   raw ("DNAbin") vectors, each with a "quality" attribute.
 #' @details
 #'   \subsection{Compatibility:}{The FASTQ convention is somewhat
 #'   ambiguous with several slightly different interpretations appearing
@@ -59,9 +58,11 @@ readFASTQ <- function(file, format = "DNAbin", ...){
   seqs <- x[seq_along(x) %% 3 == 2]
   names(seqs) <- gsub("^@", "", x[seq_along(x) %% 3 == 1])
   quals <- x[seq_along(x) %% 3 == 0]
-  # ape::as.DNAbin(seqs[1])
+  # 477 mb total
   if(format == "string"){
-    mapply(function(x, y) structure(x, quality = y), seqs, quals, SIMPLIFY = FALSE) # 639.9mb
+    attr(seqs, "quality") <- quals
+    return(seqs)
+    # mapply(function(x, y) structure(x, quality = y), seqs, quals, SIMPLIFY = FALSE) # 639.9mb
   }else if(format == "character"){
     seqs2 <- strsplit(seqs, split = "")
     quals2 <- lapply(quals, .char2qual)
@@ -69,7 +70,7 @@ readFASTQ <- function(file, format = "DNAbin", ...){
     mapply(function(x, y) structure(x, quality = y), seqs2, quals2, SIMPLIFY = FALSE) #2.3gb
   }else if(format == "DNAbin"){
     seqs2 <- lapply(seqs, .char2dna)
-    quals2 <- lapply(quals, .char2qual)
+    quals2 <- lapply(quals, .char2qual) #510 mb total
     res <- mapply(function(x, y) structure(x, quality = y), seqs2, quals2, SIMPLIFY = FALSE) # 576mb
     class(res) <- "DNAbin"
     return(res)
