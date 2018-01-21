@@ -1,8 +1,7 @@
 #' Read and filter FASTQ files.
 #'
 #' \code{readFASTQ} is a text parser/filter that reads files in the FASTQ
-#'   format into R, during which it optionally applies various sequence
-#'   editing procedures and filters.
+#'   format into R in either raw (DNAbin) or character format.
 #'
 #' @param file the name of the FASTQ file from which the sequences are to be read.
 #' @param format the format of each element in the returned list. Accepted options are
