@@ -39,18 +39,16 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
                  probs = 0.05, retry = TRUE, resize = TRUE, maxsize = NULL,
                  kmers = NULL, seqweights = "Gerstein", cores = 1,
                  quiet = FALSE, ...){
-  #if(!is.list(node) & is.null(attr(node, "lock")) & is.null(attr(node, "onespp"))){
   indices <- attr(node, "sequences")
   nseq <- length(indices)
   lineages <- lineages[indices]
   if(!is.list(node) & is.null(attr(node, "lock")) & !all(lineages == lineages[1])){
     # fork leaves only
-    # seqs <- x[attr(node, "sequences")]
-    #lins <- lineages[attr(node, "sequences")]
-    if(minK == 1 | nseq < minK){
-      if(!is.null(attr(node, "model"))) attr(node, "model")$alignment <- NULL
-      return(node)
-    }
+    if(minK == 1 | nseq < minK) return(node) # 'expand' will encode model later
+    # {
+    #   if(!is.null(attr(node, "model"))) attr(node, "model")$alignment <- NULL
+    #   return(node)
+    # }
     if(nseq < maxK) maxK <- nseq
     if(is.null(seqweights)){
       seqweights <- rep(1, nseq)
@@ -84,7 +82,6 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
         stopclustr <- TRUE
       }
     }
-
     ## Split clade
     if(!quiet) cat("Attempting to split node", attr(node, "clade"), "\n")
     if(is.null(attr(node, "model"))){
@@ -92,7 +89,10 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
       mod <- NULL
     }else{
       mod <- attr(node, "model")
-      attr(node, "model")$alignment <- NULL ## save on memory
+      ## usually models will not be encoded here
+      ## grab a copy of the model and encode the one at the node
+      if(mode(mod) == "raw") mod <- decodePHMM(mod) else attr(node, "model") <- encodePHMM(attr(node, "model"))
+      # attr(node, "model")$alignment <- NULL ## save on memory
       ins <- mod$inserts
       toosparse <- if(is.null(ins)) FALSE else sum(ins)/length(ins) > 0.5
       if(resize & toosparse & !quiet) cat("Skipping resize step\n")
@@ -252,7 +252,7 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
     } # else{
     #   attr(node, "model")$alignment <- NULL
     # }
-    attr(node, "model")$alignment <- NULL
+    # attr(node, "model")$alignment <- NULL
   }
   return(node)
 }

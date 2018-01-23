@@ -9,10 +9,11 @@
 #'   an object of class "PHMM".
 #' @details TBA
 #' @author Shaun Wilkinson
-#' @examples TBA
+#' @examples #TBA
 #' @name encoding
 ################################################################################
 encodePHMM <- function(x){
+  if(mode(x) == "raw") return(x)
   encode1 <- function(xx){
     ## a number between 0.000001 and 100
     ## encodes as two bytes to (almost) 4 signif figs
@@ -54,6 +55,7 @@ encodePHMM <- function(x){
 #' @rdname encoding
 ################################################################################
 decodePHMM <- function(z){
+  if(mode(z) != "raw") return(z)
   decode1 <- function(zz){
     ## zz is a 2-byte raw vec
     res <- rawToBits(zz)

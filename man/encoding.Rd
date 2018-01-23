@@ -27,7 +27,7 @@ These functions are used to compress and decompress profile
 TBA
 }
 \examples{
-TBA
+#TBA
 }
 \author{
 Shaun Wilkinson

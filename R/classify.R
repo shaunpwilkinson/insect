@@ -42,7 +42,9 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, cores = 1){
       no_mods <- length(tree)
       sc <- numeric(no_mods) # scores (log probabilities)
       for(i in 1:no_mods){
-        sc[i] <- aphid::forward.PHMM(attr(tree[[i]], "model"), x, odds = FALSE)$score
+        modi <- decodePHMM(attr(tree[[i]], "model"))
+        sc[i] <- aphid::forward.PHMM(modi, x, odds = FALSE)$score
+        # takes a similar amount of time
       }
       total_score <- aphid::logsum(sc)
       akwgts <- exp(sc - total_score)

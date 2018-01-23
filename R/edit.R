@@ -58,16 +58,6 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
   clades <- unlist(allnestedleaves, use.names = FALSE)
   if(length(clades) == 0) return(tree)
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
-
-#
-#   # temporarily remove DNAbin from root node and replace with indices
-#   x <- attr(tree, "sequences") #full sequence set
-#   # nseq <- length(x)
-#   tmpxattr <- attributes(x)
-#   x <- x[] # temporarily remove memory hungry attributes
-#   attr(tree, "sequences") <- seq_along(x) # temporary
-#   ### find splittable leaves recursively
-
   ## following lines are for trees that have been stripped of memory-intensive elements
   hashes <- attr(x, "hashes")
   if(is.null(hashes)) hashes <- .digest(x, simplify = TRUE)
@@ -261,11 +251,16 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
   }
   if(!quiet) cat("Repatriating duplicate sequences with tree\n")
   tree <- dendrapply(tree, reduplicate, pointers = pointers)
-  rmaligs <- function(node){
-    if(is.leaf(node)) attr(node, "model")$alignment <- NULL
+  # rmaligs <- function(node){
+  #   if(is.leaf(node)) attr(node, "model")$alignment <- NULL
+  #   return(node)
+  # }
+  # tree <- dendrapply(tree, rmaligs) # more memory efficient
+  encodemods <- function(node){
+    if(is.leaf(node)) attr(node, "model") <- encodePHMM(attr(node, "model"))
     return(node)
   }
-  tree <- dendrapply(tree, rmaligs) # more memory efficient
+  tree <- dendrapply(tree, encodemods) # more memory efficient
   #if(has_duplicates) x <- fullseqset
   # attributes(x) <- tmpxattr
   if(!quiet) cat("Resetting node heights\n")
@@ -336,132 +331,3 @@ contract <- function(tree, clades = "", quiet = FALSE){
   return(tree)
 }
 ################################################################################
-################################################################################
-# Find and collapse over-extended nodes
-#
-# This function tests each node of a classification tree
-#   for over-extension by checking if all sequences belonging
-#   to the node have identical lineage metadata. Over-extended
-#   nodes are collapsed and the simplified tree returned.
-#
-# @param tree an object of class \code{"insect"}.
-# @param quiet logical indicating whether feedback should be printed
-#   to the console.
-# @return an object of class \code{"insect"}.
-# @details TBA
-# @author Shaun Wilkinson
-# @references TBA
-# @seealso \code{\link{expand}}, \code{\link{contract}}
-# @examples
-#   ## TBA
-################################################################################
-# purge <- function(tree, quiet = FALSE){
-#   purge1 <- function(node, lineages){
-#     if(is.list(node)){
-#       nodelins <- lineages[attr(node, "sequences")]
-#       if(all(nodelins == nodelins[1])){
-#         for(i in seq_along(node)) node[[i]] <- contract(node[[i]])
-#         #node <- contract(node)
-#       }
-#     }
-#     return(node)
-#   }
-#
-#   purge2 <- function(node, lineages){
-#     node <- purge1(node, lineages)
-#     if(is.list(node)) node[] <- lapply(node, purge2, lineages)
-#     return(node)
-#   }
-#   x <- attr(tree, "sequences")
-#   attr(tree, "sequences") <- seq_along(x)
-#   if(!quiet) cat("Collapsing over-extended nodes\n")
-#   # lineages <- attr(x, "lineage")
-#   # lineages <- gsub("\\.", "", attr(x, "lineage"))
-#   # lineages <- paste0(lineages, "; ", attr(x, "species"))
-#   lineages <- attr(x, "lineage")
-#   if(!(length(x) == length(lineages))) stop("Error 1")
-#   tree <- purge2(tree, lineages)
-#   if(all(lineages == lineages[1])) tree <- contract(tree)
-#   if(!quiet) cat("Setting midpoints and members attributes\n")
-#   tree <- phylogram::remidpoint(tree)
-#   #cat(class(tree), "\n") ##############
-#   class(tree) <- "dendrogram"
-#   if(!quiet) cat("Resetting node heights\n")
-#   tree <- phylogram::reposition(tree)
-#   if(!quiet) cat("Making tree ultrametric\n")
-#   tree <- phylogram::ultrametricize(tree)
-#   attr(tree, "sequences") <- x
-#   return(tree)
-# }
-################################################################################
-
-
-# purge1 <- function(node, lineages){
-#   if(is.list(node)){
-#     for(i in seq_along(node)){
-#       if(is.list(node[[i]])){
-#         nodelinsi <- lineages[attr(node[[i]], "sequences")]
-#         if(all(nodelinsi == nodelinsi[1])) node[[i]] <- contract(node[[i]])
-#       }
-#     }
-#   }
-#   return(node)
-# }
-
-# purge <- function(tree, quiet = FALSE){
-  # purge1 <- function(node, lineages){
-  #   if(is.list(node)){
-  #     nodelins <- lineages[attr(node, "sequences")]
-  #     if(all(nodelins == nodelins[1])){
-  #       #for(i in seq_along(node)) node[[i]] <- contract(node[[i]])
-  #       node <- contract(node)
-  #     }
-  #   }
-  #   return(node)
-  # }
-#   purge2 <- function(node, lineages){
-#     node <- purge1(node, lineages)
-#     if(is.list(node)) node[] <- lapply(node, purge2, lineages)
-#     return(node)
-#   }
-#   x <- attr(tree, "sequences")
-#   attr(tree, "sequences") <- seq_along(x)
-#   if(!quiet) cat("Collapsing over-extended nodes\n")
-#   lineages <- attr(x, "lineage")
-#   tree <- purge2(tree, lineages)
-#   if(!quiet) cat("Setting midpoints and members attributes\n")
-#   tree <- phylogram::remidpoint(tree)
-#   cat(class(tree), "\n") ##############
-#   #class(tree) <- "dendrogram"
-#   if(!quiet) cat("Resetting node heights\n")
-#   tree <- phylogram::reposition(tree)
-#   if(!quiet) cat("Making tree ultrametric\n")
-#   tree <- phylogram::ultrametricize(tree)
-#   attr(tree, "sequences") <- x
-#   return(tree)
-# }
-
-
-
-
-
-
-
-# ### This was last right before returning tree in contract
-# x <- attr(tree, "sequences") #full sequence set
-# has_duplicates <- any(attr(tree, "duplicates"))
-# if(has_duplicates) x <- x[!attr(tree, "duplicates")]
-# label <- function(node, x){ # node is dendro, x is DNAbin
-#   if(is.leaf(node)){
-#     if(length(attr(node, "sequences")) > 1){
-#       attr(node, "label") <- paste0(names(x)[attr(node, "sequences")[1]],
-#                                     "...(", attr(node, "nunique"), ",",
-#                                     attr(node, "ntotal"), ")")
-#     }else{
-#       attr(node, "label") <- names(x)[attr(node, "sequences")]
-#     }
-#   }
-#   return(node)
-# }
-# if(!quiet) cat("Labeling leaf nodes\n")
-# tree <- dendrapply(tree, label, x)
