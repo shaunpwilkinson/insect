@@ -36,14 +36,14 @@ encodePHMM <- function(x){
   if(any(is.finite(x$A[7, ]))) logibits[31] <- as.raw(1) # ID trans enabled?
   logibytes <- packBits(logibits)
   sizebytes <- packBits(intToBits(x$size)) # 4 bytes for model size = 4bil max size
-  A <- x$A[-(c(3, 7)), ]
+  A <- x$A[-(c(2, 3, 6, 7, 9)), ]
   A <- A[is.finite(A)] * -1 # now a vector
   A[A < 1e-06] <- 1e-06 ## minimum value (max prob remember to fix final DM trans to 1)
   Abytes <- as.vector(sapply(A, encode1))
-  E <- x$E * -1
+  E <- x$E[1:3, ] * -1 # drop T row as can be calculated
   E[E < 1e-06] <- 1e-06
   Ebytes <- as.vector(sapply(E, encode1))
-  qa <- x$qa[-c(3, 7)] * -1
+  qa <- x$qa[-c(3, 7)] * -1 # can't drop any
   qabytes <- as.vector(sapply(qa, encode1))
   qe <- x$qe * -1
   qebytes <- as.vector(sapply(qe, encode1))
@@ -67,29 +67,40 @@ decodePHMM <- function(z){
     return(as.numeric(tmp))
   }
   zsize <-  sum(as.integer(z[5:8]) * c(1, 256, 65536, 16777216))
-  alength <- (((zsize + 1) * 7) - 4) * 2
-  ## 1 extra col at front, 7 rows excl DI & ID, 4 -Infs (DD DM start, DD MD end), 2 bytes per entry
+  alength <- (((zsize + 1) * 4) - 3) * 2
+  ## 1 extra col at front, 4 rows excl DI, ID etc, 3 -Infs (DD start, DD MD end), 2 bytes per entry
   astart <- 9
   aend <- alength + 9 - 1
   A <- z[astart:aend]
   A <- apply(matrix(A, nrow = 2), 2, decode1) * -1
-  A <- c(-Inf, -Inf, A)
-  lcis <- seq(length(A) - 4, length(A)) # last column indices
-  lastcol <- A[lcis]
-  lastcol <- c(-Inf, 0, -Inf, lastcol[-1]) # complusory DM transition
+  A <- c(-Inf, A) ## append first DD transition
+  lcis <- seq(length(A) - 1, length(A)) # last column indices
+  lastcol <- c(-Inf, -Inf, A[lcis]) # final DD, MD, MM and IM transitions
   A <- A[-lcis]
   A <- c(A, lastcol)
-  A <- matrix(A, nrow = 7)
-  A <- rbind(A, -Inf)
-  A <- rbind(A, -Inf)
-  A <- A[c(1, 2, 8, 3, 4, 5, 9, 6, 7),]
+  A <- matrix(A, nrow = 4) # just DD, MD, MM and IM at the moment
+  DMrow <- log(1 - exp(A[1, ]))
+  DMrow[1] <- -Inf
+  DMrow[length(DMrow)] <- 0
+  DIrow <- rep(-Inf, zsize + 1)
+  MIrow <- (1 - exp(A[2, ])) - exp(A[3, ])
+  MIrow[MIrow < 1e-06] <- 1e-06
+  MIrow <- log(MIrow)
+  IDrow <- rep(-Inf, zsize + 1)
+  IIrow <- 1 - exp(A[4, ])
+  IIrow[IIrow < 1e-06] <- 1e-06
+  IIrow <- log(IIrow)
+  A <- rbind(A[1, ], DMrow, DIrow, A[2:3, ], MIrow, IDrow, A[4, ], IIrow)
   dimnames(A) <- list(type = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II"),
                       module = paste(0:zsize))
   estart <- aend + 1
   eend <- length(z) - 22 #(4 x 2 for qe, 7 x 2 for qa)
   E <- z[estart:eend]
   E <- apply(matrix(E, nrow = 2), 2, decode1) * -1
-  E <- matrix(E, nrow = 4)
+  E <- matrix(E, nrow = 3)
+  Trow <- apply(exp(E), 2, function(v) 1 - v[1] - v[2] - v[3])
+  Trow[Trow < 1e-06] <- 1e-06
+  E <- rbind(E, log(Trow))
   dimnames(E) <- list(residue = c("A", "C", "G", "T"), position <- paste(1:zsize))
   qastart <- eend + 1
   qaend <- qastart + 13 #(7 * 2 - 1)
