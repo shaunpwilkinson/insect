@@ -49,10 +49,9 @@ get_lineage <- function(id, db){
 #'   ##TBA
 ################################################################################
 get_taxon <- function(lineage, db){
-  if(identical(lineage, "")) {
-    lineage <- "root"
-  }
-  linvec <- rev(strsplit(gsub("\\.$", "", lineage), split = "; ")[[1]])
+  if(identical(lineage, "")) lineage <- "root"
+  #linvec <- rev(strsplit(gsub("\\.$", "", lineage), split = "; ")[[1]])
+  linvec <- rev(strsplit(lineage, split = "; ")[[1]])
   indices <- which(db$name == linvec[1])
   taxids <- db$tax_id[indices]
   if(length(taxids) == 1){

@@ -1,0 +1,109 @@
+#' Encode and decode profile HMMs in raw bytes
+#'
+#' These functions are used to compress and decompress profile
+#'   hidden Markov models for DNA to improve memory efficiency.
+#'
+#' @param x an object of class "PHMM"
+#' @param z a raw vector in the encodePHMM schema
+#' @return encodePHMM returns a raw vector. \code{decodePHMM} returns
+#'   an object of class "PHMM".
+#' @details TBA
+#' @author Shaun Wilkinson
+#' @examples TBA
+#' @name encoding
+################################################################################
+encodePHMM <- function(x){
+  encode1 <- function(xx){
+    ## a number between 0.000001 and 100
+    ## encodes as two bytes to (almost) 4 signif figs
+    ## first 13 for the digits (2^13 = 8192) last 3 bits for exponent
+    #(1e-6 -> 0, 1e+1 -> 7)
+    if(!is.finite(xx)) return(as.raw(c(0, 0)))
+    stopifnot(xx < 100)
+    stopifnot(xx >= 1e-06)
+    tmp <- formatC(xx, digits = 3, format = "E")
+    tmp <- strsplit(tmp, split = "E")[[1]]
+    digi <- as.integer(gsub("\\.", "", tmp[1])) - 1000 #(0-999 are not poss)
+    digi <- round(digi * 0.9102122, 0) # scale factor 8191/8999 = 0.9102122
+    digi <- intToBits(digi)[1:13]
+    expo <- as.numeric(gsub(".+E(...)$", "\\1", tmp[2])) + 6
+    expo <- intToBits(expo)[1:3]
+    res <- packBits(c(digi, expo))
+    return(res)
+  }
+  logibits <- raw(32)
+  if(any(is.finite(x$A[3, ]))) logibits[32] <- as.raw(1) # DI trans enabled?
+  if(any(is.finite(x$A[7, ]))) logibits[31] <- as.raw(1) # ID trans enabled?
+  logibytes <- packBits(logibits)
+  sizebytes <- packBits(intToBits(x$size)) # 4 bytes for model size = 4bil max size
+  A <- x$A[-(c(3, 7)), ]
+  A <- A[is.finite(A)] * -1 # now a vector
+  A[A < 1e-06] <- 1e-06 ## minimum value (max prob remember to fix final DM trans to 1)
+  Abytes <- as.vector(sapply(A, encode1))
+  E <- x$E * -1
+  E[E < 1e-06] <- 1e-06
+  Ebytes <- as.vector(sapply(E, encode1))
+  qa <- x$qa[-c(3, 7)] * -1
+  qabytes <- as.vector(sapply(qa, encode1))
+  qe <- x$qe * -1
+  qebytes <- as.vector(sapply(qe, encode1))
+  z <- c(logibytes, sizebytes, Abytes, Ebytes, qabytes, qebytes)
+  return(z)
+}
+################################################################################
+#' @rdname encoding
+################################################################################
+decodePHMM <- function(z){
+  decode1 <- function(zz){
+    ## zz is a 2-byte raw vec
+    res <- rawToBits(zz)
+    expo <- as.integer(packBits(c(res[14:16], raw(5)))) - 6
+    digi <- as.integer(packBits(c(res[1:13], raw(3))))
+    digi <- sum(digi* c(1, 256))
+    # digi <- prod(digi + 1) - 1 # +1 -> 255 -> 256
+    digi <- round(digi/0.9102122, 0) + 1000
+    digi <- strsplit(paste(digi), split = "")[[1]]
+    tmp <- paste0(digi[1], ".", paste0(digi[2:4], collapse = ""), "E", expo)
+    return(as.numeric(tmp))
+  }
+  zsize <-  sum(as.integer(z[5:8]) * c(1, 256, 65536, 16777216))
+  alength <- (((zsize + 1) * 7) - 4) * 2
+  ## 1 extra col at front, 7 rows excl DI & ID, 4 -Infs (DD DM start, DD MD end), 2 bytes per entry
+  astart <- 9
+  aend <- alength + 9 - 1
+  A <- z[astart:aend]
+  A <- apply(matrix(A, nrow = 2), 2, decode1) * -1
+  A <- c(-Inf, -Inf, A)
+  lcis <- seq(length(A) - 4, length(A)) # last column indices
+  lastcol <- A[lcis]
+  lastcol <- c(-Inf, 0, -Inf, lastcol[-1]) # complusory DM transition
+  A <- A[-lcis]
+  A <- c(A, lastcol)
+  A <- matrix(A, nrow = 7)
+  A <- rbind(A, -Inf)
+  A <- rbind(A, -Inf)
+  A <- A[c(1, 2, 8, 3, 4, 5, 9, 6, 7),]
+  dimnames(A) <- list(type = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II"),
+                      module = paste(0:zsize))
+  estart <- aend + 1
+  eend <- length(z) - 22 #(4 x 2 for qe, 7 x 2 for qa)
+  E <- z[estart:eend]
+  E <- apply(matrix(E, nrow = 2), 2, decode1) * -1
+  E <- matrix(E, nrow = 4)
+  dimnames(E) <- list(residue = c("A", "C", "G", "T"), position <- paste(1:zsize))
+  qastart <- eend + 1
+  qaend <- qastart + 13 #(7 * 2 - 1)
+  tmp <- z[qastart:qaend]
+  tmp <- apply(matrix(tmp, nrow = 2), 2, decode1) * -1
+  qa <- structure(rep(-Inf, 9), names = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II"))
+  qa[c(1, 2, 4, 5, 6, 8, 9)] <- tmp
+  qestart <- qaend + 1
+  qeend <- length(z)
+  qe <- z[qestart:qeend]
+  qe <- apply(matrix(qe, nrow = 2), 2, decode1) * -1
+  names(qe) <- c("A", "C", "G", "T")
+  res <- list(size = zsize, A = A, E = E, qa = qa, qe = qe)
+  class(res) <- "PHMM"
+  return(res)
+}
+################################################################################

@@ -27,8 +27,7 @@ Returns a list of DNA sequences, either as strings, character vectors or
 }
 \description{
 \code{readFASTQ} is a text parser/filter that reads files in the FASTQ
-  format into R, during which it optionally applies various sequence
-  editing procedures and filters.
+  format into R in either raw (DNAbin) or character format.
 }
 \details{
 \subsection{Compatibility:}{The FASTQ convention is somewhat
