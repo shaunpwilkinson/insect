@@ -14,23 +14,16 @@
 ################################################################################
 encodePHMM <- function(x){
   if(mode(x) == "raw") return(x)
-  encode1 <- function(xx){
-    ## a number between 0.000001 and 100
+  encode1 <- function(xx){ ## a number between 0.000001 and 100
     ## encodes as two bytes to (almost) 4 signif figs
     ## first 13 for the digits (2^13 = 8192) last 3 bits for exponent
     #(1e-6 -> 0, 1e+1 -> 7)
     if(!is.finite(xx)) return(as.raw(c(0, 0)))
-    stopifnot(xx < 100)
-    stopifnot(xx >= 1e-06)
-    tmp <- formatC(xx, digits = 3, format = "E")
-    tmp <- strsplit(tmp, split = "E")[[1]]
-    digi <- as.integer(gsub("\\.", "", tmp[1])) - 1000 #(0-999 are not poss)
-    digi <- round(digi * 0.9102122, 0) # scale factor 8191/8999 = 0.9102122
-    digi <- intToBits(digi)[1:13]
-    expo <- as.numeric(gsub(".+E(...)$", "\\1", tmp[2])) + 6
-    expo <- intToBits(expo)[1:3]
-    res <- packBits(c(digi, expo))
-    return(res)
+    stopifnot(xx >= 1e-06 & xx < 100)
+    expo <- floor(log10(xx))
+    digi <- round((xx/10^(expo - 3) - 1000) * 0.9102122, 0)
+    ## scale factor 8191/8999 = 0.9102122, 3 to get from 1 to 1000
+    return(packBits(c(intToBits(digi)[1:13], intToBits(expo + 6)[1:3])))
   }
   logibits <- raw(32)
   if(any(is.finite(x$A[3, ]))) logibits[32] <- as.raw(1) # DI trans enabled?
@@ -56,17 +49,13 @@ encodePHMM <- function(x){
 ################################################################################
 decodePHMM <- function(z){
   if(mode(z) != "raw") return(z)
-  decode1 <- function(zz){
-    ## zz is a 2-byte raw vec
+  decode1 <- function(zz){ ## zz is a 2-byte raw vec
     res <- rawToBits(zz)
     expo <- as.integer(packBits(c(res[14:16], raw(5)))) - 6
-    digi <- as.integer(packBits(c(res[1:13], raw(3))))
+    digi <- as.integer(packBits(c(res[1:13], raw(3)))) # 2 ints between 0 and 8191
     digi <- sum(digi* c(1, 256))
-    # digi <- prod(digi + 1) - 1 # +1 -> 255 -> 256
-    digi <- round(digi/0.9102122, 0) + 1000
-    digi <- strsplit(paste(digi), split = "")[[1]]
-    tmp <- paste0(digi[1], ".", paste0(digi[2:4], collapse = ""), "E", expo)
-    return(as.numeric(tmp))
+    digi <- round(digi/0.9102122, 0) + 1000 # integer between 1000 and 9999
+    return(digi * 10^(expo - 3)) # the 3 reduces from 1000 to 1
   }
   zsize <-  sum(as.integer(z[5:8]) * c(1, 256, 65536, 16777216))
   alength <- (((zsize + 1) * 4) - 3) * 2
