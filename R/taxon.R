@@ -70,3 +70,43 @@ get_taxon <- function(lineage, db){
   }
 }
 ################################################################################
+#' Download taxon database
+#'
+#' This function accesses the NCBI API and gets the latest copy of the taxon
+#'   database
+#'
+#' @return a dataframe with the following columns: "tax_id", "parent_tax_id",
+#'   "rank", "name", "parent_tax_index"
+#' @details TBA
+#' @author Shaun Wilkinson
+#' @references TBA
+#' @examples
+#'   ##TBA
+################################################################################
+download_taxon <- function(){
+  tmp <- tempdir()
+  fn <- "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz"
+  download.file(fn, destfile = paste0(tmp, "/tmp.tar.gz"))
+  test <- untar(tarfile = paste0(tmp, "/tmp.tar.gz"), exdir = tmp)
+  if(!identical(test, 0L)) stop(cat(test))
+  x <- scan(file = paste0(tmp, "/nodes.dmp"), what = "", sep = "\n", quiet = TRUE)
+  x <- strsplit(x, split = "\t")
+  x <- sapply(x, function(s) s[c(1, 3, 5)])
+  nodes <- as.data.frame(t(x), stringsAsFactors = FALSE)
+  nodes[[1]] <- as.integer(nodes[[1]])
+  nodes[[2]] <- as.integer(nodes[[2]])
+  colnames(nodes) <- c("tax_id", "parent_tax_id", "rank")
+  x <- scan(file = paste0(tmp, "/names.dmp"), what = "", sep = "\n", quiet = TRUE)
+  x <- x[grepl("scientific name", x)] # 1637100 elements ~200 Mb, ~5 sec
+  x <- strsplit(x, split = "\t")
+  x <- sapply(x, function(s) s[c(1, 3)])
+  namez <- as.data.frame(t(x), stringsAsFactors = FALSE)
+  namez[[1]] <- as.integer(namez[[1]])
+  colnames(namez) <- c("tax_id", "name")
+  # merge node and names data frames together
+  taxa <- merge(nodes, namez, by = "tax_id")
+  taxa$parent_tax_id[taxa$tax_id == 1] <- 0
+  taxa$parent_tax_index <- match(taxa$parent_tax_id, taxa$tax_id)
+  return(taxa)
+}
+################################################################################

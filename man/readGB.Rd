@@ -7,7 +7,7 @@
 readGB(accs, prompt = FALSE, contact = NULL, quiet = FALSE)
 }
 \arguments{
-\item{accs}{character vector or GenBank accession numbers.}
+\item{accs}{character vector of GenBank accession numbers.}
 
 \item{prompt}{logical indicating whether the user should be prompted with
 the total number of sequences to download before commencing.}

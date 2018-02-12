@@ -252,7 +252,7 @@ searchGB <- function(query, onlyID = FALSE, prompt = TRUE,
 #'
 #' This function downloads DNA sequence data from GenBank via the Entrez API.
 #'
-#' @param accs character vector or GenBank accession numbers.
+#' @param accs character vector of GenBank accession numbers.
 #' @param prompt logical indicating whether the user should be prompted with
 #'  the total number of sequences to download before commencing.
 #' @param contact character string, giving users the option to provide an
@@ -283,6 +283,8 @@ readGB <- function(accs, prompt = FALSE, contact = NULL, quiet = FALSE){
   discards <- logical(N)
   counter <- 1
   if(!quiet) {
+    cat("Downloading", N, "DNA sequences from GenBank\n")
+    cat("Showing download progress\n")
     cat(paste0(rep("_", 80), collapse = ""), "\n")
     progseq <- seq(from = 0, to = N, length.out = 80)
   }

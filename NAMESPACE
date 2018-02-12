@@ -22,5 +22,7 @@ importFrom(stats,quantile)
 importFrom(stats,runif)
 importFrom(utils,head)
 importFrom(utils,read.csv)
+importFrom(utils,download.file)
+importFrom(utils,untar)
 
 useDynLib(insect)
