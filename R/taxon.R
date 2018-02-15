@@ -111,12 +111,12 @@ download_taxon <- function(synonyms = FALSE){
   colnames(nodes) <- c("tax_id", "parent_tax_id", "rank")
   x <- scan(file = paste0(tmp, "/names.dmp"), what = "", sep = "\n", quiet = TRUE)
   if(synonyms){
-    synonyms <- x[grepl("synonym", x)]
-    synonyms <- strsplit(synonyms, split = "\t")
-    synonyms <- sapply(synonyms, function(s) s[c(1, 3)])
-    synonyms <- as.data.frame(t(synonyms), stringsAsFactors = FALSE)
-    synonyms[[1]] <- as.integer(synonyms[[1]])
-    colnames(synonyms) <- c("tax_id", "synonym")
+    syn <- x[grepl("synonym", x)]
+    syn <- strsplit(syn, split = "\t")
+    syn <- sapply(syn, function(s) s[c(1, 3)])
+    syn <- as.data.frame(t(syn), stringsAsFactors = FALSE)
+    syn[[1]] <- as.integer(syn[[1]])
+    colnames(syn) <- c("tax_id", "synonym")
   }
   x <- x[grepl("scientific name", x)] # 1637100 elements ~200 Mb, ~5 sec
   x <- strsplit(x, split = "\t")
@@ -128,7 +128,7 @@ download_taxon <- function(synonyms = FALSE){
   taxa <- merge(nodes, namez, by = "tax_id")
   taxa$parent_tax_id[taxa$tax_id == 1] <- 0
   taxa$parent_tax_index <- match(taxa$parent_tax_id, taxa$tax_id)
-  if(synonyms) attr(taxa, "synonyms") <- synonyms
+  if(synonyms) attr(taxa, "synonyms") <- syn
   return(taxa)
 }
 ################################################################################
