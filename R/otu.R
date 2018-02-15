@@ -1,4 +1,4 @@
-#' Cluster sequences into operational taxonomic units
+#' Cluster sequences into operational taxonomic units.
 #'
 #' This function performs divisive heirarchical clustering on a set of
 #'   DNA sequences using sequential k-means clustering,

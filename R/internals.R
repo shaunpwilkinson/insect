@@ -1,10 +1,14 @@
 # Internal 'insect' functions
 
-.dna2char <- function(x){
-  dbytes <- as.raw(c(136, 40, 72, 24, 240))
-  dchars <- c("A", "C", "G", "T", "N")
-  return(paste0(dchars[match(x, dbytes)], collapse = ""))
+
+.dna2char <- function(z){
+  cbytes <- as.raw(c(65, 84, 71, 67, 83, 87, 82, 89, 75, 77, 66, 86, 72, 68, 78, 45, 63))
+  indices <- c(136, 24, 72, 40, 96, 144, 192, 48, 80 ,160, 112, 224, 176, 208, 240, 4, 2)
+  vec <- raw(240)
+  vec[indices] <- cbytes
+  sapply(z, function(s) rawToChar(vec[as.integer(s)]))
 }
+
 
 .qual2char <- function(x){
   qbytes <- as.raw(0:93)
@@ -14,10 +18,15 @@
   return(paste0(qchars[match(x, qbytes)], collapse = ""))
 }
 
-.char2dna <- function(x){
-  dbytes <- as.raw(c(136, 40, 72, 24, 240)) # A, C, G, T, N
-  dchars <- c("A", "C", "G", "T", "N")
-  return(dbytes[match(strsplit(x, split = "")[[1]], dchars)])
+.char2dna <- function(z){
+  dbytes <- as.raw(c(136, 24, 72, 40, 96, 144, 192, 48, 80 ,160, 112, 224, 176, 208, 240, 4, 2))
+  indices <- c(65, 84, 71, 67, 83, 87, 82, 89, 75, 77, 66, 86, 72, 68, 78, 45, 63) # max 89
+  vec <- raw(89)
+  vec[indices] <- dbytes
+  s2d1 <- function(s) vec[as.integer(charToRaw(s))]
+  res <- if(length(z) > 1) lapply(z, s2d1) else s2d1(z)
+  class(res) <- "DNAbin"
+  return(res)
 }
 
 .char2qual <- function(x){
@@ -56,7 +65,6 @@
     s <- gsub("D", "[AGT]", s)
     s <- gsub("B", "[CGT]", s)
     s <- gsub("N|I", "[ACGT]", s)
-    #s <- gsub("I", "[ACGT]", s)
   }
   return(s)
 }
@@ -150,3 +158,28 @@
   anlen <- getlinlen(anc)
   return(1 - anlen/minlinlen)
 }
+
+.point <- function(h){
+  uh <- unique(h)
+  pointers <- seq_along(uh)
+  names(pointers) <- uh
+  unname(pointers[h])
+}
+
+
+.scanURL <- function(x, retmode = "xml", ...){
+  scanURL <- function(z, retmode = "xml", ...){
+    res <- tryCatch(if(retmode == "xml") xml2::read_xml(z, ... = ...) else scan(file = z, ... = ...),
+                    error = function(er) return(NULL),
+                    warning = function(wa) return(NULL))
+    return(res)
+  }
+  for(l in 1:10){
+    res <- scanURL(x, retmode = retmode, ... = ...)
+    if(!is.null(res)) break else Sys.sleep(5)
+  }
+  if(is.null(res)) stop("Unable to reach URL, please check internet connection\n")
+  return(res)
+}
+
+

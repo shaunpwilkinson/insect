@@ -137,13 +137,6 @@ trim <- function(x, motif, direction = "both", cores = 1, ...){
         res <- lapply(x, trim1, motif, direction, ...)
       }
     }
-    # return(res)
-    # scores <- numeric(length(x))
-    # for(i in seq_along(scores)){
-    #   scores[i] <- attr(res[[i]], "scores")
-    #   attr(res[[i]], "scores") <- NULL
-    # }
-    # attr(res, "scores") <- scores
   }else{
     res <- trim1(x, motif, direction, ...)
     tmpattr$quality <- attr(res, "quality")
@@ -153,21 +146,4 @@ trim <- function(x, motif, direction = "both", cores = 1, ...){
   return(res)
 }
 ################################################################################
-# trim <- function(x, motif, direction = "forward", ...){
-#   if(!(identical(direction, "forward") | identical(direction, "reverse"))){
-#     stop("Direction must be either 'forward' or 'reverse'")
-#   }
-#   fw <- direction == "forward"
-#   trim1 <- function(x, motif, fw){
-#     viti <- Viterbi(motif, x, type = "semiglobal", ... = ...)
-#     pathi <- if(fw) rev(viti$path) else viti$path
-#     ntotrim <- match(c(0, 1), pathi)
-#     if(fw) ntotrim <- ntotrim - 1
-#     ntotrim <- min(ntotrim[!is.na(ntotrim)])
-#     res <- if(fw) x[1:(length(x) - ntotrim)] else x[-(1:(ntotrim - 1))]
-#     return(res)
-#   }
-#   res <- if(is.list(x)) lapply(x, trim1, motif, fw) else trim1(x, motif, fw)
-#   class(res) <- "DNAbin"
-#   return(res)
-# }
+

@@ -20,13 +20,13 @@ Depends:
     R (>= 3.0.0)
 Imports:
     ape (>= 3.0.0),
-    aphid (>= 0.0.0.9000),
-    httr,
+    aphid (>= 1.0.0),
     openssl, 
     phylogram (>= 1.0.0),
     Rcpp (>= 0.12.9),
     stats,
-    utils
+    utils,
+    xml2
 Suggests:
     knitr,
     rmarkdown,

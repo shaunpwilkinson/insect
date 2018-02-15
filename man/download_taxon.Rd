@@ -2,20 +2,32 @@
 % Please edit documentation in R/taxon.R
 \name{download_taxon}
 \alias{download_taxon}
-\title{Download taxon database}
+\title{Download taxon database.}
 \usage{
-download_taxon()
+download_taxon(synonyms = FALSE)
+}
+\arguments{
+\item{synonyms}{logical indicating whether a dataframe of synonyms and their
+associated taxon IDs should be attributed to the output object.
+Note that this increases the size of the returned object by around 10 percent.}
 }
 \value{
-a dataframe with the following columns: "tax_id", "parent_tax_id",
-  "rank", "name", "parent_tax_index"
+a dataframe with the following elements:
+  "tax_id", "parent_tax_id", "rank", "name", "parent_tax_index".
 }
 \description{
-This function accesses the NCBI API and gets the latest copy of the taxon
-  database
+This function accesses the NCBI API and gets an up-to-date copy of the taxon
+  database.
 }
 \details{
-TBA
+This function downloads the NCBI taxon database as a data.frame
+  object with the following columns:
+  "tax_id", "parent_tax_id", "rank", "name", "parent_tax_index".
+  As of early 2018 the zip archive to download is approximately
+  40Mb in size, and the output dataframe object is around
+  200Mb in memory. Once downloaded, the dataframe can be pruned
+  for increased speed and memory efficiency using the function
+  prune_taxon.
 }
 \examples{
   ##TBA

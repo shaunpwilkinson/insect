@@ -2,7 +2,7 @@
 % Please edit documentation in R/otu.R
 \name{otu}
 \alias{otu}
-\title{Cluster sequences into operational taxonomic units}
+\title{Cluster sequences into operational taxonomic units.}
 \usage{
 otu(x, k = 5, threshold = 0.97, ...)
 }

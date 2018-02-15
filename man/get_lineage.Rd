@@ -2,28 +2,28 @@
 % Please edit documentation in R/taxon.R
 \name{get_lineage}
 \alias{get_lineage}
-\title{Derive lineage from taxon ID.}
+\title{Convert taxon ID to semicolon-delimited lineage string.}
 \usage{
 get_lineage(id, db)
 }
 \arguments{
-\item{id}{integer giving the taxon ID number}
+\item{id}{integer, the taxon ID number.}
 
-\item{db}{taxonomic database in matrix form}
+\item{db}{the NCBI taxon database (as a data.frame object).
+See download_taxon for details.}
 }
 \value{
-the full lineage as a named character vector of taxonomic ranks
+the full lineage as a semicolon-delimited lineage string.
 }
 \description{
-This function returns the full lineage of a taxon ID number,
-  given a taxonomic database.
+This function returns the full lineage of a taxon ID number
+  using the NCBI Taxon database.
 }
 \details{
 TBA
 }
 \examples{
   ##TBA
-
 }
 \references{
 TBA

@@ -2,20 +2,36 @@
 % Please edit documentation in R/search.R
 \name{searchGB}
 \alias{searchGB}
-\title{Query GenBank and download matching sequences.}
+\title{Query the NCBI GenBank database.}
 \usage{
-searchGB(query, onlyID = FALSE, prompt = TRUE, contact = NULL,
+searchGB(query = NULL, accession = NULL, sequences = TRUE, DNA = TRUE,
+  taxonIDs = FALSE, species = FALSE, prompt = TRUE, contact = NULL,
   quiet = FALSE)
 }
 \arguments{
-\item{query}{an Entrez query provided as a character string. For help
-compiling Entrez queries see
+\item{query}{an Entrez serch query. For help compiling queries see
 \url{https://www.ncbi.nlm.nih.gov/books/NBK3837/#EntrezHelp.Entrez_Searching_Options}
 and \url{https://www.ncbi.nlm.nih.gov/books/NBK49540/}.}
 
-\item{onlyID}{logical. Should just the GenBank accession numbers be
-returned (FALSE) or should the function return the entire sequences
-and their metadata (TRUE; default)?}
+\item{accession}{an optional vector of GenBank accession numbers to be input
+in place of a search query. If both query and accession arguments are
+provided the function returns an error.}
+
+\item{sequences}{logical. Should the sequences be returned or only the
+GenBank accession numbers? Note that taxon IDs and species
+names are not returned if \code{sequences} is set to FALSE.}
+
+\item{DNA}{logical indicating whether the returned sequences should
+be in "DNAbin" raw-byte format (TRUE) or as a vector of named character
+strings (FALSE). Defaults to TRUE.}
+
+\item{taxonIDs}{logical indicating whether the NCBI taxon ID numbers should
+be included with the sequence names (separated from the accession number by
+a "|" symbol). Defaults to FALSE.}
+
+\item{species}{logical indicating whether the species names should
+be included in the sequence names (separated from the accession number and
+taxon ID by a "|" symbol). Defaults to FALSE.}
 
 \item{prompt}{logical indicating whether to check with the user before
 downloading sequences.}
@@ -28,15 +44,16 @@ the user if the application causes unintended issues.}
 to the console.}
 }
 \value{
-a list of DNA sequences as a \code{DNAbin} object.
+a list of DNA sequences as a \code{DNAbin} object or a named
+  vector of character strings.
 }
 \description{
-\code{searchGB} searches the NCBI GenBank database using the Entrez
-  utilities, and downloads the matching sequences as a
-  \code{"DNAbin"} object. Note
-  that an internet connection is required when using this function.
-  In some cases depending on the user security settings the R session
-  may need to be opened with administrator privileges.
+\code{searchGB} searches GenBank using the
+  Entrez search utilities, and downloads the matching sequences
+  and/or their accession numbers. Alternatively a vector of
+  GenBank accessiion numbers can be passed, in which case the function
+  simply returns the matching sequences from GenBank.
+  This function makes a series of API calls so internet connectivity is required.
 }
 \details{
 This function uses the Entrez e-utilities API to search and download
@@ -46,6 +63,8 @@ This function uses the Entrez e-utilities API to search and download
   This can generally be remedied by re-running the function. If problems
   persist please feel free to raise an issue on the package bug-reports page at
   <http://github.com/shaunpwilkinson/insect/issues>.
+  In some cases depending on the user security settings the R session
+  may need to be opened with administrator privileges.
 }
 \examples{
   ## Query the GenBank database for Eukaryote mitochondrial 16S sequences
@@ -62,8 +81,9 @@ NCBI Resource Coordinators (2012) Database resources of the National
    \strong{41} (Database issue): D8–D20.
 }
 \seealso{
-\code{\link{readGB}} and \code{\link[ape]{read.GenBank}} (ape)
-  for downloading DNA sequences from GenBank using accession numbers.
+\code{\link[ape]{read.GenBank}} (ape)
+  for an alternative means of downloading DNA sequences from GenBank
+  using accession numbers.
 }
 \author{
 Shaun Wilkinson
