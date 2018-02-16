@@ -52,11 +52,9 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, cores = 1){
       newakw <- akwgts[best_model]
       newcakw <- newakw * cakw
       threshold_met <- threshold <= if(decay) newcakw else newakw
-      #minscore <- attr(tree[[best_model]], "minscore")
-      #minscore <- minscore + minscore/100 # 1% tolerance
-      minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 2
-      minlength_met <- length(x) >= attr(tree[[best_model]], "minlength") - 2
-      maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength") + 2
+      minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 2.3 #log(0.1) = 2.3
+      minlength_met <- length(x) >= attr(tree[[best_model]], "minlength") - 3
+      maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength") + 3
       #minlength_met <- TRUE
       #maxlength_met <- TRUE
       if(!(threshold_met & minscore_met & minlength_met & maxlength_met)) break
