@@ -104,8 +104,10 @@ download_taxon <- function(synonyms = FALSE, quiet = FALSE){
   tmp <- tempdir()
   fn <- "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz"
   download.file(fn, destfile = paste0(tmp, "/tmp.tar.gz"), quiet = quiet)
+  if(!quiet) cat("Extracting data\n")
   test <- untar(tarfile = paste0(tmp, "/tmp.tar.gz"), exdir = tmp)
   if(!identical(test, 0L)) stop(cat(test))
+  if(!quiet) cat("Building data frame\n")
   x <- scan(file = paste0(tmp, "/nodes.dmp"), what = "", sep = "\n", quiet = TRUE)
   x <- strsplit(x, split = "\t")
   x <- sapply(x, function(s) s[c(1, 3, 5)])
@@ -113,7 +115,7 @@ download_taxon <- function(synonyms = FALSE, quiet = FALSE){
   nodes[[1]] <- as.integer(nodes[[1]])
   nodes[[2]] <- as.integer(nodes[[2]])
   colnames(nodes) <- c("tax_id", "parent_tax_id", "rank")
-  if(!quiet) cat("Parsing data frame\n")
+  #if(!quiet) cat("Parsing data frame\n")
   x <- scan(file = paste0(tmp, "/names.dmp"), what = "", sep = "\n", quiet = TRUE)
   if(synonyms){
     syn <- x[grepl("synonym", x)]
@@ -134,8 +136,8 @@ download_taxon <- function(synonyms = FALSE, quiet = FALSE){
   taxa$parent_tax_id[taxa$tax_id == 1] <- 0
   taxa$parent_tax_index <- match(taxa$parent_tax_id, taxa$tax_id)
   if(synonyms){
-    taxapp <- taxa[match(synonyms$tax_id, taxa$tax_id), ]
-    taxapp$name <- synonyms$name
+    taxapp <- taxa[match(syn$tax_id, taxa$tax_id), ]
+    taxapp$name <- syn$name
     rownames(taxapp) <- NULL
     taxa <- rbind(taxa, taxapp)
   } # attr(taxa, "synonyms") <- syn
@@ -166,7 +168,8 @@ download_taxon <- function(synonyms = FALSE, quiet = FALSE){
 prune_taxon <- function(db, clade, keep = FALSE){
   if(mode(clade) == "character") clade <- db$tax_id[match(clade, db$name)]
   if(is.na(clade)) stop("Clade not found in database\n")
-  indices <- match(clade, db$tax_id)
+  #indices <- match(clade, db$tax_id)
+  indices <- which(db$tax_id == clade)
   keeps <- db[indices, ]
   repeat{
     indices <- which(db$parent_tax_id %in% clade)
