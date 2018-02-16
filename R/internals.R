@@ -194,3 +194,120 @@
   return(s)
 }
 
+
+
+.extractXML <- function(x, species = FALSE, lineages = FALSE, taxIDs = FALSE){
+  # x is an xml document
+  res <- vector(mode = "list", length = 2 + taxIDs + species + lineages)
+  x <- xml2::xml_children(x)
+  res[[1]] <- xml2::xml_text(xml2::xml_find_all(x, "GBSeq_locus"))
+  res[[2]] <- toupper(xml2::xml_text(xml2::xml_find_all(x, "GBSeq_sequence")))
+  if(species) res[[3]] <- xml2::xml_text(xml2::xml_find_all(x, "GBSeq_organism"))
+  if(lineages) res[[4]] <- xml2::xml_text(xml2::xml_find_all(x, "GBSeq_taxonomy"))
+  if(taxIDs){
+    feattab <- xml2::xml_text(xml2::xml_find_all(x, "GBSeq_feature-table"))
+    res[[5]] <- gsub(".+taxon:([[:digit:]]+).+", "\\1", feattab)
+  }
+  if(!all(sapply(res, length) == length(res[[1]]))) res <- NULL
+  return(res)
+}
+
+
+.extractXML2 <- function(x, species = FALSE, lineages = FALSE, taxIDs = FALSE){
+  find_accession <- function(e){
+    accession <- e$GBSeq_locus[[1]]
+    if(is.null(accession)) accession <- NA
+    return(accession)
+  }
+  find_sequence <- function(e){
+    seqnc <- e$GBSeq_sequence[[1]]
+    if(is.null(seqnc)) seqnc <- NA
+    return(toupper(seqnc))
+  }
+  find_taxID <- function(s){
+    tmp <- unlist(s$`GBSeq_feature-table`$GBFeature$GBFeature_quals, use.names = FALSE)
+    if(is.null(tmp)){
+      taxID <- NA
+    }else{
+      taxID <- tmp[grepl("^taxon:", tmp)]
+      taxID <- as.integer(gsub("taxon:", "", taxID))
+    }
+    return(taxID)
+  }
+  find_species <- function(e){
+    spp <- e$GBSeq_organism[[1]]
+    if(is.null(spp)) spp <- NA
+    return(spp)
+  }
+  find_lineage <- function(e){
+    lin <- e$GBSeq_taxonomy[[1]]
+    if(is.null(lin)) lin <- NA
+    return(lin)
+  }
+  res <- vector(mode = "list", length = 2 + taxIDs + species + lineages)
+  tmp <- xml2::as_list(tmp)[[1]]
+  accs <- unname(sapply(tmp, find_accession))
+  seqs <- unname(sapply(tmp, find_sequence))
+  if(species) spps <- unname(sapply(tmp, find_species))
+  if(lineages) lins <- unname(sapply(tmp, find_lineage))
+  if(taxIDs) taxs <- unname(sapply(tmp, find_taxID))
+  discards <- is.na(accs) | is.na(seqs)
+  if(species) discards <- discards | is.na(spps)
+  if(lineages) discards <- discards | is.na(lins)
+  if(taxIDs) discards <- discards | is.na(taxs)
+  # if(sum(!discards) == 0) stop("Error 1\n")
+  res[[1]]  <- accs[!discards]
+  res[[2]] <- seqs[!discards]
+  if(species) res[[3]] <- spps[!discards]
+  if(lineages) res[[4]] <- lins[!discards]
+  if(taxIDs) res[[5]] <- taxs[!discards]
+  return(res)
+}
+
+
+
+
+
+
+
+
+
+
+
+#
+#
+#
+# query <- "Symbiodinium[ORGN]+AND+Internal[TITL]+AND+2014[MDAT]"
+#
+# URL1 <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?",
+#                "db=nucleotide&term=",
+#                query,
+#                "&usehistory=y",
+#                "&tool=R")
+# X <- .scanURL(URL1, retmode = "xml")
+# N <- as.integer(xml2::xml_text(xml2::xml_find_first(X, "Count")))
+# WebEnv <- xml2::xml_text(xml2::xml_find_first(X, "WebEnv"))
+# QueryKey <- xml2::xml_text(xml2::xml_find_first(X, "QueryKey"))
+# nrequest <- N%/%500 + as.logical(N%%500) # 1 if remainder exists, 0 otherwise
+# accs <- vector(mode = "list", length = nrequest)
+#
+# i <- 1
+# retstart <- (i - 1) * 500
+# contact <- NULL
+# URL2 <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+#                "efetch.fcgi?",
+#                "db=nucleotide",
+#                "&WebEnv=", WebEnv,
+#                "&query_key=", QueryKey,
+#                "&retstart=", retstart,
+#                "&retmax=500",
+#                "&rettype=gb",
+#                "&retmode=xml",
+#                if(!is.null(contact)) paste0("&email=", contact) else NULL)
+# tmp <- .scanURL(URL2, retmode = "xml")
+#
+# test <- .extractXML(tmp, species = TRUE, lineages = TRUE, taxIDs = TRUE)
+# test[[5]][1:2]
+#
+# test2 <- .extractXML2(tmp, species = TRUE, lineages = TRUE, taxIDs = TRUE)
+# test[[1]][1:2]

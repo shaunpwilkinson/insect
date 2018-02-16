@@ -7,8 +7,7 @@
 download_taxon(synonyms = FALSE, quiet = FALSE)
 }
 \arguments{
-\item{synonyms}{logical indicating whether a dataframe of synonyms and their
-associated taxon IDs should be attributed to the output object.
+\item{synonyms}{logical indicating whether synonyms should be included.
 Note that this increases the size of the returned object by around 10\%.}
 
 \item{quiet}{logical indicating whether progress should be printed to the console.}

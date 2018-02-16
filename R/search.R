@@ -121,16 +121,14 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
                      "&retmode=xml",
                      if(!is.null(contact)) paste0("&email=", contact) else NULL)
       tmp <- .scanURL(URL2, retmode = "xml")
-      tmp2 <- xml2::xml_children(tmp)
-      accs[[i]] <- xml2::xml_text(xml2::xml_find_all(tmp2, "GBSeq_locus"))
-      seqs[[i]] <- xml2::xml_text(xml2::xml_find_all(tmp2, "GBSeq_sequence"))
-      if(species) spps[[i]] <- xml2::xml_text(xml2::xml_find_all(tmp2, "GBSeq_organism"))
-      if(lineages) lins[[i]] <- xml2::xml_text(xml2::xml_find_all(tmp2, "GBSeq_taxonomy"))
-      if(taxIDs){
-        feattab <- xml2::xml_text(xml2::xml_find_all(tmp2, "GBSeq_feature-table"))
-        taxs[[i]] <- gsub(".+taxon:([[:digit:]]+).+", "\\1", feattab)
-      }
-      if(!quiet){
+      tmp2 <- .extractXML(tmp, species, lineages, taxIDs)
+      if(is.null(tmp2)) tmp2 <- .extractXML2(tmp, species, lineages, taxIDs)
+      accs[[i]] <- tmp2[[1]]
+      seqs[[i]] <- tmp2[[2]]
+      if(species) spps[[i]] <- tmp2[[3]]
+      if(lineages) lins[[i]] <- tmp2[[4]]
+      if(taxIDs) taxs[[i]] <- tmp2[[5]]
+      if(!quiet & retstart > 0){
         nlessthan <- sum(progseq <= retstart)
         cat(paste0(rep("=", nlessthan), collapse = ""))
         if(nlessthan > 0) progseq <- progseq[-(1:nlessthan)]
@@ -178,54 +176,4 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
 }
 ################################################################################
 
-#
-# X <- xml2::as_list(X)
-# Count <- X$eSearchResult$Count[[1]]
-# WebEnv <- X$eSearchResult$WebEnv[[1]]
-# QueryKey <- X$eSearchResult$QueryKey[[1]]
-# N <- as.numeric(Count)
 
-# find_accession <- function(e){
-#   accession <- e$GBSeq_locus[[1]]
-#   if(is.null(accession)) accession <- NA
-#   return(accession)
-# }
-# find_sequence <- function(e){
-#   seqnc <- e$GBSeq_sequence[[1]]
-#   if(is.null(seqnc)) seqnc <- NA
-#   return(toupper(seqnc))
-# }
-# find_taxID <- function(s){
-#   tmp <- unlist(s$`GBSeq_feature-table`$GBFeature$GBFeature_quals, use.names = FALSE)
-#   if(is.null(tmp)){
-#     taxID <- NA
-#   }else{
-#     taxID <- tmp[grepl("^taxon:", tmp)]
-#     taxID <- as.integer(gsub("taxon:", "", taxID))
-#   }
-#   return(taxID)
-# }
-# find_species <- function(e){
-#   spp <- e$GBSeq_organism[[1]]
-#   if(is.null(spp)) spp <- NA
-#   return(spp)
-# }
-# find_lineage <- function(e){
-#   lin <- e$GBSeq_taxonomy[[1]]
-#   if(is.null(lin)) lin <- NA
-#   return(lin)
-# }
-
-# tmp <- xml2::as_list(tmp)[[1]]
-# accs[[i]] <- unname(sapply(tmp, find_accession))
-# taxs[[i]] <- unname(sapply(tmp, find_taxID))
-# spps[[i]] <- unname(sapply(tmp, find_species))
-# seqs[[i]] <- unname(sapply(tmp, find_sequence))
-# lins[[i]] <- unname(sapply(tmp, find_lineage))
-
-# discards <- is.na(res) | is.na(accs) | is.na(spps) | is.na(taxs) | is.na(lins)
-# res <- res[!discards]
-# accs <- accs[!discards]
-# taxs <- taxs[!discards]
-# spps <- spps[!discards]
-# lins <- lins[!discards]

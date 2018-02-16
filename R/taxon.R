@@ -44,7 +44,7 @@ get_lineage <- function(taxID, db){
 #' @param db the NCBI taxon database (as a data.frame object).
 #'   See download_taxon for details.
 #' @return The unique taxon database ID (integer).
-#' @details This function will return NA if the lineage is not found in the 
+#' @details This function will return NA if the lineage is not found in the
 #'   database or it matches multiple entries.
 #' @author Shaun Wilkinson
 #' @references TBA
@@ -81,8 +81,7 @@ get_taxID <- function(lineage, db){
 #' This function accesses the NCBI API and gets an up-to-date copy of the taxon
 #'   database.
 #'
-#' @param synonyms logical indicating whether a dataframe of synonyms and their
-#'   associated taxon IDs should be attributed to the output object.
+#' @param synonyms logical indicating whether synonyms should be included.
 #'   Note that this increases the size of the returned object by around 10\%.
 #' @param quiet logical indicating whether progress should be printed to the console.
 #' @return a dataframe with the following elements:
@@ -134,7 +133,12 @@ download_taxon <- function(synonyms = FALSE, quiet = FALSE){
   taxa <- merge(nodes, namez, by = "tax_id")
   taxa$parent_tax_id[taxa$tax_id == 1] <- 0
   taxa$parent_tax_index <- match(taxa$parent_tax_id, taxa$tax_id)
-  if(synonyms) attr(taxa, "synonyms") <- syn
+  if(synonyms){
+    taxapp <- taxa[match(synonyms$tax_id, taxa$tax_id), ]
+    taxapp$name <- synonyms$name
+    rownames(taxapp) <- NULL
+    taxa <- rbind(taxa, taxapp)
+  } # attr(taxa, "synonyms") <- syn
   if(!quiet) cat("Done\n")
   return(taxa)
 }
