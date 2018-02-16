@@ -127,26 +127,30 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "sequences") <- seq_along(x)
   attr(tree, "lineage") <- .ancestor(attr(x, "lineage"))
   attr(tree, "minscore") <- -1E06 # nominal
+  attr(tree, "minlength") <- 1 # nominal
+  attr(tree, "maxlength") <- 1E06 # nominal
   if(is.null(attr(x, "weights"))){
     if(!quiet) cat("Deriving sequence weights\n")
     attr(x, "weights") <- aphid::weight(x, k = 5)
   }
   if(is.null(model)){
-    if(!quiet) cat("Deriving top level model\n")
+    if(!quiet) cat("Dereplicating sequences\n")
     if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- .digest(x, simplify = TRUE)
     if(is.null(attr(x, "duplicates"))) attr(x, "duplicates") <- duplicated(attr(x, "hashes"))
-    if(is.null(attr(x, "pointers"))){
-      pointers <- integer(length(x))
-      dhashes <- attr(x, "hashes")[attr(x, "duplicates")]
-      uhashes <- attr(x, "hashes")[!attr(x, "duplicates")]
-      pointers[!attr(x, "duplicates")] <- seq_along(uhashes)
-      pd <- integer(length(dhashes))
-      for(i in unique(dhashes)) pd[dhashes == i] <- match(i, uhashes)
-      pointers[attr(x, "duplicates")] <- pd
-      attr(x, "pointers") <- pointers
-    }
+    if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
+    # if(is.null(attr(x, "pointers"))){
+    #   pointers <- integer(length(x))
+    #   dhashes <- attr(x, "hashes")[attr(x, "duplicates")]
+    #   uhashes <- attr(x, "hashes")[!attr(x, "duplicates")]
+    #   pointers[!attr(x, "duplicates")] <- seq_along(uhashes)
+    #   pd <- integer(length(dhashes))
+    #   for(i in unique(dhashes)) pd[dhashes == i] <- match(i, uhashes)
+    #   pointers[attr(x, "duplicates")] <- pd
+    #   attr(x, "pointers") <- pointers
+    # }
     xu <- x[!attr(x, "duplicates")]
     xuw <- sapply(split(attr(x, "weights"), attr(x, "pointers")), sum)
+    if(!quiet) cat("Deriving top level model\n")
     if(length(xu) > 1000){
       # progressive model training to avoid excessive memory use
       samp <- sample(seq_along(xu), size = 1000)

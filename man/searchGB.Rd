@@ -5,8 +5,8 @@
 \title{Query the NCBI GenBank database.}
 \usage{
 searchGB(query = NULL, accession = NULL, sequences = TRUE, DNA = TRUE,
-  taxonIDs = FALSE, species = FALSE, prompt = TRUE, contact = NULL,
-  quiet = FALSE)
+  taxIDs = FALSE, species = FALSE, lineages = FALSE, prompt = TRUE,
+  contact = NULL, quiet = FALSE)
 }
 \arguments{
 \item{query}{an Entrez serch query. For help compiling queries see
@@ -25,13 +25,14 @@ names are not returned if \code{sequences} is set to FALSE.}
 be in "DNAbin" raw-byte format (TRUE) or as a vector of named character
 strings (FALSE). Defaults to TRUE.}
 
-\item{taxonIDs}{logical indicating whether the NCBI taxon ID numbers should
-be included with the sequence names (separated from the accession number by
-a "|" symbol). Defaults to FALSE.}
+\item{taxIDs}{logical indicating whether the NCBI taxon ID numbers should
+be attributed to the output object. Defaults to FALSE.}
 
 \item{species}{logical indicating whether the species names should
-be included in the sequence names (separated from the accession number and
-taxon ID by a "|" symbol). Defaults to FALSE.}
+be attributed to the output object. Defaults to FALSE.}
+
+\item{lineages}{logical indicating whether semicolon-delimited lineage
+strings should be attributed to the output object. Defaults to FALSE.}
 
 \item{prompt}{logical indicating whether to check with the user before
 downloading sequences.}

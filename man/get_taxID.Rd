@@ -21,7 +21,8 @@ This function returns the unique taxon ID associated with a given
   using the NCBI taxon database.
 }
 \details{
-TBA
+This function will return NA if the lineage is not found in the 
+  database or it matches multiple entries.
 }
 \examples{
   ##TBA

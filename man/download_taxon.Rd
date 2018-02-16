@@ -4,12 +4,14 @@
 \alias{download_taxon}
 \title{Download taxon database.}
 \usage{
-download_taxon(synonyms = FALSE)
+download_taxon(synonyms = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{synonyms}{logical indicating whether a dataframe of synonyms and their
 associated taxon IDs should be attributed to the output object.
-Note that this increases the size of the returned object by around 10 percent.}
+Note that this increases the size of the returned object by around 10\%.}
+
+\item{quiet}{logical indicating whether progress should be printed to the console.}
 }
 \value{
 a dataframe with the following elements:

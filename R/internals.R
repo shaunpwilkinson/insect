@@ -6,7 +6,11 @@
   indices <- c(136, 24, 72, 40, 96, 144, 192, 48, 80 ,160, 112, 224, 176, 208, 240, 4, 2)
   vec <- raw(240)
   vec[indices] <- cbytes
-  sapply(z, function(s) rawToChar(vec[as.integer(s)]))
+  if(is.list(z)){
+    sapply(z, function(s) rawToChar(vec[as.integer(s)]))
+  }else{
+    rawToChar(vec[as.integer(z)])
+  }
 }
 
 

@@ -4,10 +4,10 @@
 \alias{get_lineage}
 \title{Convert taxon ID to semicolon-delimited lineage string.}
 \usage{
-get_lineage(id, db)
+get_lineage(taxID, db)
 }
 \arguments{
-\item{id}{integer, the taxon ID number.}
+\item{taxID}{integer, the taxon ID number.}
 
 \item{db}{the NCBI taxon database (as a data.frame object).
 See download_taxon for details.}

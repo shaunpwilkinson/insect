@@ -59,22 +59,25 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
   if(length(clades) == 0) return(tree)
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
   ## following lines are for trees that have been stripped of memory-intensive elements
+  if(!quiet) cat("Dereplicating sequences\n")
   hashes <- attr(x, "hashes")
   if(is.null(hashes)) hashes <- .digest(x, simplify = TRUE)
   # attr(tree, "hashes") <- NULL
   duplicates <- attr(x, "duplicates")
   if(is.null(duplicates)) duplicates <- duplicated(hashes)
+  if(!quiet) cat("Found", sum(!duplicates), "unique sequences\n")
   # attr(tree, "duplicates") <- NULL
   pointers <- attr(x, "pointers")
-  if(is.null(pointers)){
-    pointers <- integer(length(x))
-    dhashes <- hashes[duplicates]
-    uhashes <- hashes[!duplicates]
-    pointers[!duplicates] <- seq_along(uhashes)
-    pd <- integer(length(dhashes))
-    for(i in unique(dhashes)) pd[dhashes == i] <- match(i, uhashes)
-    pointers[duplicates] <- pd
-  }
+  if(is.null(pointers)) pointers <- .point(hashes)
+  # if(is.null(pointers)){
+  #   pointers <- integer(length(x))
+  #   dhashes <- hashes[duplicates]
+  #   uhashes <- hashes[!duplicates]
+  #   pointers[!duplicates] <- seq_along(uhashes)
+  #   pd <- integer(length(dhashes))
+  #   for(i in unique(dhashes)) pd[dhashes == i] <- match(i, uhashes)
+  #   pointers[duplicates] <- pd
+  # }
   # attr(tree, "pointers") <- NULL
   seqweights <- attr(x, "weights")
   if(is.null(seqweights)) seqweights <- aphid::weight(x, k = 5)

@@ -3,7 +3,7 @@
 #' This function returns the full lineage of a taxon ID number
 #'   using the NCBI Taxon database.
 #'
-#' @param id integer, the taxon ID number.
+#' @param taxID integer, the taxon ID number.
 #' @param db the NCBI taxon database (as a data.frame object).
 #'   See download_taxon for details.
 #' @return the full lineage as a semicolon-delimited lineage string.
@@ -13,12 +13,12 @@
 #' @examples
 #'   ##TBA
 ################################################################################
-get_lineage <- function(id, db){
+get_lineage <- function(taxID, db){
   res <- resnames <- character(100)
   counter <- 1
-  index <- match(id, db$tax_id)
+  index <- match(taxID, db$tax_id)
   if(is.na(index)){
-    warning(paste("Taxon id", id, "not found in database\n"))
+    warning(paste("Taxon ID", taxID, "not found in database\n"))
     return(NA)
   }
   repeat{
@@ -44,7 +44,8 @@ get_lineage <- function(id, db){
 #' @param db the NCBI taxon database (as a data.frame object).
 #'   See download_taxon for details.
 #' @return The unique taxon database ID (integer).
-#' @details TBA
+#' @details This function will return NA if the lineage is not found in the 
+#'   database or it matches multiple entries.
 #' @author Shaun Wilkinson
 #' @references TBA
 #' @examples
@@ -52,7 +53,6 @@ get_lineage <- function(id, db){
 ################################################################################
 get_taxID <- function(lineage, db){
   if(identical(lineage, "")) lineage <- "root"
-  #linvec <- rev(strsplit(gsub("\\.$", "", lineage), split = "; ")[[1]])
   linvec <- rev(strsplit(lineage, split = "; ")[[1]])
   indices <- which(db$name == linvec[1])
   taxids <- db$tax_id[indices]
@@ -60,12 +60,16 @@ get_taxID <- function(lineage, db){
     return(taxids)
   }else if(length(taxids) > 1){
     if(!grepl(";", lineage)){
-      stop(paste("Taxon name matches multiple entries in database,",
-                 "try entering semicolon-delimited lineage string"))
+      # warning(paste("Taxon name matches multiple entries in database,",
+      #            "returning first matching entry.\n",
+      #            "Tip: try entering semicolon-delimited lineage string\n"))
+      # return(taxIDs[1])
+      return(NA)
+    }else{
+      tmp <- lapply(taxids, get_lineage, db = db)
+      nmatches <- sapply(tmp, function(l) sum(sapply(l, grepl, lineage)))
+      return(taxids[which.max(nmatches)])
     }
-    tmp <- lapply(taxids, get_lineage, db = db)
-    nmatches <- sapply(tmp, function(l) sum(sapply(l, grepl, lineage)))
-    return(taxids[which.max(nmatches)])
   }else{
     #warning("Not found in database\n"))
     return(NA)
@@ -79,7 +83,8 @@ get_taxID <- function(lineage, db){
 #'
 #' @param synonyms logical indicating whether a dataframe of synonyms and their
 #'   associated taxon IDs should be attributed to the output object.
-#'   Note that this increases the size of the returned object by around 10 percent.
+#'   Note that this increases the size of the returned object by around 10\%.
+#' @param quiet logical indicating whether progress should be printed to the console.
 #' @return a dataframe with the following elements:
 #'   "tax_id", "parent_tax_id", "rank", "name", "parent_tax_index".
 #' @details
@@ -96,10 +101,10 @@ get_taxID <- function(lineage, db){
 #' @examples
 #'   ##TBA
 ################################################################################
-download_taxon <- function(synonyms = FALSE){
+download_taxon <- function(synonyms = FALSE, quiet = FALSE){
   tmp <- tempdir()
   fn <- "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz"
-  download.file(fn, destfile = paste0(tmp, "/tmp.tar.gz"))
+  download.file(fn, destfile = paste0(tmp, "/tmp.tar.gz"), quiet = quiet)
   test <- untar(tarfile = paste0(tmp, "/tmp.tar.gz"), exdir = tmp)
   if(!identical(test, 0L)) stop(cat(test))
   x <- scan(file = paste0(tmp, "/nodes.dmp"), what = "", sep = "\n", quiet = TRUE)
@@ -109,6 +114,7 @@ download_taxon <- function(synonyms = FALSE){
   nodes[[1]] <- as.integer(nodes[[1]])
   nodes[[2]] <- as.integer(nodes[[2]])
   colnames(nodes) <- c("tax_id", "parent_tax_id", "rank")
+  if(!quiet) cat("Parsing data frame\n")
   x <- scan(file = paste0(tmp, "/names.dmp"), what = "", sep = "\n", quiet = TRUE)
   if(synonyms){
     syn <- x[grepl("synonym", x)]
@@ -116,7 +122,7 @@ download_taxon <- function(synonyms = FALSE){
     syn <- sapply(syn, function(s) s[c(1, 3)])
     syn <- as.data.frame(t(syn), stringsAsFactors = FALSE)
     syn[[1]] <- as.integer(syn[[1]])
-    colnames(syn) <- c("tax_id", "synonym")
+    colnames(syn) <- c("tax_id", "name")
   }
   x <- x[grepl("scientific name", x)] # 1637100 elements ~200 Mb, ~5 sec
   x <- strsplit(x, split = "\t")
@@ -129,6 +135,7 @@ download_taxon <- function(synonyms = FALSE){
   taxa$parent_tax_id[taxa$tax_id == 1] <- 0
   taxa$parent_tax_index <- match(taxa$parent_tax_id, taxa$tax_id)
   if(synonyms) attr(taxa, "synonyms") <- syn
+  if(!quiet) cat("Done\n")
   return(taxa)
 }
 ################################################################################

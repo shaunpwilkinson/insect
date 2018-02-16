@@ -136,7 +136,7 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
       for(i in 1:nclades){
         minperfs[i] <- quantile(performances[membership == i], probs = probs)
         if(!quiet){
-          if(i == 1) cat("Akaike weights:", performances, "\n")
+          #if(i == 1) cat("Akaike weights:", performances, "\n")
           cat("Group", i, "size =", sum(membership == i), "\n")
           cat(sum(performances[membership == i] > minscore), "of",
               sum(membership == i), "correctly predicted with Akaike weight >",

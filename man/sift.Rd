@@ -4,19 +4,23 @@
 \alias{sift}
 \title{Identify sequences with potentially incorrect lineage metadata}
 \usage{
-sift(x, db, ranks = c("phylum", "class", "order"), threshold = 0.97)
+sift(x, db, level = "order", threshold = 0.97, quiet = FALSE)
 }
 \arguments{
 \item{x}{a DNAbin object with lineage attributes.}
 
 \item{db}{the taxon database.}
 
-\item{ranks}{character vector of taxonomic ranks to compare, in order of priority.}
+\item{level}{taxonomic level at which heterogeneity within an OTUs flags 
+a sequence as potentially erroneous. Must be a recognized rank
+in the NCBI Taxon database.}
 
-\item{threshold}{numeric between 0 and 1 giving the OTU similarity cutoff.}
+\item{threshold}{numeric between 0 and 1 giving the OTU similarity cutoff value.}
+
+\item{quiet}{logical indicating whether progress should be printed to the console.}
 }
 \value{
-a character vector giving the names of the potentially incorrect sequences
+a data frame containing the names of the potentially erroneous sequences.
 }
 \description{
 This function evaluates a list of DNA barcode
