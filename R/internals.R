@@ -187,3 +187,10 @@
 }
 
 
+.trimprimer <- function(s, nbases){
+  qual <- attr(s, "quality")
+  s <- s[-(1:nbases)]
+  attr(s, "quality") <- qual[-(1:nbases)]
+  return(s)
+}
+
