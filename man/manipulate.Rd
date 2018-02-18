@@ -5,32 +5,42 @@
 \alias{duplicated.DNAbin}
 \alias{unique.DNAbin}
 \alias{subset.DNAbin}
-\title{Further bit-level manipulation of DNA sequences.}
+\alias{duplicated.AAbin}
+\alias{unique.AAbin}
+\alias{subset.AAbin}
+\title{Further bit-level manipulation of sequences.}
 \usage{
-\method{duplicated}{DNAbin}(x, incomparables = FALSE, point = TRUE, ...)
+\method{duplicated}{DNAbin}(x, incomparables = FALSE, pointers = TRUE, ...)
 
 \method{unique}{DNAbin}(x, incomparables = FALSE, attrs = TRUE,
   drop = FALSE, ...)
 
 \method{subset}{DNAbin}(x, subset, attrs = TRUE, drop = FALSE, ...)
+
+\method{duplicated}{AAbin}(x, incomparables = FALSE, pointers = TRUE, ...)
+
+\method{unique}{AAbin}(x, incomparables = FALSE, attrs = TRUE,
+  drop = FALSE, ...)
+
+\method{subset}{AAbin}(x, subset, attrs = TRUE, drop = FALSE, ...)
 }
 \arguments{
-\item{x}{a \code{DNAbin} object.}
+\item{x}{a \code{DNAbin} or \code{AAbin} object.}
 
 \item{incomparables}{placeholder, not currently functional.}
 
-\item{point}{logical indicating whether the duplication indices
-should be returned as a \code{"pointers"} attribute of the outputted
-logical vector (only applicable for \code{duplicated.DNAbin}).
-Note that this can significantly increase the computational
-time for larger DNAbin objects.}
+\item{pointers}{logical indicating whether the re-replication key
+should be returned as a \code{"pointers"} attribute of the output vector
+(only applicable for \code{duplicated.DNAbin} and \code{duplicated.AAbin}).
+Note that this can increase the computational
+time for larger sequence lists.}
 
 \item{...}{further agruments to be passed between methods.}
 
 \item{attrs}{logical indicating whether the attributes of the input object
 whose length match the object length (or number of rows if it is a matrix)
 should be retained and subsetted along with the object.
-This is useful if the input object has definition and/or lineage
+This is useful if the input object has species, lineage and/or taxon ID
 metadata that need to be retained following the duplicate analysis.}
 
 \item{drop}{logical; indicates whether the input matrix (assuming one is
@@ -40,18 +50,18 @@ Defaults to FALSE in keeping with the style of the \code{\link{ape}} package.}
 \item{subset}{logical vector giving the elements or rows to be kept.}
 }
 \value{
-\code{unique.DNAbin} and \code{subset.DNAbin} return a
-  \code{DNAbin} object. \code{duplicated.DNAbin} returns a logical vector.
+\code{unique} and \code{subset} return a
+  \code{DNAbin} or \code{AAbin} object. \code{duplicated} returns a logical vector.
 }
 \description{
 These functions provide additional methods to manipulate objects of class
   \code{"DNAbin"}.
 }
 \details{
-\code{duplicated.DNAbin} returns a logical vector indicating the sequences
+\code{duplicated} returns a logical vector indicating the sequences
   that are duplicated, and optionally provides a "pointers" attribute
   indicating which of the unique sequences they are duplicates of.
-\code{unique.DNAbin} takes a list or matrix of DNA sequences and returns
+\code{unique} takes a list or matrix of DNA or amino acid sequences and returns
 the subset of sequences that are unique.
 }
 \examples{

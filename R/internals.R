@@ -1,6 +1,5 @@
 # Internal 'insect' functions
 
-
 .dna2char <- function(z){
   cbytes <- as.raw(c(65, 84, 71, 67, 83, 87, 82, 89, 75, 77, 66, 86, 72, 68, 78, 45, 63))
   indices <- c(136, 24, 72, 40, 96, 144, 192, 48, 80 ,160, 112, 224, 176, 208, 240, 4, 2)
@@ -14,14 +13,6 @@
 }
 
 
-.qual2char <- function(x){
-  qbytes <- as.raw(0:93)
-  qchars <- strsplit(paste0("!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOP",
-                            "QRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"),
-                     split = "")[[1]]
-  return(paste0(qchars[match(x, qbytes)], collapse = ""))
-}
-
 .char2dna <- function(z){
   dbytes <- as.raw(c(136, 24, 72, 40, 96, 144, 192, 48, 80 ,160, 112, 224, 176, 208, 240, 4, 2))
   indices <- c(65, 84, 71, 67, 83, 87, 82, 89, 75, 77, 66, 86, 72, 68, 78, 45, 63) # max 89
@@ -33,6 +24,16 @@
   return(res)
 }
 
+
+.qual2char <- function(x){
+  qbytes <- as.raw(0:93)
+  qchars <- strsplit(paste0("!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOP",
+                            "QRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"),
+                     split = "")[[1]]
+  return(paste0(qchars[match(x, qbytes)], collapse = ""))
+}
+
+
 .char2qual <- function(x){
   qbytes <- as.raw(0:93)
   qchars <- strsplit(paste0("!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOP",
@@ -43,7 +44,7 @@
 
 
 .rc <- function(s){
-  # a string of A, C, G, T, and N's
+  # a string of A, C, G, Ts etc
   s <- strsplit(s, split = "")[[1]]
   s <- rev(s)
   dchars <- strsplit("ACGTMRWSYKVHDBN", split = "")[[1]]
@@ -163,13 +164,34 @@
   return(1 - anlen/minlinlen)
 }
 
+
+################################################################################
+# Get rereplication indices.
+#
+# This function takes a list of sequences containing duplicates, and returns
+#   an vector of named indices that can be used to rereplicate the list if it is
+#   dereplicated using the \code{unique} function.
+#
+# @param x a character vector of sequences or sequence hashes.
+# @return an integer vector, named if the input object is named.
+# @details TBA
+# @author Shaun Wilkinson
+# @examples ##TBA
+################################################################################
 .point <- function(h){
   uh <- unique(h)
   pointers <- seq_along(uh)
   names(pointers) <- uh
   unname(pointers[h])
 }
+################################################################################
 
+.trimprimer <- function(s, nbases){
+  qual <- attr(s, "quality")
+  s <- s[-(1:nbases)]
+  attr(s, "quality") <- qual[-(1:nbases)]
+  return(s)
+}
 
 .scanURL <- function(x, retmode = "xml", ...){
   scanURL <- function(z, retmode = "xml", ...){
@@ -187,32 +209,23 @@
 }
 
 
-.trimprimer <- function(s, nbases){
-  qual <- attr(s, "quality")
-  s <- s[-(1:nbases)]
-  attr(s, "quality") <- qual[-(1:nbases)]
-  return(s)
-}
-
-
-
 .extractXML <- function(x, species = FALSE, lineages = FALSE, taxIDs = FALSE){
   # x is an xml document
-  res <- vector(mode = "list", length = 2 + taxIDs + species + lineages)
+  res <- list()
   x <- xml2::xml_children(x)
-  res[[1]] <- xml2::xml_text(xml2::xml_find_all(x, "GBSeq_locus"))
-  res[[2]] <- toupper(xml2::xml_text(xml2::xml_find_all(x, "GBSeq_sequence")))
-  if(species) res[[3]] <- xml2::xml_text(xml2::xml_find_all(x, "GBSeq_organism"))
-  if(lineages) res[[4]] <- xml2::xml_text(xml2::xml_find_all(x, "GBSeq_taxonomy"))
+  res$accs <- xml2::xml_text(xml2::xml_find_all(x, "GBSeq_locus"))
+  res$seqs <- toupper(xml2::xml_text(xml2::xml_find_all(x, "GBSeq_sequence")))
+  if(species) res$spps <- xml2::xml_text(xml2::xml_find_all(x, "GBSeq_organism"))
+  if(lineages) res$lins <- xml2::xml_text(xml2::xml_find_all(x, "GBSeq_taxonomy"))
   if(taxIDs){
     feattab <- xml2::xml_text(xml2::xml_find_all(x, "GBSeq_feature-table"))
-    res[[5]] <- gsub(".+taxon:([[:digit:]]+).+", "\\1", feattab)
+    res$taxs <- gsub(".+taxon:([[:digit:]]+).+", "\\1", feattab)
   }
   if(!all(sapply(res, length) == length(res[[1]]))) res <- NULL
   return(res)
 }
 
-
+# this function is much slower but can return NAs
 .extractXML2 <- function(x, species = FALSE, lineages = FALSE, taxIDs = FALSE){
   find_accession <- function(e){
     accession <- e$GBSeq_locus[[1]]
@@ -244,7 +257,7 @@
     if(is.null(lin)) lin <- NA
     return(lin)
   }
-  res <- vector(mode = "list", length = 2 + taxIDs + species + lineages)
+  res <- list()
   tmp <- xml2::as_list(tmp)[[1]]
   accs <- unname(sapply(tmp, find_accession))
   seqs <- unname(sapply(tmp, find_sequence))
@@ -256,23 +269,13 @@
   if(lineages) discards <- discards | is.na(lins)
   if(taxIDs) discards <- discards | is.na(taxs)
   # if(sum(!discards) == 0) stop("Error 1\n")
-  res[[1]]  <- accs[!discards]
-  res[[2]] <- seqs[!discards]
-  if(species) res[[3]] <- spps[!discards]
-  if(lineages) res[[4]] <- lins[!discards]
-  if(taxIDs) res[[5]] <- taxs[!discards]
+  res$accs  <- accs[!discards]
+  res$seqs <- seqs[!discards]
+  if(species) res$spps <- spps[!discards]
+  if(lineages) res$lins <- lins[!discards]
+  if(taxIDs) res$taxs <- taxs[!discards]
   return(res)
 }
-
-
-
-
-
-
-
-
-
-
 
 #
 #

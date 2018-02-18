@@ -113,8 +113,8 @@ partition <- function(x, model = NULL, K = 2, allocation = "cluster",
       infocols <- apply(kmers, 2, function(v) length(unique(v))) == 2
       if(sum(infocols) > 30 & K == 2){
         if(!quiet) cat("using k-mer splitting method\n")
-        hash <- function(v) paste(openssl::md5(as.raw(v == v[1])))
-        hashes <- apply(kmers[, infocols], 2, hash)
+        hash1 <- function(v) paste(openssl::md5(as.raw(v == v[1])))
+        hashes <- apply(kmers[, infocols], 2, hash1)
         hfac <- factor(hashes)
         infocol <- match(levels(hfac)[which.max(tabulate(hfac))], hashes)
         tmp <- kmers[, infocols][, infocol]

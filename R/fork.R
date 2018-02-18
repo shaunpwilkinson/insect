@@ -151,8 +151,8 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
         infocols <- apply(kmers, 2, function(v) length(unique(v))) == 2
         if(sum(infocols) > 50){
           if(!quiet) cat("Comparing result with alternative grouping method\n")
-          hash <- function(v) paste(openssl::md5(as.raw(v == v[1])))
-          hashes <- apply(kmers[, infocols], 2, hash)
+          hash1 <- function(v) paste(openssl::md5(as.raw(v == v[1])))
+          hashes <- apply(kmers[, infocols], 2, hash1)
           hfac <- factor(hashes)
           infocol <- match(levels(hfac)[which.max(tabulate(hfac))], hashes)
           alloc2 <- kmers[, infocols][, infocol]

@@ -16,9 +16,11 @@
 #' @param sequences logical. Should the sequences be returned or only the
 #'   GenBank accession numbers? Note that taxon IDs and species
 #'   names are not returned if \code{sequences} is set to FALSE.
-#' @param DNA logical indicating whether the returned sequences should
-#'   be in "DNAbin" raw-byte format (TRUE) or as a vector of named character
-#'   strings (FALSE). Defaults to TRUE.
+#' @param bin logical indicating whether the returned sequences should
+#'   be in raw-byte format ("DNAbin" or "AAbin" object type) or as a
+#'   vector of named character strings. Defaults to TRUE.
+#' @param db the NCBI database from which to download the sequences and/or
+#'   accession names. Accepted options are "nucleotide" (default) or "protein".
 #' @param taxIDs logical indicating whether the NCBI taxon ID numbers should
 #'   be attributed to the output object. Defaults to FALSE.
 #' @param species logical indicating whether the species names should
@@ -32,8 +34,8 @@
 #'   the user if the application causes unintended issues.
 #' @param quiet logical indicating whether the progress should be printed
 #'   to the console.
-#' @return a list of DNA sequences as a \code{DNAbin} object or a named
-#'   vector of character strings.
+#' @return a list of sequences as a \code{DNAbin} or \code{AAbin} object,
+#'   or a named vector of character strings (if \code{bin = FALSE}).
 #' @details
 #'   This function uses the Entrez e-utilities API to search and download
 #'   sequences from GenBank.
@@ -53,7 +55,7 @@
 #'   for an alternative means of downloading DNA sequences from GenBank
 #'   using accession numbers.
 #' @examples
-#'   ## Query the GenBank database for Eukaryote mitochondrial 16S sequences
+#'   ## Query the GenBank database for Eukaryote mitochondrial 16S DNA sequences
 #'   ## between 100 and 300 base pairs in length and last modified between
 #'   ## 1999 and 2000.
 #'   \dontrun{
@@ -62,7 +64,7 @@
 #'   }
 ################################################################################
 searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
-                      DNA = TRUE, taxIDs = FALSE, species = FALSE,
+                      bin = TRUE, db = "nucleotide", taxIDs = FALSE, species = FALSE,
                       lineages = FALSE, prompt = TRUE, contact = NULL,
                      quiet = FALSE){
   if((is.null(query) & is.null(accession)) | (!is.null(query) & !is.null(accession))){
@@ -70,7 +72,8 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
   }
   if(!is.null(query)){
     URL1 <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?",
-                   "db=nucleotide&term=",
+                   "db=", db,
+                   "&term=",
                    query,
                    "&usehistory=y",
                    "&tool=R")
@@ -80,13 +83,13 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
     QueryKey <- xml2::xml_text(xml2::xml_find_first(X, "QueryKey"))
     if(N == 0){
       if(!quiet) warning("No sequences found matching query\n")
-      if(sequences & DNA) raw(0) else character(0)
+      if(sequences & bin) raw(0) else character(0)
     }
   }else if(!is.null(accession)){
     if(!sequences) stop("Accession numbers both provided and required\n")
     N <- length(accession)
     URL1 <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/epost.fcgi?",
-                   "db=nucleotide",
+                   "db=", db,
                    "&id=", paste(accession, collapse = ","))
     X <- .scanURL(URL1, retmode = "xml")
     WebEnv <- xml2::xml_text(xml2::xml_find_first(X, "WebEnv"))
@@ -103,16 +106,15 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
   accs <- vector(mode = "list", length = nrequest)
   if(sequences){
     seqs <- taxs <- spps <- lins <- accs
-
     if(!quiet){
-      cat("Downloading", N, "DNA sequences from GenBank\n")
+      cat("Downloading", N, "sequences from GenBank\n")
       progseq <- seq(from = 0, to = N, length.out = 80)
     }
     for (i in 1:nrequest){
       retstart <- (i - 1) * 500
       URL2 <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
                      "efetch.fcgi?",
-                     "db=nucleotide",
+                     "db=", db,
                      "&WebEnv=", WebEnv,
                      "&query_key=", QueryKey,
                      "&retstart=", retstart,
@@ -123,11 +125,11 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
       tmp <- .scanURL(URL2, retmode = "xml")
       tmp2 <- .extractXML(tmp, species, lineages, taxIDs)
       if(is.null(tmp2)) tmp2 <- .extractXML2(tmp, species, lineages, taxIDs)
-      accs[[i]] <- tmp2[[1]]
-      seqs[[i]] <- tmp2[[2]]
-      if(species) spps[[i]] <- tmp2[[3]]
-      if(lineages) lins[[i]] <- tmp2[[4]]
-      if(taxIDs) taxs[[i]] <- tmp2[[5]]
+      accs[[i]] <- tmp2$accs
+      seqs[[i]] <- tmp2$seqs
+      if(species) spps[[i]] <- tmp2$spps
+      if(lineages) lins[[i]] <- tmp2$lins
+      if(taxIDs) taxs[[i]] <- tmp2$taxs
       if(!quiet & retstart > 0){
         nlessthan <- sum(progseq <= retstart)
         cat(paste0(rep("=", nlessthan), collapse = ""))
@@ -140,7 +142,14 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
     if(species) spps <- unlist(spps, use.names = FALSE)
     if(lineages) lins <- unlist(lins, use.names = FALSE)
     if(length(res) == 0) stop("No valid sequences to return\n")
-    if(DNA) res <- .char2dna(res)
+    if(bin){
+      if(db == "nucleotide"){
+        res <- .char2dna(res)
+      }else{
+        res <- lapply(res, charToRaw)
+        class(res) <- "AAbin"
+      }
+    }
     if(taxIDs) attr(res, "taxID") <- taxs
     if(species) attr(res, "species") <- spps
     if(lineages) attr(res, "lineage") <- lins
@@ -153,7 +162,7 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
     for (i in 1:nrequest){
       retstart <- (i - 1) * 500
       URL2 <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?",
-                     "db=nucleotide",
+                     "db=", db,
                      "&WebEnv=", WebEnv,
                      "&query_key=", QueryKey,
                      "&retstart=", retstart,

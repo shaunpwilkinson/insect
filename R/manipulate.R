@@ -1,32 +1,32 @@
-#' Further bit-level manipulation of DNA sequences.
+#' Further bit-level manipulation of sequences.
 #'
 #' These functions provide additional methods to manipulate objects of class
 #'   \code{"DNAbin"}.
 #'
-#' @param x a \code{DNAbin} object.
+#' @param x a \code{DNAbin} or \code{AAbin} object.
 #' @param incomparables placeholder, not currently functional.
-#' @param point logical indicating whether the duplication indices
-#'   should be returned as a \code{"pointers"} attribute of the outputted
-#'   logical vector (only applicable for \code{duplicated.DNAbin}).
-#'   Note that this can significantly increase the computational
-#'   time for larger DNAbin objects.
+#' @param pointers logical indicating whether the re-replication key
+#'   should be returned as a \code{"pointers"} attribute of the output vector
+#'   (only applicable for \code{duplicated.DNAbin} and \code{duplicated.AAbin}).
+#'   Note that this can increase the computational
+#'   time for larger sequence lists.
 #' @param attrs logical indicating whether the attributes of the input object
 #'   whose length match the object length (or number of rows if it is a matrix)
 #'   should be retained and subsetted along with the object.
-#'   This is useful if the input object has definition and/or lineage
+#'   This is useful if the input object has species, lineage and/or taxon ID
 #'   metadata that need to be retained following the duplicate analysis.
 #' @param drop logical; indicates whether the input matrix (assuming one is
 #'   passed) should be reduced to a vector if subset to a single sequence.
 #'   Defaults to FALSE in keeping with the style of the \code{\link{ape}} package.
 #' @param subset logical vector giving the elements or rows to be kept.
 #' @param ... further agruments to be passed between methods.
-#' @return \code{unique.DNAbin} and \code{subset.DNAbin} return a
-#'   \code{DNAbin} object. \code{duplicated.DNAbin} returns a logical vector.
+#' @return \code{unique} and \code{subset} return a
+#'   \code{DNAbin} or \code{AAbin} object. \code{duplicated} returns a logical vector.
 #' @details
-#' \code{duplicated.DNAbin} returns a logical vector indicating the sequences
+#' \code{duplicated} returns a logical vector indicating the sequences
 #'   that are duplicated, and optionally provides a "pointers" attribute
 #'   indicating which of the unique sequences they are duplicates of.
-#' \code{unique.DNAbin} takes a list or matrix of DNA sequences and returns
+#' \code{unique} takes a list or matrix of DNA or amino acid sequences and returns
 #' the subset of sequences that are unique.
 #' @author Shaun Wilkinson
 #' @references
@@ -50,45 +50,31 @@
 #'   x <- subset.DNAbin(x, subset = c(TRUE, TRUE, FALSE))
 #' @name manipulate
 ################################################################################
-duplicated.DNAbin <- function(x, incomparables = FALSE, point = TRUE, ...){
+duplicated.DNAbin <- function(x, incomparables = FALSE, pointers = TRUE, ...){
   incomparables <- incomparables #TODO
   if(is.list(x)){
-    if(point){
+    if(pointers){
       hashes <- sapply(x, function(s) paste(openssl::md5(as.vector(s))))
       dupes <- duplicated(hashes, ... = ...) # logical length x
-      pointers <- integer(length(x))
-      dupehashes <- hashes[dupes]
-      uniquehashes <- hashes[!dupes]
-      pointers[!dupes] <- seq_along(uniquehashes)
-      pd <- integer(length(dupehashes))
-      for(i in unique(dupehashes)) pd[dupehashes == i] <- match(i, uniquehashes)
-      pointers[dupes] <- pd
-      #pointers[dupes] <- sapply(dupehashes, match, uniquehashes)
-      attr(dupes, "pointers") <- pointers
+      pntrs <- .point(hashes)
+      attr(dupes, "pointers") <- pntrs
     }else{
-      dupes <- duplicated(lapply(x, as.vector)) # just removes attributes
+      dupes <- duplicated(lapply(x, as.vector)) # as.vector removes attributes
     }
     names(dupes) <- names(x)
   }else if(is.matrix(x)){
-    if(point){
+    if(pointers){
       hashes <- apply(x, 1, function(s) paste(openssl::md5(as.vector(s))))
       dupes <- duplicated(hashes, ... = ...)
-      pointers <- integer(nrow(x))
-      dupehashes <- hashes[dupes]
-      uniquehashes <- hashes[!dupes]
-      pointers[!dupes] <- seq_along(uniquehashes)
-      pd <- integer(length(dupehashes))
-      for(i in unique(dupehashes)) pd[dupehashes == i] <- match(i, uniquehashes)
-      pointers[dupes] <- pd
-      #pointers[dupes] <- sapply(dupehashes, match, uniquehashes)
-      attr(dupes, "pointers") <- pointers
+      pntrs <- .point(hashes)
+      attr(dupes, "pointers") <- pntrs
     }else{
       dupes <- duplicated(x, MARGIN = 1, ... = ...)
     }
     names(dupes) <- rownames(x)
   }else{
     dupes <- FALSE
-    if(point) attr(dupes, "pointers") <- 1
+    if(pointers) attr(dupes, "pointers") <- 1
   }
   return(dupes)
 }
@@ -166,5 +152,24 @@ subset.DNAbin <- function(x, subset, attrs = TRUE, drop = FALSE, ...){
     }
   }
   return(x)
+}
+################################################################################
+#' @rdname manipulate
+################################################################################
+duplicated.AAbin <- function(x, incomparables = FALSE, pointers = TRUE, ...){
+  duplicated.DNAbin(x, incomparables, pointers, ...)
+}
+################################################################################
+#' @rdname manipulate
+################################################################################
+unique.AAbin <- function(x, incomparables = FALSE, attrs = TRUE,
+                         drop = FALSE, ...){
+  unique.DNAbin(x, incomparables, attrs, drop, ...)
+}
+################################################################################
+#' @rdname manipulate
+################################################################################
+subset.AAbin <- function(x, subset, attrs = TRUE, drop = FALSE, ...){
+  subset.AAbin(x, subset, attrs, drop, ...)
 }
 ################################################################################

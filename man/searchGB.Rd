@@ -4,9 +4,9 @@
 \alias{searchGB}
 \title{Query the NCBI GenBank database.}
 \usage{
-searchGB(query = NULL, accession = NULL, sequences = TRUE, DNA = TRUE,
-  taxIDs = FALSE, species = FALSE, lineages = FALSE, prompt = TRUE,
-  contact = NULL, quiet = FALSE)
+searchGB(query = NULL, accession = NULL, sequences = TRUE, bin = TRUE,
+  db = "nucleotide", taxIDs = FALSE, species = FALSE, lineages = FALSE,
+  prompt = TRUE, contact = NULL, quiet = FALSE)
 }
 \arguments{
 \item{query}{an Entrez serch query. For help compiling queries see
@@ -21,9 +21,12 @@ provided the function returns an error.}
 GenBank accession numbers? Note that taxon IDs and species
 names are not returned if \code{sequences} is set to FALSE.}
 
-\item{DNA}{logical indicating whether the returned sequences should
-be in "DNAbin" raw-byte format (TRUE) or as a vector of named character
-strings (FALSE). Defaults to TRUE.}
+\item{bin}{logical indicating whether the returned sequences should
+be in raw-byte format ("DNAbin" or "AAbin" object type) or as a
+vector of named character strings. Defaults to TRUE.}
+
+\item{db}{the NCBI database from which to download the sequences and/or
+accession names. Accepted options are "nucleotide" (default) or "protein".}
 
 \item{taxIDs}{logical indicating whether the NCBI taxon ID numbers should
 be attributed to the output object. Defaults to FALSE.}
@@ -45,8 +48,8 @@ the user if the application causes unintended issues.}
 to the console.}
 }
 \value{
-a list of DNA sequences as a \code{DNAbin} object or a named
-  vector of character strings.
+a list of sequences as a \code{DNAbin} or \code{AAbin} object,
+  or a named vector of character strings (if \code{bin = FALSE}).
 }
 \description{
 \code{searchGB} searches GenBank using the
@@ -68,7 +71,7 @@ This function uses the Entrez e-utilities API to search and download
   may need to be opened with administrator privileges.
 }
 \examples{
-  ## Query the GenBank database for Eukaryote mitochondrial 16S sequences
+  ## Query the GenBank database for Eukaryote mitochondrial 16S DNA sequences
   ## between 100 and 300 base pairs in length and last modified between
   ## 1999 and 2000.
   \dontrun{

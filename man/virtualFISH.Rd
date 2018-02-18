@@ -51,7 +51,7 @@ The string 'autodetect' is also accepted, in which case the maximum
 number of cores to use is one less than the total number of cores available.
 Note that in this case there
 may be a tradeoff in terms of speed depending on the number and size
-of sequences to be aligned, due to the extra time required to initialize
+of sequences to be processed, due to the extra time required to initialize
 the cluster.}
 
 \item{quiet}{logical indicating whether progress should be printed to
