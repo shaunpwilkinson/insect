@@ -314,3 +314,48 @@
 #
 # test2 <- .extractXML2(tmp, species = TRUE, lineages = TRUE, taxIDs = TRUE)
 # test[[1]][1:2]
+
+# Check if object is DNA
+.isDNA <- function(x){
+  if(inherits(x, "DNAbin")){
+    return(TRUE)
+  }else if(inherits(x, "AAbin")){
+    return(FALSE)
+  }else if(mode(x) == "character"){
+    return(FALSE)
+  }else if(mode(x) == "raw"){
+    return(all(x %in% as.raw(c(136, 72, 40, 24, 192, 160, 144, 96, 80, 48,
+                               224, 176, 208, 112, 240, 4, 2))))
+  }else if(mode(x) == "list"){
+    if(length(x) > 0){
+      return(all(unlist(x, use.names = FALSE) %in%
+                   as.raw(c(136, 72, 40, 24, 192, 160, 144, 96, 80, 48,
+                            224, 176, 208, 112, 240, 4, 2))))
+    }else{
+      return(FALSE)
+    }
+  }else{
+    return(FALSE)
+  }
+}
+
+# Check if object is amino acid sequence
+.isAA <- function(x){
+  if(inherits(x, "AAbin")){
+    return(TRUE)
+  }else if(inherits(x, "DNAbin")){
+    return(FALSE)
+  }else if(mode(x) == "character"){
+    return(FALSE)
+  }else if(mode(x) == "raw"){
+    return(all(x %in% as.raw(c(65:90, 42, 45, 63))))
+  }else if(mode(x) == "list"){
+    if(length(x) > 0){
+      return(all(unlist(x, use.names = FALSE) %in% as.raw(c(65:90, 42, 45, 63))))
+    }else{
+      return(FALSE)
+    }
+  }else{
+    return(FALSE)
+  }
+}

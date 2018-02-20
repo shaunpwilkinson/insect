@@ -36,35 +36,31 @@ hash <- function(x, cores = 1){
   hash1 <- function(s){
     if(mode(s) != "raw"){
       if(mode(s) == "character"){
-        s <- sapply(s, charToRaw)
+        s <- charToRaw(s)
       }else if(mode(s) == "integer"){
-        s <- sapply(s, as.raw)
+        s <-  as.raw(s)
       }else if(mode(s) == "numeric"){
-        s <- unlist(sapply(s, function(a) charToRaw(paste(round(a, 4)))), use.names = FALSE)
-        #stop("Can't digest numeric vectors")
+        stop("Can't digest numeric vectors")
       }
     }
     return(paste(openssl::md5(as.vector(s))))
   }
-  if(is.list(x)){
-    if(inherits(cores, "cluster")){
-      x <- parallel::parSapply(cores, x, hash1)
-    }else if(cores == 1){
-      x <- sapply(x, hash1)
-    }else{
-      navailcores <- parallel::detectCores()
-      if(identical(cores, "autodetect")) cores <- navailcores - 1
-      if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' argument")
-      if(cores > 1){
-        cl <- parallel::makeCluster(cores)
-        x <- parallel::parSapply(cl, x, hash1)
-        parallel::stopCluster(cl)
-      }else{
-        x <- sapply(x, hash1)
-      }
-    }
+  if(inherits(cores, "cluster")){
+    res <- parallel::parSapply(cores, x, hash1)
+  }else if(cores == 1){
+    res <- sapply(x, hash1)
   }else{
-    return(hash1(x))
+    navailcores <- parallel::detectCores()
+    if(identical(cores, "autodetect")) cores <- navailcores - 1
+    if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' argument")
+    if(cores > 1){
+      cl <- parallel::makeCluster(cores)
+      res <- parallel::parSapply(cl, x, hash1)
+      parallel::stopCluster(cl)
+    }else{
+      res <- sapply(x, hash1)
+    }
   }
+  return(res)
 }
 ################################################################################
