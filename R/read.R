@@ -1,25 +1,23 @@
-#' Read and filter FASTQ files.
+#' Read FASTA and FASTQ files.
 #'
-#' \code{readFASTQ} is a text parser/filter that reads files in the FASTQ
-#'   format into R in either raw (DNAbin) or character format.
+#' Text parsing functions for reading sequences in the FASTA or FASTQ format into R.
 #'
-#' @param file the name of the FASTQ file from which the sequences are to be read.
-#' @param format the format of each element in the returned list. Accepted options are
-#'   "string" (each sequence is a concatenated string with a similarly concatenated
-#'   quality attribute comprised of the same ASCII metacharacters used in the FASTQ coding scheme),
-#'   "DNAbin" (each element is a raw vector in DNAbin format; quality attributes
-#'   are also raw vectors), and
-#'   "character" (each sequence is a character vector with one element for each
-#'   nucleotide; quality attributes are integer vectors with values
-#'   between 0 and 93). The latter is perhaps the most intuitive, but the least memory
-#'   efficient, occupying around four times the memory of the other formats.
-#' @param ... further arguments to be passed to \code{\link{scan}}.
-#' @return Returns a list of DNA sequences, either as strings, character vectors or
-#'   raw ("DNAbin") vectors, each with a "quality" attribute.
+#' @param file the name of the FASTA or FASTQ file from which the sequences
+#'   are to be read.
+#' @param bin logical indicating whether the returned object should be in
+#'   binary/raw byte format (i.e. "DNAbin" or "AAbin" objects for
+#'   nucleotide and amino acid sequences, respectively).
+#'   If FALSE a vector of named character strings is returned.
+#' @param residues character string indicating whether the sequences to
+#'   be read are composed of nucleotides ("DNA"; default) or amino acids ("AA").
+#'   Only required for \code{readFASTA} and if \code{bin = TRUE}.
+#' @return Either a vector of character strings (if bin = FALSE),
+#'   or a list of raw ("DNAbin" or "AAbin") vectors,
+#'   with each element having a "quality" attribute.
 #' @details
 #'   \subsection{Compatibility:}{The FASTQ convention is somewhat
 #'   ambiguous with several slightly different interpretations appearing
-#'   in the literature. For now, this function only supports the Illumina
+#'   in the literature. For now, this function supports the Illumina
 #'   convention for FASTQ files, where each sequence and its associated
 #'   metadata occupies four line of the text file as follows : (1) the
 #'   run and cluster metadata preceeded by an @ symbol; (2) the sequence
@@ -29,9 +27,19 @@
 #'   on this convention see the Illumina help page
 #'   \href{https://help.basespace.illumina.com/articles/descriptive/fastq-files/}{here}
 #'   .}
-#'   \subsection{Speed and Memory Requirements:}{This function can
-#'   take a while to process larger FASTQ files, a multithreading option
-#'   will be available in a future version.}
+#'   \subsection{Speed and Memory Requirements:}{
+#'   For optimal memory efficiency and compatibility with other functions,
+#'   it is recommended to store sequences in raw byte format
+#'   as either DNAbin or AAbin objects.
+#'   For FASTQ files when bin = TRUE, a vector of quality scores
+#'   (also in raw-byte format) is attributed to each sequence.
+#'   These can be converted back to numeric quality scores with \code{as.integer}.
+#'   For FASTQ files when bin = FALSE the function returns a vector with each
+#'   sequence as a concatenated string with a similarly concatenated quality attribute
+#'   comprised of the same ASCII metacharacters used in the FASTQ coding scheme.
+#'
+#'   This function can take a while to process larger FASTQ files,
+#'   a multithreading option may be available in a future version.}
 #' @author Shaun Wilkinson
 #' @references
 #'   Bokulich NA, Subramanian S, Faith JJ, Gevers D, Gordon JI, Knight R,
@@ -42,38 +50,63 @@
 #'   Illumina help page:
 #'   \url{https://help.basespace.illumina.com/articles/descriptive/fastq-files/}
 #'
-#' @seealso \code{\link{writeFASTQ}} for writing DNAbin objects to text
-#'   in the FASTQ format, and \code{\link[ape]{read.dna}} in the
-#'   \code{\link[ape]{ape}} package for reading DNA in FASTA and other formats
-#'   into R.
+#' @seealso \code{\link{writeFASTQ}} and \code{\link{writeFASTA}}
+#'   for writing sequences to text in the FASTA or FASTQ format.
+#'   See also \code{\link[ape]{read.dna}} in the \code{\link[ape]{ape}} package.
 #' @examples
 #'   \dontrun{
 #'     ##TBA
 #'   }
+#' @name read
 ################################################################################
-readFASTQ <- function(file, format = "DNAbin", ...){
-  x <- scan(file = file, what = "", sep = "\n", quiet = TRUE, ... = ...)
-  x <- x[seq_along(x) %% 4 != 3]
-  seqs <- x[seq_along(x) %% 3 == 2]
-  names(seqs) <- gsub("^@", "", x[seq_along(x) %% 3 == 1])
-  quals <- x[seq_along(x) %% 3 == 0]
-  # 477 mb total
-  if(format == "string"){
-    attr(seqs, "quality") <- quals
-    return(seqs)
-    # mapply(function(x, y) structure(x, quality = y), seqs, quals, SIMPLIFY = FALSE) # 639.9mb
-  }else if(format == "character"){
-    seqs2 <- strsplit(seqs, split = "")
-    quals2 <- lapply(quals, .char2qual)
-    quals2 <- lapply(quals2, as.integer)
-    mapply(function(x, y) structure(x, quality = y), seqs2, quals2, SIMPLIFY = FALSE) #2.3gb
-  }else if(format == "DNAbin"){
-    seqs2 <- lapply(seqs, .char2dna)
+readFASTQ <- function(file = file.choose(), bin = TRUE){
+  x <- scan(file = file, what = "", sep = "\n", quiet = TRUE)
+  seqs <- x[seq(2, length(x), by = 4)]
+  seqnames <- gsub("^@", "", x[seq(1, length(x), by = 4)])
+  quals <- x[seq(4, length(x), by = 4)]
+  if(bin){
+    seqs2 <- .char2dna(seqs)
     quals2 <- lapply(quals, .char2qual) #510 mb total
-    res <- mapply(function(x, y) structure(x, quality = y), seqs2, quals2, SIMPLIFY = FALSE) # 576mb
+    res <- mapply(function(x, y) structure(x, quality = y), seqs2, quals2, SIMPLIFY = FALSE)
+    names(res) <- seqnames
     class(res) <- "DNAbin"
     return(res)
-  }else stop("Invalid format\n")
+  }else{
+    attr(seqs, "quality") <- quals
+    names(seqs) <- seqnames
+    return(seqs)
+  }
 }
-
 ################################################################################
+#' @rdname read
+################################################################################
+readFASTA <- function(file = file.choose(), bin = TRUE, residues = "DNA"){
+  x <- readLines(file)
+  namelines <- grepl("^>", x)
+  f <- cumsum(namelines)
+  res <- split(x, f)
+  resnames <- sapply(res, function(s) s[1])
+  resnames <- gsub("^>", "", resnames)
+  # resnames <- gsub("\\|.+", "", resnames)
+  res <- lapply(res, function(s) paste0(s[-1], collapse = ""))
+  names(res) <- resnames
+  if(bin){
+    if(identical(residues, "DNA")){
+      res <- .char2dna(res)
+      class(res) <- "DNAbin"
+    }else if(identical(residues, "AA")){
+      res <- lapply(res, charToRaw)
+      class(res) <- "AAbin"
+    }else stop("Invalid 'residues' argument\n")
+  }
+  return(res)
+}
+################################################################################
+
+
+# mapply(function(x, y) structure(x, quality = y), seqs, quals, SIMPLIFY = FALSE) # 639.9mb
+# }else if(format == "character"){
+#   seqs2 <- strsplit(seqs, split = "")
+#   quals2 <- lapply(quals, .char2qual)
+#   quals2 <- lapply(quals2, as.integer)
+#   mapply(function(x, y) structure(x, quality = y), seqs2, quals2, SIMPLIFY = FALSE) #2.3gb
