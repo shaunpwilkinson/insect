@@ -11,6 +11,8 @@
 #' @param residues character string indicating whether the sequences to
 #'   be read are composed of nucleotides ("DNA"; default) or amino acids ("AA").
 #'   Only required for \code{readFASTA} and if \code{bin = TRUE}.
+#' @param alignment logical indicating whether the sequences represent
+#'   an alignment to be parsed as a matrix. Defaults to FALSE.
 #' @return Either a vector of character strings (if bin = FALSE),
 #'   or a list of raw ("DNAbin" or "AAbin") vectors,
 #'   with each element having a "quality" attribute.
@@ -106,6 +108,11 @@ readFASTA <- function(file = file.choose(), bin = TRUE, residues = "DNA",
       rownames(res) <- resnames
     }
     class(res) <- if(DNA) "DNAbin" else "AAbin"
+  }else{
+    if(alignment){
+      res <- matrix(res, ncol = 1)
+      roenames(res) <- resnames
+    }
   }
   return(res)
 }
