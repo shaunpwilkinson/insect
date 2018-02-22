@@ -12,7 +12,7 @@
 #'   be read are composed of nucleotides ("DNA"; default) or amino acids ("AA").
 #'   Only required for \code{readFASTA} and if \code{bin = TRUE}.
 #' @param alignment logical indicating whether the sequences represent
-#'   an alignment to be parsed as a matrix. Defaults to FALSE.
+#'   an alignment to be parsed as a matrix. Only applies to \code{readFASTA}.
 #' @return Either a vector of character strings (if bin = FALSE),
 #'   or a list of raw ("DNAbin" or "AAbin") vectors,
 #'   with each element having a "quality" attribute.
