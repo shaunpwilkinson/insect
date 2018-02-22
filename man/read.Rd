@@ -8,7 +8,8 @@
 \usage{
 readFASTQ(file = file.choose(), bin = TRUE)
 
-readFASTA(file = file.choose(), bin = TRUE, residues = "DNA")
+readFASTA(file = file.choose(), bin = TRUE, residues = "DNA",
+  alignment = FALSE)
 }
 \arguments{
 \item{file}{the name of the FASTA or FASTQ file from which the sequences

@@ -80,24 +80,32 @@ readFASTQ <- function(file = file.choose(), bin = TRUE){
 ################################################################################
 #' @rdname read
 ################################################################################
-readFASTA <- function(file = file.choose(), bin = TRUE, residues = "DNA"){
-  x <- readLines(file)
+readFASTA <- function(file = file.choose(), bin = TRUE, residues = "DNA",
+                      alignment = FALSE){
+  x <- scan(file = file, what = "", sep = "\n", quiet = TRUE)
   namelines <- grepl("^>", x)
   f <- cumsum(namelines)
   res <- split(x, f)
   resnames <- sapply(res, function(s) s[1])
   resnames <- gsub("^>", "", resnames)
   # resnames <- gsub("\\|.+", "", resnames)
-  res <- lapply(res, function(s) paste0(s[-1], collapse = ""))
+  res <- sapply(res, function(s) paste0(s[-1], collapse = ""))
   names(res) <- resnames
   if(bin){
-    if(identical(residues, "DNA")){
-      res <- .char2dna(res)
-      class(res) <- "DNAbin"
-    }else if(identical(residues, "AA")){
-      res <- lapply(res, charToRaw)
-      class(res) <- "AAbin"
-    }else stop("Invalid 'residues' argument\n")
+    residues <- toupper(residues)
+    DNA <- identical(residues, "DNA")
+    if(!DNA){
+      if(!identical(residues, "AA")) stop("Invalid 'residues' argument\n")
+    }
+    res <- if(DNA) .char2dna(res) else lapply(res, charToRaw)
+    if(alignment){
+      if(!all(sapply(res, length) == length(res[[1]]))){
+        warning("alignment is TRUE but sequences have differing lengths\n")
+      }
+      suppressWarnings(res <- do.call("rbind", res))
+      rownames(res) <- resnames
+    }
+    class(res) <- if(DNA) "DNAbin" else "AAbin"
   }
   return(res)
 }
