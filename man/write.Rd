@@ -6,9 +6,9 @@
 \alias{writeFASTA}
 \title{Write sequences to text in FASTA or FASTQ format.}
 \usage{
-writeFASTQ(x, file = "", append = FALSE)
+writeFASTQ(x, file = "", ...)
 
-writeFASTA(x, file = "", append = FALSE)
+writeFASTA(x, file = "", ...)
 }
 \arguments{
 \item{x}{a list of sequences in \code{DNAbin} or \code{AAbin} format, or a
@@ -24,10 +24,7 @@ See \code{\link{readFASTQ}} for more details.}
 If file = "" (default setting) the text file is written to the
 console.}
 
-\item{append}{logical indicating whether text should be appended below
-existing text in the file (TRUE), or whether any existing text should be
-overwritten (FALSE; default). Only applicable if the file specified
-in \code{file} already exists.}
+\item{...}{further options to be passed to \code{cat} (not including \code{"sep"}).}
 }
 \description{
 These functions take a list of DNA or amino acid sequences in

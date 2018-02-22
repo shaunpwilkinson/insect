@@ -102,7 +102,7 @@ readFASTA <- function(file = file.choose(), bin = TRUE, residues = "DNA",
     res <- if(DNA) .char2dna(res) else lapply(res, charToRaw)
     if(alignment){
       if(!all(sapply(res, length) == length(res[[1]]))){
-        warning("alignment is TRUE but sequences have differing lengths\n")
+        warning("alignment is TRUE but sequences differ in length\n")
       }
       suppressWarnings(res <- do.call("rbind", res))
       rownames(res) <- resnames

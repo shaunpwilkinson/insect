@@ -15,10 +15,7 @@
 #' @param file character string giving a valid file path to output the text to.
 #'   If file = "" (default setting) the text file is written to the
 #'   console.
-#' @param append logical indicating whether text should be appended below
-#'   existing text in the file (TRUE), or whether any existing text should be
-#'   overwritten (FALSE; default). Only applicable if the file specified
-#'   in \code{file} already exists.
+#' @param ... further options to be passed to \code{cat} (not including \code{"sep"}).
 #' @details TBA
 #' @author Shaun Wilkinson
 #' @references
@@ -34,7 +31,7 @@
 #'   }
 #' @name write
 ################################################################################
-writeFASTQ <- function(x, file = "", append = FALSE){
+writeFASTQ <- function(x, file = "", ...){
   if(!.isDNA(x)) stop("x must be a 'DNAbin' object")
   reslen <- length(x) * 4
   res <- character(reslen)
@@ -42,14 +39,18 @@ writeFASTQ <- function(x, file = "", append = FALSE){
   res[seq(2, reslen, by = 2)]  <- .dna2char(x)
   res[seq(3, reslen, by = 2)]  <- rep("+", length(x))
   res[seq(4, reslen, by = 2)]  <- sapply(lapply(x, attr, "quality"), .qual2char)
-  cat(res, file = file, append = append, sep = "\n")
+  cat(res, file = file, sep = "", ... = ...)
 }
 ################################################################################
 #' @rdname write
 ################################################################################
-writeFASTA <- function(x, file = "", append = FALSE){
+writeFASTA <- function(x, file = "", ...){
   isDNA <- .isDNA(x)
   isAA <- .isAA(x)
+  if(!is.null(dim(x))){
+    # convert from matrix to list while retaining gaps
+    x <- as.list(as.data.frame(t(unclass(x))))
+  }
   if(isDNA | isAA){
     if(isDNA){
       tmp <- .dna2char(x)
@@ -67,6 +68,6 @@ writeFASTA <- function(x, file = "", append = FALSE){
   res <- character(reslen)
   res[seq(1, reslen, by = 2)] <- paste0(">", names(tmp))
   res[seq(2, reslen, by = 2)] <- tmp
-  cat(res, file = file, sep = "\n")
+  cat(res, file = file, sep = "", ... = ...)
 }
 ################################################################################
