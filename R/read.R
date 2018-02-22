@@ -111,7 +111,7 @@ readFASTA <- function(file = file.choose(), bin = TRUE, residues = "DNA",
   }else{
     if(alignment){
       res <- matrix(res, ncol = 1)
-      roenames(res) <- resnames
+      rownames(res) <- resnames
     }
   }
   return(res)
