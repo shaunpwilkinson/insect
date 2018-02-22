@@ -23,6 +23,9 @@ If FALSE a vector of named character strings is returned.}
 \item{residues}{character string indicating whether the sequences to
 be read are composed of nucleotides ("DNA"; default) or amino acids ("AA").
 Only required for \code{readFASTA} and if \code{bin = TRUE}.}
+
+\item{alignment}{logical indicating whether the sequences represent
+an alignment to be parsed as a matrix. Only applies to \code{readFASTA}.}
 }
 \value{
 Either a vector of character strings (if bin = FALSE),
