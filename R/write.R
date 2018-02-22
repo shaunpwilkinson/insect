@@ -39,7 +39,7 @@ writeFASTQ <- function(x, file = "", ...){
   res[seq(2, reslen, by = 2)]  <- .dna2char(x)
   res[seq(3, reslen, by = 2)]  <- rep("+", length(x))
   res[seq(4, reslen, by = 2)]  <- sapply(lapply(x, attr, "quality"), .qual2char)
-  cat(res, file = file, sep = "", ... = ...)
+  cat(res, file = file, sep = "\n", ... = ...)
 }
 ################################################################################
 #' @rdname write
@@ -68,6 +68,6 @@ writeFASTA <- function(x, file = "", ...){
   res <- character(reslen)
   res[seq(1, reslen, by = 2)] <- paste0(">", names(tmp))
   res[seq(2, reslen, by = 2)] <- tmp
-  cat(res, file = file, sep = "", ... = ...)
+  cat(res, file = file, sep = "\n", ... = ...)
 }
 ################################################################################
