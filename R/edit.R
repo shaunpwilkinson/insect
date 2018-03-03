@@ -61,7 +61,7 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
   ## following lines are for trees that have been stripped of memory-intensive elements
   if(!quiet) cat("Dereplicating sequences\n")
   hashes <- attr(x, "hashes")
-  if(is.null(hashes)) hashes <- .digest(x, simplify = TRUE)
+  if(is.null(hashes)) hashes <- hash(x)
   # attr(tree, "hashes") <- NULL
   duplicates <- attr(x, "duplicates")
   if(is.null(duplicates)) duplicates <- duplicated(hashes)
@@ -69,16 +69,6 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
   # attr(tree, "duplicates") <- NULL
   pointers <- attr(x, "pointers")
   if(is.null(pointers)) pointers <- .point(hashes)
-  # if(is.null(pointers)){
-  #   pointers <- integer(length(x))
-  #   dhashes <- hashes[duplicates]
-  #   uhashes <- hashes[!duplicates]
-  #   pointers[!duplicates] <- seq_along(uhashes)
-  #   pd <- integer(length(dhashes))
-  #   for(i in unique(dhashes)) pd[dhashes == i] <- match(i, uhashes)
-  #   pointers[duplicates] <- pd
-  # }
-  # attr(tree, "pointers") <- NULL
   seqweights <- attr(x, "weights")
   if(is.null(seqweights)) seqweights <- aphid::weight(x, k = 5)
   # attr(tree, "weights") <- NULL ## replaced later
@@ -130,10 +120,10 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
   ## calculate k-mers once but only if run on single core
   ## otherwise uses excessive memory (since this matrix can be > 1GB)
   # kmers <- attr(tree, "kmers")
-  #if(is.null(kmers)) kmers <- phylogram::mbed(x)
+  #if(is.null(kmers)) kmers <- kmer::mbed(x)
   if(ncores == 1){
     if(!quiet) cat("Counting k-mers\n")
-    kmers <- phylogram::kcount(x, k = 5)/(sapply(x, length) - 4) #k - 1 = 4
+    kmers <- kmer::kcount(x, k = 5)/(sapply(x, length) - 4) #k - 1 = 4
   # }else if(has_duplicates & nrow(kmers) == nseq & ncores = 1){
   #   kmers <- kmers[!duplicates, ]
   }else kmers <- NULL

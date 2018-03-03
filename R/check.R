@@ -1,4 +1,4 @@
-#' Identify sequences with potentially incorrect lineage metadata
+#' Identify sequences with potentially incorrect lineage metadata.
 #'
 #'  This function evaluates a list of DNA barcode
 #'    sequences (a "DNAbin" object with lineage attributes)
@@ -8,24 +8,27 @@
 #'
 #' @param x a DNAbin object with lineage attributes.
 #' @param db the taxon database.
-#' @param level taxonomic level at which heterogeneity within an OTUs flags 
+#' @param level taxonomic level at which heterogeneity within an OTUs flags
 #'   a sequence as potentially erroneous. Must be a recognized rank
 #'   in the NCBI Taxon database.
 #' @param threshold numeric between 0 and 1 giving the OTU similarity cutoff value.
 #' @param quiet logical indicating whether progress should be printed to the console.
 #' @return a data frame containing the names of the potentially erroneous sequences.
-#' @details TBA
+#' @details This function first clusters the sequence dataset into operational
+#'   taxonomic units (OTUs) based on a given genetic distance threshold,
+#'   and then checks for lineage homogeneity within OTUS, flagging any records
+#'   that appear out of place based on the lineage metadata of other OTU members.
 #' @author Shaun Wilkinson
 #' @references TBA
 #' @examples
 #'   ##TBA
 ################################################################################
-sift <- function(x, db, level = "order", threshold = 0.97, quiet = FALSE){
+check <- function(x, db, level = "order", threshold = 0.97, quiet = FALSE){
   level <- tolower(level)
   if(!quiet) cat("Clustering OTUs\n")
-  otus <- otu(x, threshold = threshold, k = 5)
+  otus <- kmer::otu(x, threshold = threshold, k = 5)
   if(!quiet) cat("Comparing lineage metadata within OTUs\n")
-  sift1 <- function(y){
+  check1 <- function(y){
     ## input a vector of named lineages (non delimited) of a given rank
     ## returns a df
     hashes <- paste0(gsub("(^.{4}).+", "\\1", names(y)), y)
@@ -55,16 +58,16 @@ sift <- function(x, db, level = "order", threshold = 0.97, quiet = FALSE){
     }
   }
   lins <- lapply(attr(x, "taxID"), get_lineage, db)
-  lins <- sapply(lins, function(e) e[level]) 
+  lins <- sapply(lins, function(e) e[level])
   names(lins) <- names(x)
   f <- as.factor(otus)[!is.na(lins)]
   lins <- lins[!is.na(lins)]
   splitlist <- split(lins, f)
   splitlist <- splitlist[tabulate(f) > 2]
-  out <- lapply(splitlist, sift1)
+  out <- lapply(splitlist, check1)
   out <- out[!sapply(out, is.null)]
   if(length(out) == 0){
-    out <- data.frame(listed = character(0), suggested = character(0), 
+    out <- data.frame(listed = character(0), suggested = character(0),
                       confidence = numeric(0), nstudies = integer(0))
     if(!quiet) cat("Found no erroneous sequences\n")
     return(out)
@@ -76,34 +79,4 @@ sift <- function(x, db, level = "order", threshold = 0.97, quiet = FALSE){
   return(out)
 }
 ################################################################################
-#' Evaluate sequences classification quality.
-#' This function is used to check the efficiency of a tree-based sequence
-#'   classification given a known lineage string.
-#' @param predicted,actual semicolon-delimited lineage strings, where the former
-#'   is predicted by a classification tree and the latter is the true lineage.
-#' @return A signed integer.
-#'   A negative number indicates an underclassification (a correct subset of the actual
-#'   lineage), a zero represents a full correct classification,
-#'   and a positive number indicates a over- or mis-classification.
-check_classification <- function(predicted, actual){
-  if(identical(predicted, actual)) return(0)
-  splitfun <- function(s) strsplit(s, split = "; ")[[1]]
-  actual <- splitfun(gsub("\\.$", "", actual))
-  if(identical(predicted, "")) return(length(actual) * -1)
-  predicted <- splitfun(gsub("\\.$", "", predicted))
-  diflen <- length(predicted) - length(actual)
-  if(diflen > 0) actual <- c(actual, rep("", diflen))
-  matched <- TRUE
-  for(i in seq_along(predicted)){
-    if(actual[i] != predicted[i]){
-      matched = FALSE
-      break
-    }
-  }
-  if(i == length(predicted) & matched){
-    return(diflen)
-  }else{
-    return(length(predicted) - i + 1)
-  }
-}
-################################################################################
+

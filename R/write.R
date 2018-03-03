@@ -9,8 +9,7 @@
 #'   For writeFASTQ, only DNAbin objects are accepted, and each element should have
 #'   a vector of quality scores of equal length attributed to the sequence.
 #'   These vectors are comprised of raw bytes ranging from 00 to 5d
-#'   (0 to 93 when converted to integers; this format is more memory
-#'   efficient than the ASCII characters used in the FASTQ text files).
+#'   (0 to 93 when converted to integers).
 #'   See \code{\link{readFASTQ}} for more details.
 #' @param file character string giving a valid file path to output the text to.
 #'   If file = "" (default setting) the text file is written to the
@@ -36,7 +35,7 @@ writeFASTQ <- function(x, file = "", ...){
   reslen <- length(x) * 4
   res <- character(reslen)
   res[seq(1, reslen, by = 2)] <- paste0("@", names(x))
-  res[seq(2, reslen, by = 2)]  <- .dna2char(x)
+  res[seq(2, reslen, by = 2)]  <- dna2char(x)
   res[seq(3, reslen, by = 2)]  <- rep("+", length(x))
   res[seq(4, reslen, by = 2)]  <- sapply(lapply(x, attr, "quality"), .qual2char)
   cat(res, file = file, sep = "\n", ... = ...)
@@ -52,11 +51,7 @@ writeFASTA <- function(x, file = "", ...){
     x <- as.list(as.data.frame(t(unclass(x))))
   }
   if(isDNA | isAA){
-    if(isDNA){
-      tmp <- .dna2char(x)
-    }else{
-      tmp <- if(is.list(x)) sapply(x, rawToChar) else rawToChar(x)
-    }
+    tmp <- if(isDNA) dna2char(x) else aa2char(x)
   }else if(is.list(x)){
     if(length(x[[1]] == 1)){
       tmp <- unlist(x, use.names = TRUE)

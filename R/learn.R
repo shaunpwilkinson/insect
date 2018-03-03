@@ -135,7 +135,7 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   }
   if(is.null(model)){
     if(!quiet) cat("Dereplicating sequences\n")
-    if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- .digest(x, simplify = TRUE)
+    if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- hash(x)
     if(is.null(attr(x, "duplicates"))) attr(x, "duplicates") <- duplicated(attr(x, "hashes"))
     if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
     # if(is.null(attr(x, "pointers"))){

@@ -1,30 +1,5 @@
 # Internal 'insect' functions
 
-.dna2char <- function(z){
-  cbytes <- as.raw(c(65, 84, 71, 67, 83, 87, 82, 89, 75, 77, 66, 86, 72, 68, 78, 45, 63))
-  indices <- c(136, 24, 72, 40, 96, 144, 192, 48, 80 ,160, 112, 224, 176, 208, 240, 4, 2)
-  vec <- raw(240)
-  vec[indices] <- cbytes
-  if(is.list(z)){
-    sapply(z, function(s) rawToChar(vec[as.integer(s)]))
-  }else{
-    rawToChar(vec[as.integer(z)])
-  }
-}
-
-
-.char2dna <- function(z){
-  dbytes <- as.raw(c(136, 24, 72, 40, 96, 144, 192, 48, 80 ,160, 112, 224, 176, 208, 240, 4, 2))
-  indices <- c(65, 84, 71, 67, 83, 87, 82, 89, 75, 77, 66, 86, 72, 68, 78, 45, 63) # max 89
-  vec <- raw(89)
-  vec[indices] <- dbytes
-  s2d1 <- function(s) vec[as.integer(charToRaw(s))]
-  res <- if(length(z) > 1) lapply(z, s2d1) else s2d1(z)
-  class(res) <- "DNAbin"
-  return(res)
-}
-
-
 .qual2char <- function(x){
   qbytes <- as.raw(0:93)
   qchars <- strsplit(paste0("!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOP",
@@ -42,37 +17,6 @@
   return(qbytes[match(strsplit(x, split = "")[[1]], qchars)])
 }
 
-
-.rc <- function(s){
-  # a string of A, C, G, Ts etc
-  s <- strsplit(s, split = "")[[1]]
-  s <- rev(s)
-  dchars <- strsplit("ACGTMRWSYKVHDBN", split = "")[[1]]
-  comps <- strsplit("TGCAKYWSRMBDHVN", split = "")[[1]]
-  s <- s[s %in% dchars] # remove spaces etc
-  s <- dchars[match(s, comps)]
-  s <- paste0(s, collapse = "")
-  return(s)
-}
-
-.disambiguate <- function(s){
-  if(is.null(s)) return(NULL)
-  s <- gsub("[^ACGTMRWSYKVHDBNI]", "", s)
-  if(grepl("[MRWSYKVHDBNI]", s)){
-    s <- gsub("M", "[AC]", s)
-    s <- gsub("R", "[AG]", s)
-    s <- gsub("W", "[AT]", s)
-    s <- gsub("S", "[CG]", s)
-    s <- gsub("Y", "[CT]", s)
-    s <- gsub("K", "[GT]", s)
-    s <- gsub("V", "[ACG]", s)
-    s <- gsub("H", "[ACT]", s)
-    s <- gsub("D", "[AGT]", s)
-    s <- gsub("B", "[CGT]", s)
-    s <- gsub("N|I", "[ACGT]", s)
-  }
-  return(s)
-}
 
 
 ## tree is a "dendrogram" object (can be a node)
@@ -116,27 +60,6 @@
   return(names(indices))
 }
 
-
-.digest <- function(x, simplify = TRUE){
-  digest1 <- function(s){
-    if(mode(s) != "raw"){
-      if(mode(s) == "character"){
-        s <- sapply(s, charToRaw)
-      }else if(mode(s) == "integer"){
-        s <- sapply(s, as.raw)
-      }else if(mode(s) == "numeric"){
-        s <- unlist(sapply(s, function(a) charToRaw(paste(round(a, 4)))), use.names = FALSE)
-        #stop("Can't digest numeric vectors")
-      }
-    }
-    return(paste(openssl::md5(as.vector(s))))
-  }
-  if(is.list(x)){
-    if(simplify) return(sapply(x, digest1)) else return(lapply(x, digest1))
-  }else{
-    return(digest1(x))
-  }
-}
 
 .ancestor <- function(lineages){
   # input and output both semicolon-delimited character string(s)
@@ -277,43 +200,6 @@
   return(res)
 }
 
-#
-#
-#
-# query <- "Symbiodinium[ORGN]+AND+Internal[TITL]+AND+2014[MDAT]"
-#
-# URL1 <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?",
-#                "db=nucleotide&term=",
-#                query,
-#                "&usehistory=y",
-#                "&tool=R")
-# X <- .scanURL(URL1, retmode = "xml")
-# N <- as.integer(xml2::xml_text(xml2::xml_find_first(X, "Count")))
-# WebEnv <- xml2::xml_text(xml2::xml_find_first(X, "WebEnv"))
-# QueryKey <- xml2::xml_text(xml2::xml_find_first(X, "QueryKey"))
-# nrequest <- N%/%500 + as.logical(N%%500) # 1 if remainder exists, 0 otherwise
-# accs <- vector(mode = "list", length = nrequest)
-#
-# i <- 1
-# retstart <- (i - 1) * 500
-# contact <- NULL
-# URL2 <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
-#                "efetch.fcgi?",
-#                "db=nucleotide",
-#                "&WebEnv=", WebEnv,
-#                "&query_key=", QueryKey,
-#                "&retstart=", retstart,
-#                "&retmax=500",
-#                "&rettype=gb",
-#                "&retmode=xml",
-#                if(!is.null(contact)) paste0("&email=", contact) else NULL)
-# tmp <- .scanURL(URL2, retmode = "xml")
-#
-# test <- .extractXML(tmp, species = TRUE, lineages = TRUE, taxIDs = TRUE)
-# test[[5]][1:2]
-#
-# test2 <- .extractXML2(tmp, species = TRUE, lineages = TRUE, taxIDs = TRUE)
-# test[[1]][1:2]
 
 # Check if object is DNA
 .isDNA <- function(x){

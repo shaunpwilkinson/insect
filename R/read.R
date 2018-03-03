@@ -67,7 +67,7 @@ readFASTQ <- function(file = file.choose(), bin = TRUE){
   seqnames <- gsub("^@", "", x[seq(1, length(x), by = 4)])
   quals <- x[seq(4, length(x), by = 4)]
   if(bin){
-    seqs2 <- .char2dna(seqs)
+    seqs2 <- char2dna(seqs)
     quals2 <- lapply(quals, .char2qual) #510 mb total
     res <- mapply(function(x, y) structure(x, quality = y), seqs2, quals2, SIMPLIFY = FALSE)
     names(res) <- seqnames
@@ -99,7 +99,7 @@ readFASTA <- function(file = file.choose(), bin = TRUE, residues = "DNA",
     if(!DNA){
       if(!identical(residues, "AA")) stop("Invalid 'residues' argument\n")
     }
-    res <- if(DNA) .char2dna(res) else lapply(res, charToRaw)
+    res <- if(DNA) char2dna(res) else lapply(res, charToRaw)
     if(alignment){
       if(!all(sapply(res, length) == length(res[[1]]))){
         warning("alignment is TRUE but sequences differ in length\n")

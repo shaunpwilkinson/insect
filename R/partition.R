@@ -39,8 +39,8 @@
 #'   the method to derive the weights from the sequences. Currently only the
 #'   \code{"Gerstein"} method is supported (the default). For this method, a
 #'   tree is first created by k-mer counting (see the
-#'   \code{\link[phylogram]{topdown}} function in the
-#'   \code{\link[phylogram]{phylogram}} package),
+#'   \code{\link[kmer]{cluster}} function in the
+#'   \code{\link[kmer]{kmer}} package),
 #'   and sequence weights are derived from the tree using the 'bottom up'
 #'   algorithm of Gerstein et al. (1994). The sum of these weights are equal
 #'   to the number of sequences in the alignment (so that
@@ -106,7 +106,7 @@ partition <- function(x, model = NULL, K = 2, allocation = "cluster",
     if(!quiet) cat("Clustering sequences into", K, "groups\n")
     if(is.null(kmers)){
       if(!quiet) cat("Counting k-mers\n")
-      kmers <- phylogram::kcount(x, k = 5)
+      kmers <- kmer::kcount(x, k = 5)
     }
     if(!quiet) cat("Assigning sequences to groups ")
     if(identical(allocation, "split")){

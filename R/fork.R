@@ -18,7 +18,7 @@
 #'   the sequence weights used to derive the model, or a character string giving
 #'   the method to derive the weights from the sequences. Currently only the
 #'   \code{"Gerstein"} method is supported (default). For this method, a
-#'   tree is first created by k-mer counting (see \code{\link[phylogram]{topdown}}),
+#'   tree is first created by k-mer counting (see \code{\link[kmer]{cluster}}),
 #'   and sequence weights are then derived from the tree using the 'bottom up'
 #'   algorithm of Gerstein et al (1994).
 #' @inheritParams learn
@@ -60,7 +60,7 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
     }else stop("Invalid seqweights argument")
     if(is.null(kmers)){# generally will be NULL due to large size
       if(!quiet) cat("\nCounting kmers\n")
-      kmers <- phylogram::kcount(x[indices], k = 5)
+      kmers <- kmer::kcount(x[indices], k = 5)
     }else{
       if(nrow(kmers) == length(x)) kmers <- kmers[indices, ]
     }

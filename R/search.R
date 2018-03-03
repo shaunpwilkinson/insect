@@ -143,12 +143,7 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
     if(lineages) lins <- unlist(lins, use.names = FALSE)
     if(length(res) == 0) stop("No valid sequences to return\n")
     if(bin){
-      if(db == "nucleotide"){
-        res <- .char2dna(res)
-      }else{
-        res <- lapply(res, charToRaw)
-        class(res) <- "AAbin"
-      }
+      res <- if(db == "nucleotide") char2dna(res) else char2aa(res)
     }
     if(taxIDs) attr(res, "taxID") <- taxs
     if(species) attr(res, "species") <- spps
