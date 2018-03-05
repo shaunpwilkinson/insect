@@ -16,8 +16,7 @@ vector of sequences as character strings.
 For writeFASTQ, only DNAbin objects are accepted, and each element should have
 a vector of quality scores of equal length attributed to the sequence.
 These vectors are comprised of raw bytes ranging from 00 to 5d
-(0 to 93 when converted to integers; this format is more memory
-efficient than the ASCII characters used in the FASTQ text files).
+(0 to 93 when converted to integers).
 See \code{\link{readFASTQ}} for more details.}
 
 \item{file}{character string giving a valid file path to output the text to.

@@ -169,15 +169,32 @@ prune_taxon <- function(db, clade, keep = FALSE){
   if(mode(clade) == "character") clade <- db$tax_id[match(clade, db$name)]
   if(is.na(clade)) stop("Clade not found in database\n")
   #indices <- match(clade, db$tax_id)
-  indices <- which(db$tax_id == clade)
-  keeps <- db[indices, ]
+  indices <- which(db$tax_id == clade) # should be length 1 to start
+  if(keep){
+    keeps <- db[indices, ]
+    parclade <- db$parent_tax_id[indices]
+    repeat{ # must include parent nodes including root
+      if(identical(parclade, 0)) break
+      parindex <- which(db$tax_id == parclade)
+      keeps <- rbind(db[parindex, ], keeps)
+      parclade <- db$parent_tax_id[parindex]
+    }
+  }
   repeat{
     indices <- which(db$parent_tax_id %in% clade)
     if(length(indices) == 0) break
     clade <- db$tax_id[indices]
-    keeps <- rbind(keeps, db[indices, ])
+    if(keep) keeps <- rbind(keeps, db[indices, ])
     db <- db[-indices, ]
   }
-  if(keep) keeps else db
+  if(keep){
+    keeps$parent_tax_index <- match(keeps$parent_tax_id, keeps$tax_id)
+    rownames(keeps) <- NULL
+    return(keeps)
+  }else{
+    db$parent_tax_index <- match(db$parent_tax_id, db$tax_id)
+    rownames(db) <- NULL
+    return(db)
+  }
 }
 ################################################################################
