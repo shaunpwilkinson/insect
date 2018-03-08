@@ -15,7 +15,7 @@
 #'   sequence for it to pass the filter. Defaults to 2 (removes singletons).
 #' @param minlength integer, the minimum acceptable sequence length.
 #'   Defaults to 50.
-#' @param minlength integer, the maximum acceptable sequence length.
+#' @param maxlength integer, the maximum acceptable sequence length.
 #'   Defaults to 500.
 #' @return a possibly shortened object of the same type as the primary
 #'   input argument

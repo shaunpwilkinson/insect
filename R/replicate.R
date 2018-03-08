@@ -17,10 +17,10 @@
 ################################################################################
 dereplicate <- function(x, cores = 1){
   hashes <- hash(x, cores = cores)
-  pointers <- insect:::.point(hashes)
+  pointers <- .point(hashes)
   orignames <- names(x)
   x <- x[!duplicated(pointers)]
-  if(insect:::.isDNA(x)) for(i in seq_along(x)) attr(x[[i]], "quality") <- NULL
+  if(.isDNA(x)) for(i in seq_along(x)) attr(x[[i]], "quality") <- NULL
   attr(x, "rerep.names") <- orignames
   attr(x, "rerep.pointers") <- pointers
   return(x)

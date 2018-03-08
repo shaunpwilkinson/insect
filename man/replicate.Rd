@@ -23,7 +23,7 @@ either a DNAbin/AAbin object, or a vector of concatenated
 \description{
 These functions are used to extract only the unique sequences from
   a set of DNA reads, with the ability to rebuild the original
-  sequence set.
+  sequence set at a later time.
 }
 \details{
 TBA

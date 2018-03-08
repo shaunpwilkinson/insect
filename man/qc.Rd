@@ -24,7 +24,7 @@ sequence for it to pass the filter. Defaults to 2 (removes singletons).}
 \item{minlength}{integer, the minimum acceptable sequence length.
 Defaults to 50.}
 
-\item{minlength}{integer, the maximum acceptable sequence length.
+\item{maxlength}{integer, the maximum acceptable sequence length.
 Defaults to 500.}
 }
 \value{
