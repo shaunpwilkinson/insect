@@ -16,7 +16,7 @@ rc <- function(z){
   rc1 <- function(zz){
     s <- strsplit(zz, split = "")[[1]]
     s <- rev(s)
-    dchars <- strsplit("ACGTMRWSYKVHDBNN", split = "")[[1]]
+    dchars <- strsplit("ACGTMRWSYKVHDBNI", split = "")[[1]]
     comps <- strsplit("TGCAKYWSRMBDHVNI", split = "")[[1]]
     s <- s[s %in% dchars] # remove spaces etc
     s <- dchars[match(s, comps)]

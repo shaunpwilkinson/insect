@@ -1,0 +1,216 @@
+---
+title: "A gentle introduction to the insect pipeline"
+author: "Shaun Wilkinson"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+bibliography: insect.bib
+csl: bioinformatics.csl
+vignette: >
+  %\VignetteIndexEntry{Introduction to the insect package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#knitr::opts_chunk$set(out.width='750px', dpi=200)
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+--------------------------------------------------------------------------------
+
+
+##Introduction
+Welcome to the **insect** R package, 
+a bioinformatic pipeline designed for the 
+analysis of next generation sequencing (NGS) amplicon 
+libraries using informatic sequence classification trees. 
+The pipeline employs a machine-learning approach that 
+uses a set of training data (generally derived from barcode 
+sequencing of individual specimens of known taxonomy) 
+to 'learn' a classification tree, 
+which is then used to probabilistically 
+assign taxonomic IDs to the query sequence dataset. 
+The package also includes a suite of functions 
+for FASTQ/FASTA sequence parsing, demultiplexing, 
+paired-end read stitching, primer trimming, quality filtering, 
+dereplication, rereplication, 
+and many more useful operations.
+These functions are generally designed for use on 
+workstations with multiple-processors, 
+but can also be used on standard laptop and desktop computers 
+provided the user doesn't mind waiting a little longer for the results.
+This pipeline is designed to be used in conjunction with the **ape**
+package [@Paradis2004; @Paradis2012], which contains memory-efficient
+binary formats for DNAs and amino acids ("DNAbin" and "AAbin" objects)
+among many other useful features.
+The **insect** pipeline is ideal for processing environmental DNA 
+(eDNA) metabarcode libaries and both NGS and standard sanger 
+single source amplicon sequences.
+
+
+The most time-consuming part of the process 
+generally involves building the classification tree. 
+For example, a training dataset consisting of 
+300,000 COI sequences took around one week 
+to learn on a workstation with 
+48 logcal processors (Intel Xeon 2.3GHz) and 64 GB RAM. 
+To produce a classification tree, the **learn** function 
+recursively partitions the training sequences 
+(a top-down/divisive approach to tree building as opposed to 
+bottom-up/agglomerative ethods such as UPGA and Neighbor Joining).
+The dataset is initially divided in two,
+and for each subset, a profile hidden Markov model
+is derived (see Durbin et al. [-@Durbin1998] for a detailed 
+description of these models). 
+At this stage the lowest common taxonomic rank of each subset is also stored
+for downstream classification of query sequences.
+The partitioning and model training procedure is carried out 
+recursively, splitting the training data into smaller and 
+smaller subsets.
+
+The classification trees are amplicon specific, so a unique tree is 
+generally required for each primer set. 
+However, classification trees are already available for some 
+of the more common barcoding primers from 
+[here](https://osf.io/fvyub/). 
+Functions and instructions are also provided 
+for obtaining and filtering training data from GenBank 
+and performing the tree-learning operation, 
+though it is beyond the scope of this introductory tutorial.
+New trees are constantly being added to the collection, 
+so please feel free to suggest a barcoding primer set with 
+which to generate a tree and we will endeavour to add it to the list.
+
+Once a classification tree has been loaded, 
+query sequences (eg those from the FASTQ file(s) representing the 
+user's eDNA dataset) can be classified to produce 
+taxonomic IDs with an associated degree of confidence.
+The classification algorithm works as follows:
+Starting from the root node of the classification tree, 
+the likelihood of the sequence is computed (using the forward algorithm) 
+for each of the two models that occupy the two child nodes. 
+The likelihoods (log-probabilities of the sequences given the models) 
+are compared using the Akaike weight test statistic 
+[@Johnson2004], and if the model-comparison procedure reveals that 
+one model is overwhelmingly more likely to have produced the 
+sequence than the other, this child node is selected and the taxon ID
+is updated to reflect the lowest common taxonomic rank of the training
+data subset from which the node was derived. 
+
+This procedure is repeated, continuing down the tree until 
+either an inconclusive result is returned from the model comparison tests
+(i.e. the Akaike weight is lower than a pre-defined threshold), 
+or a terminal leaf is reached, at which point a species-level 
+classification is generally returned.
+The algorithm outputs a taxonomic ID, its rank 
+(i.e. species, genus, family, etc), and the Akaike weight value
+used to assess the confidence of the classification. 
+
+
+In addition to the two key functions **learn** and **classify**, 
+the package includes several tools to encode the entire work-flow from 
+raw sequence data input to tabular output. 
+This tutorial will guide users through the process using an example dataset
+of COI sequences derived from Autonomous Reef Monitoring Structures (ARMS)
+deployed in Timor-Leste, using the barcoding primers mlCOIintF (GGWACWGGWTGAACWGTWTAYCCYCC) and 
+jgHCO2198 (TAIACYTCIGGRTGICCRAARAAYCA)[@Leray2013].
+
+
+##A working example
+First download and install the latest development version of the 
+package by following the instructions given in the package README 
+[here](https://github.com/shaunpwilkinson/insect). 
+Load the package as follows:
+
+```{R}
+library(insect)
+```
+
+A zip file containing two FASTQ files 
+(representing the forward and reverse reads from the same sample) 
+as well as the classification tree can 
+be found [here](https://osf.io/2xqmw/).
+Once the archive is downloaded and the contents extracted to the 
+working directory, the FASTQ files are initially read into R as either concatenated
+upper-case character strings or binary "DNAbin" objects, with "quality" attributes. 
+In this example we will opt for the former by setting `bin = FALSE`, 
+since the output is a little more intuitive. 
+However intermediate/advanced users who are familiar with the **ape** package
+may prefer to work with "DNAbin" objects by retaining the default setting of
+`bin = TRUE`.
+
+```{R}
+R1 <- readFASTQ("S1_L001_R1_001.fastq", bin = FALSE)
+R2 <- readFASTQ("S1_L001_R2_001.fastq", bin = FALSE)
+```
+
+This parses the sequences into R as vectors of concatenated upper-case character strings. 
+The R1 and R2 objects are the same length, and have the same names apart from 
+a single digit that specifies the read number.
+The first couple of sequences and their names can be viewed as follows:
+
+```{R}
+head(R1, 2)
+```
+
+The next step is to stitch the forward and reverse reads together to create a single 
+vector of sequences. The `stitch` function performs this operation, as well as 
+optionally removing any sequences that don't contain the primer sequences,
+trimming the primers off the ones that do, and orientating the sequences 
+in the 5' -> 3' direction.
+The optional primer filter-trim and sequence orientation is simply 
+activated by passing the primer sequences to the function. 
+Note that this operation will take a few seconds to process, 
+since the function uses the computationally intensive Needleman–Wunsch 
+algorithm to find the optimal alignments for the paired sequences. 
+The operation can be sped up considerably by setting `cores = 2` or
+higher if using a computer with multiple processors. 
+
+```{R}
+mlCOIintF <- "GGWACWGGWTGAACWGTWTAYCCYCC"
+jgHCO2198 <- "TAIACYTCIGGRTGICCRAARAAYCA"
+x <- stitch(R1, R2, up = mlCOIintF, down = jgHCO2198)
+```
+
+304 sequences were retained and stitched together; however, 
+the sequence set needs further filtering to remove low-quality
+reads, ambiguous base calls and singletons.
+The function `qc` is a quality control function that can 
+be used to apply any or all of these filters.
+The default behaviour is to remove any sequences with a mean quality 
+score of less than 30 (`minqual = 30`), 
+those that contain ambiguous base calls,
+those that appear only once in the dataset (singletons),
+and those with length not between 50 and 500 base pairs.
+To disable any of the filters, simply set the parameter value to `NULL`.
+In this example we will use the default settings, except we will
+change the acceptable length range to 250 - 350 bp.
+
+```{R}
+x <- qc(x, minlength = 250, maxlength = 350)
+```
+
+This has whittled the dataset down 140 sequences from the original 1000.
+A chimera filter is not applied here since these are filtered out 
+during the classification procedure, generally returning an
+uninformative taxonomic ID such as "Eukaryota" or "Eukaryota; Metazoa".
+
+
+
+
+
+
+
+
+##Concluding remarks
+The **insect** package is released underthe GPL-3 license, and is free to distribute
+under certain conditions; however it comes with no warranty. Please direct bug 
+reports to the GitHub issues page at <http://github.com/shaunpwilkinson/insect/issues>.
+Any feedback is greatly appreciated.
+
+
+## Acknowledgements 
+This software was developed with funding from a Rutherford Foundation Postdoctoral 
+Research Fellowship from the Royal Society of New Zealand.
+
+## References 

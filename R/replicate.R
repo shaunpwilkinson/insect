@@ -1,0 +1,40 @@
+#' Dereplicate and rereplicate sequence datasets.
+#'
+#' These functions are used to extract only the unique sequences from
+#'   a set of DNA reads, with the ability to rebuild the original
+#'   sequence set at a later time.
+#'
+#' @param x a list of sequences in \code{DNAbin} or \code{AAbin} format, or a
+#'   vector of sequences as concatenated upper-case character strings.
+#' @param cores integer, the number of processors to use (advanced).
+#' @return either a DNAbin/AAbin object, or a vector of concatenated
+#'   upper-case character strings, depending on the original input object.
+#' @details TBA
+#' @author Shaun Wilkinson
+#' @references TBA
+#' @examples ##TBA
+#' @name replicate
+################################################################################
+dereplicate <- function(x, cores = 1){
+  hashes <- hash(x, cores = cores)
+  pointers <- insect:::.point(hashes)
+  orignames <- names(x)
+  x <- x[!duplicated(pointers)]
+  if(insect:::.isDNA(x)) for(i in seq_along(x)) attr(x[[i]], "quality") <- NULL
+  attr(x, "rerep.names") <- orignames
+  attr(x, "rerep.pointers") <- pointers
+  return(x)
+}
+################################################################################
+#' @rdname replicate
+################################################################################
+rereplicate <- function(x){
+  if(is.null(attr(x, "rerep.names")) | is.null(attr(x, "rerep.pointers"))){
+    stop("x is not rereplicable\n")
+  }
+  orignames <- attr(x, "rerep.names")
+  x <- x[attr(x, "rerep.pointers")]
+  names(x) <- orignames
+  return(x)
+}
+################################################################################

@@ -23,9 +23,17 @@ dna2char <- function(x){
   vec <- raw(240)
   vec[indices] <- cbytes
   if(is.list(x)){
-    sapply(x, function(s) rawToChar(vec[as.integer(s)]))
+    res <- sapply(x, function(s) rawToChar(vec[as.integer(s)]))
+    if(!is.null(attr(x[[1]], "quality"))){
+      attr(res, "quality") <- unname(sapply(x, function(s) .qual2char(attr(s, "quality"))))
+    }
+    return(res)
   }else{
-    rawToChar(vec[as.integer(x)])
+    res <- rawToChar(vec[as.integer(x)])
+    if(!is.null(attr(x, "quality"))){
+      attr(res, "quality") <- unname(.qual2char(attr(x, "quality")))
+    }
+    return(res)
   }
 }
 ################################################################################
@@ -43,7 +51,16 @@ char2dna <- function(z, simplify = FALSE){
   vec <- raw(89)
   vec[indices] <- dbytes
   s2d1 <- function(s) vec[as.integer(charToRaw(s))]
-  res <- if(length(z) == 1 & simplify) s2d1(z) else lapply(z, s2d1)
+  if(length(z) == 1 & simplify){
+    res <- s2d1(z)
+    attr(res, "quality") <- .char2qual(attr(z, "quality")) # can be null
+  }else{
+    res <- lapply(z, s2d1)
+    if(!is.null(attr(z, "quality"))){
+      quals <- lapply(attr(z, "quality"), .char2qual) #list
+      for(i in seq_along(res)) attr(res[[i]], "quality") <- quals[[i]]
+    }
+  }
   class(res) <- "DNAbin"
   return(res)
 }

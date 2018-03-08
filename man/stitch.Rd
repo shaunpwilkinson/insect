@@ -2,15 +2,18 @@
 % Please edit documentation in R/stitch.R
 \name{stitch}
 \alias{stitch}
-\title{Paired-end rread stitching.}
+\title{Paired-end read stitching.}
 \usage{
-stitch(fw, rv, mindiff = 6, cores = 1, ...)
+stitch(R1, R2, up = NULL, down = NULL, mindiff = 6, cores = 1)
 }
 \arguments{
-\item{fw, rv}{DNAbin objects with quality attributes (see \code{\link{readFASTQ}} to
+\item{R1, R2}{DNAbin objects with quality attributes (see \code{\link{readFASTQ}} to
 generate these objects from fastq text files), representing the forward and
 reverse reads to be stitched. These objects can be either vectors or lists.
 In the latter case, the two objects must be equal length.}
+
+\item{up, down}{forward and reverse primer sequences (either as concatenated
+character strings or "DNAbin" objects). Either both or neither should be provided.}
 
 \item{mindiff}{the minimum difference in quality between two different base calls
 for the higher quality call to be added to the consensus alignment. In cases where
@@ -18,8 +21,6 @@ the quality differences are less than this threshold, the ambiguity code "N" is 
 to the consensus sequence.}
 
 \item{cores}{The number of threads to be used to process the operation.}
-
-\item{...}{further agruments to be passed to \code{\link[aphid]{align}}}
 }
 \value{
 a DNAbin object with quality attributes

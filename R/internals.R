@@ -1,6 +1,7 @@
 # Internal 'insect' functions
 
 .qual2char <- function(x){
+  if(is.null(x)) return(NULL) # needed for dna2char
   qbytes <- as.raw(0:93)
   qchars <- strsplit(paste0("!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOP",
                             "QRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"),
@@ -10,6 +11,7 @@
 
 
 .char2qual <- function(x){
+  if(is.null(x)) return(NULL)# needed for chardna
   qbytes <- as.raw(0:93)
   qchars <- strsplit(paste0("!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOP",
                             "QRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~"),

@@ -12,7 +12,7 @@ writeFASTA(x, file = "", ...)
 }
 \arguments{
 \item{x}{a list of sequences in \code{DNAbin} or \code{AAbin} format, or a
-vector of sequences as character strings.
+vector of sequences as concatenated upper-case character strings.
 For writeFASTQ, only DNAbin objects are accepted, and each element should have
 a vector of quality scores of equal length attributed to the sequence.
 These vectors are comprised of raw bytes ranging from 00 to 5d
@@ -24,6 +24,9 @@ If file = "" (default setting) the text file is written to the
 console.}
 
 \item{...}{further options to be passed to \code{cat} (not including \code{"sep"}).}
+}
+\value{
+NULL (invisibly).
 }
 \description{
 These functions take a list of DNA or amino acid sequences in

@@ -33,6 +33,7 @@
 #'   ##TBA
 ################################################################################
 classify <- function(x, tree, threshold = 0.9, decay = TRUE, cores = 1){
+  if(!.isDNA(x)) x <- char2dna(x)
   classify1 <- function(x, tree, threshold = 0.9, decay = TRUE){
     path <- ""
     akw <- 1
