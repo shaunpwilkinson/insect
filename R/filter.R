@@ -1,4 +1,4 @@
-#' Sequence quality filter.
+#' Filter NGS sequences.
 #'
 #' This function checks that the average Phred quality scores of sequences (imported
 #'   from a FASTQ file) are above a given threshold, and that the maximum number
