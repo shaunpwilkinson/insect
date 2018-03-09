@@ -27,20 +27,24 @@ dna2char <- function(x){
     if(!is.null(attr(x[[1]], "quality"))){
       attr(res, "quality") <- unname(sapply(x, function(s) .qual2char(attr(s, "quality"))))
     }
-    return(res)
   }else{
     res <- rawToChar(vec[as.integer(x)])
     if(!is.null(attr(x, "quality"))){
       attr(res, "quality") <- unname(.qual2char(attr(x, "quality")))
     }
-    return(res)
   }
+  attr(res, "rerep.names") <- attr(x, "rerep.names")
+  attr(res, "rerep.pointers") <- attr(x, "rerep.pointers")
+  return(res)
 }
 ################################################################################
 #' @rdname conversion
 ################################################################################
 aa2char <- function(x){
-  if(is.list(x)) sapply(x, rawToChar) else rawToChar(x)
+  res <- if(is.list(x)) sapply(x, rawToChar) else rawToChar(x)
+  attr(res, "rerep.names") <- attr(x, "rerep.names")
+  attr(res, "rerep.pointers") <- attr(x, "rerep.pointers")
+  return(res)
 }
 ################################################################################
 #' @rdname conversion
@@ -61,6 +65,8 @@ char2dna <- function(z, simplify = FALSE){
       for(i in seq_along(res)) attr(res[[i]], "quality") <- quals[[i]]
     }
   }
+  attr(res, "rerep.names") <- attr(z, "rerep.names")
+  attr(res, "rerep.pointers") <- attr(z, "rerep.pointers")
   class(res) <- "DNAbin"
   return(res)
 }
@@ -69,6 +75,8 @@ char2dna <- function(z, simplify = FALSE){
 ################################################################################
 char2aa <- function(z, simplify = FALSE){
   res <- if(length(z) == 1 & simplify) charToRaw(z) else lapply(z, charToRaw)
+  attr(res, "rerep.names") <- attr(z, "rerep.names")
+  attr(res, "rerep.pointers") <- attr(z, "rerep.pointers")
   class(res) <- "AAbin"
   return(res)
 }

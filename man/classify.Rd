@@ -4,7 +4,9 @@
 \alias{classify}
 \title{Taxonomic classification for DNA barcode sequences.}
 \usage{
-classify(x, tree, threshold = 0.9, decay = TRUE, cores = 1)
+classify(x, tree, threshold = 0.9, decay = TRUE, cores = 1,
+  scores = TRUE, paths = FALSE, threshs = FALSE, minscores = FALSE,
+  minlengths = FALSE, maxlengths = FALSE)
 }
 \arguments{
 \item{x}{a \code{"DNAbin"} object, either as a vector or a list of vectors.}
@@ -30,6 +32,18 @@ connection at the conclusion of the operation,
 for example by running \code{parallel::stopCluster(cores)}.
 The string 'autodetect' is also accepted, in which case the maximum
 number of cores to use is one less than the total number of cores available.}
+
+\item{scores}{logical indicating whether the Akaike weight confidence
+values should be attributed to the output object as a numeric vector
+called "score". Defaults to TRUE.}
+
+\item{paths}{logical indicating whether the path of each sequence
+through the classification tree should be attributed to the output object
+as a character vector called "path". Defaults to FALSE.}
+
+\item{threshs, minscores, minlengths, maxlengths}{logical, indicating
+which test results should be attributed to the output object
+(advanced use).}
 }
 \value{
 a character string giving the lineage of the input sequence

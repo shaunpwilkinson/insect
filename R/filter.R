@@ -26,7 +26,7 @@
 #' @references TBA
 #' @examples ##TBA
 ################################################################################
-qc <- function(x, minqual = 30, maxambigs = 0, mincount = 2,
+qfilter <- function(x, minqual = 30, maxambigs = 0, mincount = 2,
                minlength = 50, maxlength = 500){
   if(.isDNA(x)){
     if(!is.list(x)) stop("Sequences in binary format should be in a list\n")

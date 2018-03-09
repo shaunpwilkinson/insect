@@ -24,6 +24,15 @@
 #'   for example by running \code{parallel::stopCluster(cores)}.
 #'   The string 'autodetect' is also accepted, in which case the maximum
 #'   number of cores to use is one less than the total number of cores available.
+#' @param scores logical indicating whether the Akaike weight confidence
+#'   values should be attributed to the output object as a numeric vector
+#'   called "score". Defaults to TRUE.
+#' @param paths logical indicating whether the path of each sequence
+#'   through the classification tree should be attributed to the output object
+#'   as a character vector called "path". Defaults to FALSE.
+#' @param threshs,minscores,minlengths,maxlengths logical, indicating
+#'   which test results should be attributed to the output object
+#'   (advanced use).
 #' @return a character string giving the lineage of the input sequence
 #' @details TBA
 #' @author Shaun Wilkinson
@@ -32,8 +41,19 @@
 #' @examples
 #'   ##TBA
 ################################################################################
-classify <- function(x, tree, threshold = 0.9, decay = TRUE, cores = 1){
+classify <- function(x, tree, threshold = 0.9, decay = TRUE,
+                     cores = 1, scores = TRUE, paths = FALSE, threshs = FALSE,
+                     minscores = FALSE, minlengths = FALSE,
+                     maxlengths = FALSE){
   if(!.isDNA(x)) x <- char2dna(x)
+  hashes <- hash(x, cores = cores)
+  dupes <- duplicated(hashes)
+  needs_rerep <- any(dupes)
+  if(needs_rerep){
+    pointers <- .point(hashes)
+    orignames <- names(x)
+    x <- x[!dupes]
+  }
   classify1 <- function(x, tree, threshold = 0.9, decay = TRUE){
     path <- ""
     akw <- 1
@@ -105,6 +125,23 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, cores = 1){
   }else{
     res <- unpack(classify1(x, tree, threshold, decay))
   }
+  if(needs_rerep){
+    tmpattr <- attributes(res)
+    res <- res[pointers]
+    names(res) <- orignames
+    attr(res, "score") <- tmpattr$score[pointers]
+    attr(res, "path") <- tmpattr$path[pointers]
+    attr(res, "threshold_met") <- tmpattr$threshold_met[pointers]
+    attr(res, "minscore_met") <- tmpattr$minscore_met[pointers]
+    attr(res, "minlength_met") <- tmpattr$minlength_met[pointers]
+    attr(res, "maxlength_met") <- tmpattr$maxlength_met[pointers]
+  }
+  if(!scores) attr(res, "score") <- NULL
+  if(!paths) attr(res, "path") <- NULL
+  if(!threshs) attr(res, "threshold_met") <- NULL
+  if(!minscores) attr(res, "minscore_met") <- NULL
+  if(!minlengths) attr(res, "minlength_met") <- NULL
+  if(!maxlengths) attr(res, "maxlength_met") <- NULL
   return(res)
 }
 ################################################################################
