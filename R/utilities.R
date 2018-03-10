@@ -39,13 +39,13 @@ join <- function(...){
   return(res)
 }
 ################################################################################
-# trim DNA
+# shave DNA
 # x is a DNAbin list or vector
 # motif can be either a PHMM or a DNAbin vector, must not be rc'd (as ordered)
 # resulting sequence includes the motif and anything to the right (if direction
 # == "forward) or left (if direction == "reverse")
 
-#' Trim ends of DNA sequences
+#' Shave ends of DNA sequences
 #'
 #' This function uses the Viterbi algorithm to semi-globally align a motif to
 #'   a DNA sequence, and removes all nucleotides to the left or right of the
@@ -54,11 +54,11 @@ join <- function(...){
 #' @param x an object of class \code{DNAbin}.
 #' @param motif a \code{DNAbin} or \code{PHMM} object.
 #' @param direction character string indicating
-#'   the direction of the trim. Options are "forward" (trims everything to
-#'   the right of the motif), "backward" (trims everything to the left of
+#'   the direction of the shave. Options are "forward" (shaves everything to
+#'   the right of the motif), "backward" (shaves everything to the left of
 #'   the motif) or "both" (retains the motif region only).
 #' @param cores integer giving the number of CPUs to parallelize the operation
-#'   over. Defaults to 1, and reverts to 1 if x is not a list.
+#'   over. Defaults to 1, and reverts to 1 if \code{x} is not a list.
 #'   This argument may alternatively be a 'cluster' object,
 #'   in which case it is the user's responsibility to close the socket
 #'   connection at the conclusion of the operation,
@@ -84,32 +84,31 @@ join <- function(...){
 #' @examples
 #'   ## TBA
 ################################################################################
-trim <- function(x, motif, direction = "both", cores = 1, ...){
+shave <- function(x, motif, direction = "both", cores = 1, ...){
   tmpattr <- attributes(x)
   tmpattr <- tmpattr[names(tmpattr) != "quality"]
- #classx <- class(x)
-  trim1 <- function(x, motif, direction){
+  shave1 <- function(x, motif, direction){
     vit <- aphid::Viterbi(motif, x, type = "semiglobal", ... = ...)
-    p <- attr(x, "quality") # trim quality scores too
+    p <- attr(x, "quality") # shave quality scores too
     if(!is.null(p)) stopifnot(length(x) == length(p))
     if(identical(direction, "forward")){
-      ntotrim <- match(c(0, 1), rev(vit$path)) - 1
-      ntotrim <- min(ntotrim[!is.na(ntotrim)])
-      res <- x[1:(length(x) - ntotrim)]
-      if(!is.null(p)) attr(res, "quality") <- p[1:(length(x) - ntotrim)]
+      ntoshave <- match(c(0, 1), rev(vit$path)) - 1
+      ntoshave <- min(ntoshave[!is.na(ntoshave)])
+      res <- x[1:(length(x) - ntoshave)]
+      if(!is.null(p)) attr(res, "quality") <- p[1:(length(x) - ntoshave)]
     }else if(identical(direction, "reverse")){
-      ntotrim <- match(c(0, 1), vit$path) - 1
-      ntotrim <- min(ntotrim[!is.na(ntotrim)])
-      if(ntotrim > 0){
-        res <- x[-(1:ntotrim)]
-        if(!is.null(p)) attr(res, "quality") <- p[-(1:ntotrim)]
+      ntoshave <- match(c(0, 1), vit$path) - 1
+      ntoshave <- min(ntoshave[!is.na(ntoshave)])
+      if(ntoshave > 0){
+        res <- x[-(1:ntoshave)]
+        if(!is.null(p)) attr(res, "quality") <- p[-(1:ntoshave)]
       }else{
         res <- x
       }
     }else if(identical(direction, "both")){
-      ntotrimf <- match(c(0, 1), rev(vit$path)) - 1
-      ntotrimf <- min(ntotrimf[!is.na(ntotrimf)])
-      last <- length(x) - ntotrimf
+      ntoshavef <- match(c(0, 1), rev(vit$path)) - 1
+      ntoshavef <- min(ntoshavef[!is.na(ntoshavef)])
+      last <- length(x) - ntoshavef
       begin <- match(c(0, 1), vit$path)
       begin <- min(begin[!is.na(begin)])
       res <- x[begin:last]
@@ -120,9 +119,9 @@ trim <- function(x, motif, direction = "both", cores = 1, ...){
   }
   if(is.list(x)){
     if(inherits(cores, "cluster")){
-      res <- parallel::parLapply(cores, x, trim1, motif, direction, ...)
+      res <- parallel::parLapply(cores, x, shave1, motif, direction, ...)
     }else if(cores == 1){
-      res <- lapply(x, trim1, motif, direction, ...)
+      res <- lapply(x, shave1, motif, direction, ...)
     }else{
       #nseq <- length(x)
       navailcores <- parallel::detectCores()
@@ -131,14 +130,14 @@ trim <- function(x, motif, direction = "both", cores = 1, ...){
       # if(cores > navailcores) stop("Number of cores to use is more than number available")
       if(cores > 1){
         cl <- parallel::makeCluster(cores)
-        res <- parallel::parLapply(cl, x, trim1, motif, direction, ...)
+        res <- parallel::parLapply(cl, x, shave1, motif, direction, ...)
         parallel::stopCluster(cl)
       }else{
-        res <- lapply(x, trim1, motif, direction, ...)
+        res <- lapply(x, shave1, motif, direction, ...)
       }
     }
   }else{
-    res <- trim1(x, motif, direction, ...)
+    res <- shave1(x, motif, direction, ...)
     tmpattr$quality <- attr(res, "quality")
     tmpattr$score <- attr(res, "score")
   }

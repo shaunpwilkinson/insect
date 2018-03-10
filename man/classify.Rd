@@ -46,7 +46,7 @@ which test results should be attributed to the output object
 (advanced use).}
 }
 \value{
-a character string giving the lineage of the input sequence
+a character string giving the lineage of the input sequence.
 }
 \description{
 \code{"classify"} assigns a DNA barcode or other

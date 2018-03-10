@@ -23,7 +23,8 @@ to the consensus sequence.}
 \item{cores}{The number of threads to be used to process the operation.}
 }
 \value{
-a DNAbin object with quality attributes
+a "DNAbin" object or a vector of concatenated character strings,
+  depending on the input.
 }
 \description{
 This function aligns forward and reverse reads generated from the Illumina
@@ -42,7 +43,7 @@ TBA
 TBA
 }
 \seealso{
-\code{\link{readFASTQ}} for generating DNAbin objects from FASTQ text files
+\code{\link{readFASTQ}} for reading FASTQ text files into R.
 }
 \author{
 Shaun Wilkinson

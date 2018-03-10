@@ -15,11 +15,12 @@
 #'   the quality differences are less than this threshold, the ambiguity code "N" is added
 #'   to the consensus sequence.
 #' @param cores The number of threads to be used to process the operation.
-#' @return a DNAbin object with quality attributes
+#' @return a "DNAbin" object or a vector of concatenated character strings,
+#'   depending on the input.
 #' @details TBA
 #' @author Shaun Wilkinson
 #' @references TBA
-#' @seealso \code{\link{readFASTQ}} for generating DNAbin objects from FASTQ text files
+#' @seealso \code{\link{readFASTQ}} for reading FASTQ text files into R.
 #' @examples
 #'   \dontrun{
 #'     ##TBA

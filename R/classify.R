@@ -33,7 +33,7 @@
 #' @param threshs,minscores,minlengths,maxlengths logical, indicating
 #'   which test results should be attributed to the output object
 #'   (advanced use).
-#' @return a character string giving the lineage of the input sequence
+#' @return a character string giving the lineage of the input sequence.
 #' @details TBA
 #' @author Shaun Wilkinson
 #' @references TBA
