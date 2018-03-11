@@ -49,7 +49,7 @@ tabulize <- function(y, db, aggregated = FALSE,
   }
   taxvecs <- lapply(taxIDs, get_lineage, db = db)
   taxout <- data.frame(representative = names(yulu),
-                       md5 = hshul[!dupes],
+                       # md5 = hshul[!dupes],
                        taxID = taxIDs[clpointers],
                        taxon = sapply(taxvecs, tail, 1)[clpointers],
                        rank = sapply(taxvecs, function(e) tail(names(e), 1))[clpointers],
