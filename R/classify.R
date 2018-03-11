@@ -45,13 +45,29 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE,
                      cores = 1, scores = TRUE, paths = FALSE, threshs = FALSE,
                      minscores = FALSE, minlengths = FALSE,
                      maxlengths = FALSE){
-  if(!.isDNA(x)) x <- char2dna(x)
+  depth <- function(l) ifelse(is.list(l), 1L + max(sapply(l, depth)), 0L)
+  ## thanks flodal for depth function
+  xdepth <- depth(x)
+  stopifnot(xdepth < 3)
+  isbin <- if(xdepth == 2) .isDNA(x[[1]]) else if (xdepth == 1) .isDNA(x) else FALSE
+  if(xdepth == 2 & !isbin) stop("List has depth 2 but elements are not of class 'DNAbin'")
+  lol <- if(isbin) xdepth == 2 else xdepth == 1
+  if(lol){
+    splinds <- rep(seq_along(x), sapply(x, length)) # split indices
+    #for(i in seq_along(x)) names(x[[i]]) <- paste0(names(x[[i]]), ":", i)
+    orignames <- names(x)
+    newnames <- unlist(lapply(x, names), use.names = FALSE)
+    x <- unlist(x, use.names = FALSE, recursive = FALSE)
+    names(x) <- newnames
+    if(isbin) class(x) <- "DNAbin"
+  }
+  if(!isbin) x <- char2dna(x)
   hashes <- hash(x, cores = cores)
   dupes <- duplicated(hashes)
   needs_rerep <- any(dupes)
   if(needs_rerep){
     pointers <- .point(hashes)
-    orignames <- names(x)
+    rerepnames <- names(x)
     x <- x[!dupes]
   }
   classify1 <- function(x, tree, threshold = 0.9, decay = TRUE){
@@ -125,23 +141,39 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE,
   }else{
     res <- unpack(classify1(x, tree, threshold, decay))
   }
-  if(needs_rerep){
-    tmpattr <- attributes(res)
-    res <- res[pointers]
-    names(res) <- orignames
-    attr(res, "score") <- tmpattr$score[pointers]
-    attr(res, "path") <- tmpattr$path[pointers]
-    attr(res, "threshold_met") <- tmpattr$threshold_met[pointers]
-    attr(res, "minscore_met") <- tmpattr$minscore_met[pointers]
-    attr(res, "minlength_met") <- tmpattr$minlength_met[pointers]
-    attr(res, "maxlength_met") <- tmpattr$maxlength_met[pointers]
-  }
   if(!scores) attr(res, "score") <- NULL
   if(!paths) attr(res, "path") <- NULL
   if(!threshs) attr(res, "threshold_met") <- NULL
   if(!minscores) attr(res, "minscore_met") <- NULL
   if(!minlengths) attr(res, "minlength_met") <- NULL
   if(!maxlengths) attr(res, "maxlength_met") <- NULL
+  if(needs_rerep){
+    tmpattr <- attributes(res)
+    res <- res[pointers]
+    for(i in seq_along(tmpattr)) tmpattr[[i]] <- tmpattr[[i]][pointers]
+    if(!all(sapply(tmpattr, length) == length(res))) stop("Error 1\n")
+    ## careful here in case of future addition of class attribute
+    tmpattr$names <- rerepnames
+    attributes(res) <- tmpattr
+    attr(res, "hashes") <- unname(hashes) # needed for tabulize
+    # attr(res, "score") <- tmpattr$score[pointers]
+    # attr(res, "path") <- tmpattr$path[pointers]
+    # attr(res, "threshold_met") <- tmpattr$threshold_met[pointers]
+    # attr(res, "minscore_met") <- tmpattr$minscore_met[pointers]
+    # attr(res, "minlength_met") <- tmpattr$minlength_met[pointers]
+    # attr(res, "maxlength_met") <- tmpattr$maxlength_met[pointers]
+  }
+  if(lol){
+    tmpattr <- attributes(res)
+    res <- split(res, f = splinds)
+    for(i in seq_along(tmpattr)[names(tmpattr) != "names"]){
+      splattr <- split(tmpattr[[i]], f = splinds)
+      for(j in seq_along(res)){
+        attr(res[[j]], names(tmpattr)[i]) <- splattr[[j]]
+      }
+    }
+    names(res) <- orignames
+  }
   return(res)
 }
 ################################################################################
