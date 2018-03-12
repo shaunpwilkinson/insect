@@ -44,7 +44,7 @@ trim <- function(x, up, down = NULL){ # trims primers and/or indices
   starts <- starts + ncup
   if(!is.null(down)) stops <- stops - ncdn
   discards <- stops - starts < 50
-  hasp[discards] <- FALSE
+  hasp[hasp][discards] <- FALSE
   if(sum(hasp) == 0) return(if(isbin) raw(0) else character(0))
   starts <- starts[!discards]
   stops <- stops[!discards]
