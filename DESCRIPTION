@@ -21,7 +21,7 @@ Depends:
 Imports:
     ape (>= 3.0.0),
     aphid (>= 1.0.0),
-    kmer,
+    kmer (>= 1.0.0),
     openssl, 
     phylogram (>= 1.0.0),
     Rcpp (>= 0.12.9),
@@ -32,8 +32,6 @@ Suggests:
     knitr,
     rmarkdown,
     testthat
-Remotes:
-    shaunpwilkinson/kmer,
 LinkingTo: Rcpp
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1

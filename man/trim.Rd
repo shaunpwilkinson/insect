@@ -21,7 +21,10 @@ a "DNAbin" object or a vector of concatenated character strings,
 This function trims the primer sequence(s) from a set of DNA sequences.
 }
 \details{
-TBA
+Any sequences not containing the primer(s) in either direction are discarded.
+  Hence this function can also be used to de-multiplex sequences and remove indices,
+  though it will generally be faster to do this on the sequencing platform prior to
+  exporting the FASTQ files.
 }
 \examples{
 ##TBA

@@ -110,10 +110,12 @@ but it minimizes the chance of generating type I errors.
 
 In addition to the two key functions `learn` and `classify`, 
 the package includes several tools to encode the entire work-flow from 
-raw sequence data input to tabular output. 
+raw sequence data input to tabular output. At any stage of the workflow,
+users can export their partially-processed data for input into other programs
+using the functions `writeFASTA` and `writeFASTQ`.
 This tutorial will gently guide users through the pipeline using an example dataset
 of COI sequences derived from Autonomous Reef Monitoring Structures (ARMS)
-in Timor-Leste, amplified using the barcoding primers 
+in Timor-Leste, amplified using the COI barcoding primers 
 mlCOIintF and jgHCO2198 (GGWACWGGWTGAACWGTWTAYCCYCC and 
 TAIACYTCIGGRTGICCRAARAAYCA, respectively; Leray et al. [-@Leray2013]).
 
@@ -157,9 +159,9 @@ head(R1, 2)
 
 The next step is to stitch the forward and reverse reads together to create a single 
 vector of sequences. The `stitch` function performs this operation, as well as 
-optionally removing any sequences that don't contain the primer sequences,
-trimming the primers off the ones that do, and orientating the sequences 
-in the 5' -> 3' direction.
+optionally removing any sequences that don't contain the primer sequences 
+in either direction, trimming the primers off those that do, 
+and finally orientating all sequences in the 5' -> 3' direction.
 The optional primer filter-trim and sequence orientation is 
 activated by passing the primer sequences to the function 
 (again either as character strings or "DNAbin" objects). 
@@ -217,13 +219,18 @@ and are free of ambiguous base calls.
 The final step is to load the classification tree and run the `classify` function to 
 assign taxonomic IDs and associated Akaike weight confidence scores 
 (between 0 and 1, with anything over 0.9 signifying strong confidence).
-Again this may take a minute or two to process, 
+Again this may take a minute or so to process, 
 because `classify` also uses computationally intensive dynamic
 programming to find the likelihoods of the sequences
 at each node of the classification tree. 
 This function is also able to be run in parallel by setting the `cores` 
 argument to 2 or more depending on the number available 
 (tip: run `parallel::detectCores()` if you are unsure).
+However, note that over-specifying the number of cores can have an adverse
+effect due to the extra time taken to initialize the cluster 
+(in this small example the optimal number of cores is ~ 2, 
+beyond which the addition of extra cores becomes counter-productive).
+
 
 ```{r}
 load("tree.RData")
