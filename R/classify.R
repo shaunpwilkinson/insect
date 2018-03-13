@@ -155,7 +155,6 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE,
     ## careful here in case of future addition of class attribute
     tmpattr$names <- rerepnames
     attributes(res) <- tmpattr
-    attr(res, "hashes") <- unname(hashes) # needed for tabulize
     # attr(res, "score") <- tmpattr$score[pointers]
     # attr(res, "path") <- tmpattr$path[pointers]
     # attr(res, "threshold_met") <- tmpattr$threshold_met[pointers]
@@ -163,6 +162,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE,
     # attr(res, "minlength_met") <- tmpattr$minlength_met[pointers]
     # attr(res, "maxlength_met") <- tmpattr$maxlength_met[pointers]
   }
+  attr(res, "hashes") <- unname(hashes) # needed for tabulize
   if(lol){
     tmpattr <- attributes(res)
     res <- split(res, f = splinds)
