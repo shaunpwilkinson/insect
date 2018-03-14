@@ -33,6 +33,7 @@
 #'
 ################################################################################
 hash <- function(x, cores = 1){
+  if(mode(x) == "raw") x <- list(x)
   hash1 <- function(s){
     if(mode(s) != "raw"){
       if(mode(s) == "character"){
