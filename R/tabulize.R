@@ -33,7 +33,7 @@ tabulize <- function(y, db, aggregated = FALSE,
   yul <- unlist(y, use.names = FALSE)
   names(yul) <- newnames
   #yul <- unlist(y, use.names = TRUE) # y unlisted
-  hshul <- unlist(lapply(y, function(e) attr(e, "hashes")), use.names = FALSE) #unlisted hashes
+  hshul <- unlist(lapply(y, function(e) attr(e, "hash")), use.names = FALSE) #unlisted hashes
   scrul <- unlist(lapply(y, function(e) attr(e, "score")), use.names = FALSE) # unlisted scores
   pointers <- .point(hshul)
   dupes <- duplicated(hshul)

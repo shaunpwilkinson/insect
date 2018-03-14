@@ -49,7 +49,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE,
   ## thanks flodal for depth function
   xdepth <- depth(x)
   stopifnot(xdepth < 3)
-  isbin <- if(xdepth == 2) .isDNA(x[[1]]) else if (xdepth == 1) .isDNA(x) else FALSE
+  isbin <- if(xdepth == 2) .isDNA(x[[1]]) else .isDNA(x)
   if(xdepth == 2 & !isbin) stop("List has depth 2 but elements are not of class 'DNAbin'")
   lol <- if(isbin) xdepth == 2 else xdepth == 1
   if(lol){
@@ -162,7 +162,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE,
     # attr(res, "minlength_met") <- tmpattr$minlength_met[pointers]
     # attr(res, "maxlength_met") <- tmpattr$maxlength_met[pointers]
   }
-  attr(res, "hashes") <- unname(hashes) # needed for tabulize
+  attr(res, "hash") <- unname(hashes) # needed for tabulize
   if(lol){
     tmpattr <- attributes(res)
     res <- split(res, f = splinds)
