@@ -20,10 +20,10 @@ Depends:
     R (>= 3.0.0)
 Imports:
     ape (>= 3.0.0),
-    aphid (>= 1.0.0),
-    kmer (>= 1.0.0),
+    aphid (>= 1.1.0),
+    kmer (>= 1.0.1),
     openssl, 
-    phylogram (>= 1.0.0),
+    phylogram (>= 1.0.1),
     Rcpp (>= 0.12.9),
     stats,
     utils,

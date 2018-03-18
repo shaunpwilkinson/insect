@@ -32,9 +32,8 @@ tabulize <- function(y, db, aggregated = FALSE,
   newnames <- unlist(lapply(y, names), use.names = FALSE)
   yul <- unlist(y, use.names = FALSE)
   names(yul) <- newnames
-  #yul <- unlist(y, use.names = TRUE) # y unlisted
-  hshul <- unlist(lapply(y, function(e) attr(e, "hash")), use.names = FALSE) #unlisted hashes
-  scrul <- unlist(lapply(y, function(e) attr(e, "score")), use.names = FALSE) # unlisted scores
+  hshul <- unlist(lapply(y, attr, "hash"), use.names = FALSE) #unlisted hashes
+  scrul <- unlist(lapply(y, attr, "score"), use.names = FALSE) # unlisted scores
   pointers <- .point(hshul)
   dupes <- duplicated(hshul)
   yulu <- yul[!dupes]# y unlisted & unique - length 13
@@ -53,7 +52,7 @@ tabulize <- function(y, db, aggregated = FALSE,
                        taxID = taxIDs[clpointers],
                        taxon = sapply(taxvecs, tail, 1)[clpointers],
                        rank = sapply(taxvecs, function(e) tail(names(e), 1))[clpointers],
-                       probability = scrul[!dupes])
+                       probability = scrul[!dupes], stringsAsFactors = FALSE)
   for(i in seq_along(ranks)){
     taxout[ranks[i]] <- sapply(taxvecs, function(v) if(is.na(v[ranks[i]])) "" else v[ranks[i]])[clpointers]
   }

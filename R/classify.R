@@ -147,6 +147,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE,
   if(!minscores) attr(res, "minscore_met") <- NULL
   if(!minlengths) attr(res, "minlength_met") <- NULL
   if(!maxlengths) attr(res, "maxlength_met") <- NULL
+  ## override classifications for exact matches (optional) ###
   if(needs_rerep){
     tmpattr <- attributes(res)
     res <- res[pointers]

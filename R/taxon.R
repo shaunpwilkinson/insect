@@ -14,6 +14,7 @@
 #'   ##TBA
 ################################################################################
 get_lineage <- function(taxID, db){
+  stopifnot(length(taxID) == 1 & mode(taxID) == "numeric")
   res <- resnames <- character(100)
   counter <- 1
   index <- match(taxID, db$tax_id)
