@@ -16,6 +16,14 @@
 #'   the Akaike weight of the selected model at the parent node) or whether
 #'   each Akaike weight should be calculated independently of that of the
 #'   parent node. Defaults to the latter (FALSE).
+#' @param ping logical indicating whether an exact-match search should
+#'   be carried out before applying the classification algorithm.
+#'   If TRUE (the default value) and the query sequence is identical to
+#'   at least one of the training sequences used to learn the tree,
+#'   the common ancestor of the matching training sequences is returned
+#'   as a semicolon-delimited lineage string with an associated score value of 1.
+#'   The lineage string will generally specify the taxonomic ID to species level
+#'   but may be to genus/family, etc if the barcoding marker lacks resolution.
 #' @param cores integer giving the number of CPUs to parallelize the operation
 #'   over. Defaults to 1, and reverts to 1 if x is not a list.
 #'   This argument may alternatively be a 'cluster' object,
@@ -41,10 +49,13 @@
 #' @examples
 #'   ##TBA
 ################################################################################
-classify <- function(x, tree, threshold = 0.9, decay = TRUE,
+classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      cores = 1, scores = TRUE, paths = FALSE, threshs = FALSE,
                      minscores = FALSE, minlengths = FALSE,
                      maxlengths = FALSE){
+  if(is.null(attr(tree, "key"))){
+    cat("Note: ping is TRUE but tree has no hash key. Exact matching not possible\n")
+  }
   depth <- function(l) ifelse(is.list(l), 1L + max(sapply(l, depth)), 0L)
   ## thanks flodal for depth function
   xdepth <- depth(x)
@@ -70,7 +81,12 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE,
     rerepnames <- names(x)
     x <- x[!dupes]
   }
-  classify1 <- function(x, tree, threshold = 0.9, decay = TRUE){
+  classify1 <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE){
+    if(ping){
+      xhash <- hash(x)
+      xmatch <- attr(tree, "key")[xhash][1]
+      if(!is.na(xmatch)) return(paste(c(xmatch, 0, 1, rep(TRUE, 4)), collapse = "%"))
+    }
     path <- ""
     akw <- 1
     cakw <- 1
@@ -93,8 +109,6 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE,
       # 4 is approx asymtote for single bp change as n training seqs -> inf
       minlength_met <- length(x) >= attr(tree[[best_model]], "minlength") - 3
       maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength") + 3
-      #minlength_met <- TRUE
-      #maxlength_met <- TRUE
       if(!(threshold_met & minscore_met & minlength_met & maxlength_met)) break
       path <- paste0(path, best_model)
       akw <- newakw
@@ -121,9 +135,9 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE,
   }
   if(is.list(x)){
     if(inherits(cores, "cluster")){
-      res <- parallel::parSapply(cores, x, classify1, tree, threshold, decay)
+      res <- parallel::parSapply(cores, x, classify1, tree, threshold, decay, ping)
     }else if(cores == 1){
-      res <- sapply(x, classify1, tree, threshold, decay)
+      res <- sapply(x, classify1, tree, threshold, decay, ping)
     }else{
       navailcores <- parallel::detectCores()
       if(identical(cores, "autodetect")) cores <- navailcores - 1
@@ -131,15 +145,15 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE,
       # if(cores > navailcores) stop("Insufficient CPUs available")
       if(cores > 1){
         cl <- parallel::makeCluster(cores)
-        res <- parallel::parSapply(cl, x, classify1, tree, threshold, decay)
+        res <- parallel::parSapply(cl, x, classify1, tree, threshold, decay, ping)
         parallel::stopCluster(cl)
       }else{
-        res <- sapply(x, classify1, tree, threshold, decay)
+        res <- sapply(x, classify1, tree, threshold, decay, ping)
       }
     }
     res <- unpack(res)
   }else{
-    res <- unpack(classify1(x, tree, threshold, decay))
+    res <- unpack(classify1(x, tree, threshold, decay, ping))
   }
   if(!scores) attr(res, "score") <- NULL
   if(!paths) attr(res, "path") <- NULL

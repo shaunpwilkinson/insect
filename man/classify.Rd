@@ -4,7 +4,7 @@
 \alias{classify}
 \title{Taxonomic classification for DNA barcode sequences.}
 \usage{
-classify(x, tree, threshold = 0.9, decay = TRUE, cores = 1,
+classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE, cores = 1,
   scores = TRUE, paths = FALSE, threshs = FALSE, minscores = FALSE,
   minlengths = FALSE, maxlengths = FALSE)
 }
@@ -23,6 +23,15 @@ classification process should occur based on decaying Akaike weights
 the Akaike weight of the selected model at the parent node) or whether
 each Akaike weight should be calculated independently of that of the
 parent node. Defaults to the latter (FALSE).}
+
+\item{ping}{logical indicating whether an exact-match search should
+be carried out before applying the classification algorithm.
+If TRUE (the default value) and the query sequence is identical to
+at least one of the training sequences used to learn the tree,
+the common ancestor of the matching training sequences is returned
+as a semicolon-delimited lineage string with an associated score value of 1.
+The lineage string will generally specify the taxonomic ID to species level
+but may be to genus/family, etc if the barcoding marker lacks resolution.}
 
 \item{cores}{integer giving the number of CPUs to parallelize the operation
 over. Defaults to 1, and reverts to 1 if x is not a list.
