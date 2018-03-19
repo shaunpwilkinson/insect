@@ -33,10 +33,15 @@ tabulize <- function(y, db, aggregated = FALSE,
   yul <- unlist(y, use.names = FALSE)
   names(yul) <- newnames
   hshul <- unlist(lapply(y, attr, "hash"), use.names = FALSE) #unlisted hashes
-  scrul <- unlist(lapply(y, attr, "score"), use.names = FALSE) # unlisted scores
+  hassc <- !is.null(attr(y[[1]], "score"))
+  hasln <- !is.null(attr(y[[1]], "length"))
+  haspath <- !is.null(attr(y[[1]], "path"))
+  if(hassc) scrul <- unlist(lapply(y, attr, "score"), use.names = FALSE) # unlisted scores
+  if(hasln) lngul <- unlist(lapply(y, attr, "length"), use.names = FALSE) # unlisted lengths
+  if(haspath) pthul <- unlist(lapply(y, attr, "path"), use.names = FALSE) # unlisted paths
   pointers <- .point(hshul)
   dupes <- duplicated(hshul)
-  yulu <- yul[!dupes]# y unlisted & unique - length 13
+  yulu <- yul[!dupes]# y unlisted & unique
   clashes <- hash(yulu)
   clpointers <- .point(clashes)
   taxIDs <- sapply(yulu[!duplicated(clpointers)], get_taxID, db = db)
@@ -52,7 +57,10 @@ tabulize <- function(y, db, aggregated = FALSE,
                        taxID = taxIDs[clpointers],
                        taxon = sapply(taxvecs, tail, 1)[clpointers],
                        rank = sapply(taxvecs, function(e) tail(names(e), 1))[clpointers],
-                       probability = scrul[!dupes], stringsAsFactors = FALSE)
+                       stringsAsFactors = FALSE)
+  if(hassc) taxout$probability = scrul[!dupes]
+  if(hasln) taxout$seqlength = lngul[!dupes]
+  if(haspath) taxout$path = pthul[!dupes]
   for(i in seq_along(ranks)){
     taxout[ranks[i]] <- sapply(taxvecs, function(v) if(is.na(v[ranks[i]])) "" else v[ranks[i]])[clpointers]
   }

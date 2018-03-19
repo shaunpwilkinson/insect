@@ -15,7 +15,9 @@ expand(tree, x, clades = "", refine = "Viterbi", iterations = 50,
 \item{x}{an object of class\code{"DNAbin"} representing a list of
 DNA sequences to be used as the traning data for the tree-learning process.
 All sequences should be from the same genetic region of interest
-and be globally alignable (i.e. without unjustified end-gaps).}
+and be globally alignable (i.e. without unjustified end-gaps).
+This object must have a "lineage" attribute, a vector the same length as the
+sequence list, composed of semicolon-delimited lineage strings.}
 
 \item{clades}{a vector of character strings giving the binary indices
 matching the labels of the nodes that are to be collapsed.}

@@ -5,8 +5,8 @@
 \title{Taxonomic classification for DNA barcode sequences.}
 \usage{
 classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE, cores = 1,
-  scores = TRUE, paths = FALSE, threshs = FALSE, minscores = FALSE,
-  minlengths = FALSE, maxlengths = FALSE)
+  scores = TRUE, paths = FALSE, seqlengths = FALSE, threshs = FALSE,
+  minscores = FALSE, minlengths = FALSE, maxlengths = FALSE)
 }
 \arguments{
 \item{x}{a \code{"DNAbin"} object, either as a vector or a list of vectors.}
@@ -50,9 +50,12 @@ called "score". Defaults to TRUE.}
 through the classification tree should be attributed to the output object
 as a character vector called "path". Defaults to FALSE.}
 
-\item{threshs, minscores, minlengths, maxlengths}{logical, indicating
-which test results should be attributed to the output object
-(advanced use).}
+\item{seqlengths}{logical indicating whether the original sequence
+lengths should be attributed to the returned object.}
+
+\item{threshs, minscores, minlengths, maxlengths}{logicals, indicating
+which classification test results should be attributed to the output object
+(for advanced use).}
 }
 \value{
 a character string giving the lineage of the input sequence.

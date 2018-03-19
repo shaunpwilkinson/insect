@@ -38,9 +38,11 @@
 #' @param paths logical indicating whether the path of each sequence
 #'   through the classification tree should be attributed to the output object
 #'   as a character vector called "path". Defaults to FALSE.
-#' @param threshs,minscores,minlengths,maxlengths logical, indicating
-#'   which test results should be attributed to the output object
-#'   (advanced use).
+#' @param seqlengths logical indicating whether the original sequence
+#'   lengths should be attributed to the returned object.
+#' @param threshs,minscores,minlengths,maxlengths logicals, indicating
+#'   which classification test results should be attributed to the output object
+#'   (for advanced use).
 #' @return a character string giving the lineage of the input sequence.
 #' @details TBA
 #' @author Shaun Wilkinson
@@ -50,8 +52,8 @@
 #'   ##TBA
 ################################################################################
 classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
-                     cores = 1, scores = TRUE, paths = FALSE, threshs = FALSE,
-                     minscores = FALSE, minlengths = FALSE,
+                     cores = 1, scores = TRUE, paths = FALSE, seqlengths = FALSE,
+                     threshs = FALSE, minscores = FALSE, minlengths = FALSE,
                      maxlengths = FALSE){
   if(is.null(attr(tree, "key"))){
     cat("Note: ping is TRUE but tree has no hash key. Exact matching not possible\n")
@@ -74,10 +76,10 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   }
   if(!isbin) x <- char2dna(x)
   hashes <- hash(x, cores = cores)
-  dupes <- duplicated(hashes)
+  pointers <- .point(hashes)
+  dupes <- duplicated(pointers)
   needs_rerep <- any(dupes)
   if(needs_rerep){
-    pointers <- .point(hashes)
     rerepnames <- names(x)
     x <- x[!dupes]
   }
@@ -178,6 +180,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     # attr(res, "maxlength_met") <- tmpattr$maxlength_met[pointers]
   }
   attr(res, "hash") <- unname(hashes) # needed for tabulize
+  if(seqlengths) attr(res, "length") <- unname(sapply(x, length)[pointers])
   if(lol){
     tmpattr <- attributes(res)
     res <- split(res, f = splinds)

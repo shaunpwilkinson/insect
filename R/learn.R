@@ -7,6 +7,8 @@
 #'   DNA sequences to be used as the traning data for the tree-learning process.
 #'   All sequences should be from the same genetic region of interest
 #'   and be globally alignable (i.e. without unjustified end-gaps).
+#'   This object must have a "lineage" attribute, a vector the same length as the
+#'   sequence list, composed of semicolon-delimited lineage strings.
 #' @param model an optional object of class \code{"PHMM"} to form the model
 #'   at the root node of the classification tree. Used to train (optimize
 #'   parameters for) subsequent nested models to be positioned at successive
@@ -127,27 +129,24 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "sequences") <- seq_along(x)
   attr(tree, "lineage") <- .ancestor(attr(x, "lineage"))
   attr(tree, "minscore") <- -1E06 # nominal
-  attr(tree, "minlength") <- 1 # nominal
-  attr(tree, "maxlength") <- 1E06 # nominal
+  xlengths <- sapply(x, length)
+  attr(tree, "minlength") <- min(xlengths)
+  attr(tree, "maxlength") <- max(xlengths)
+  if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- hash(x, cores = cores)
+  if(is.null(attr(x, "duplicates"))) attr(x, "duplicates") <- duplicated(attr(x, "hashes"))
+  if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
   if(is.null(attr(x, "weights"))){
     if(!quiet) cat("Deriving sequence weights\n")
     attr(x, "weights") <- aphid::weight(x, k = 5)
   }
+  ancestors <- character(max(attr(x, "pointers")))
+  names(ancestors) <- attr(x, "hashes")[!attr(x, "duplicates")]
+  for(i in seq_along(ancestors)){
+    ancestors[i] <- .ancestor(attr(x, "lineage")[attr(x, "hashes") == names(ancestors)[i]])
+  }
+  attr(tree, "key") <- ancestors # for exact matching, the only non-modular attribute
   if(is.null(model)){
     if(!quiet) cat("Dereplicating sequences\n")
-    if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- hash(x)
-    if(is.null(attr(x, "duplicates"))) attr(x, "duplicates") <- duplicated(attr(x, "hashes"))
-    if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
-    # if(is.null(attr(x, "pointers"))){
-    #   pointers <- integer(length(x))
-    #   dhashes <- attr(x, "hashes")[attr(x, "duplicates")]
-    #   uhashes <- attr(x, "hashes")[!attr(x, "duplicates")]
-    #   pointers[!attr(x, "duplicates")] <- seq_along(uhashes)
-    #   pd <- integer(length(dhashes))
-    #   for(i in unique(dhashes)) pd[dhashes == i] <- match(i, uhashes)
-    #   pointers[attr(x, "duplicates")] <- pd
-    #   attr(x, "pointers") <- pointers
-    # }
     xu <- x[!attr(x, "duplicates")]
     xuw <- sapply(split(attr(x, "weights"), attr(x, "pointers")), sum)
     if(!quiet) cat("Deriving top level model\n")
