@@ -2,27 +2,27 @@
 % Please edit documentation in R/taxon.R
 \name{prune_taxon}
 \alias{prune_taxon}
-\title{Purge clades from taxon database.}
+\title{Purge taxa from taxonomy database.}
 \usage{
-prune_taxon(db, clade, keep = FALSE)
+prune_taxon(db, taxIDs, keep = TRUE)
 }
 \arguments{
-\item{db}{the taxon database, obtained by running
-download_taxon.}
+\item{db}{a copy of the NCBI taxon database, obtained by running
+\code{\link{download_taxon}}.}
 
-\item{clade}{the name or taxon ID number of the clade to be removed
-(or kept if keep is TRUE).}
+\item{taxIDs}{the names or taxon ID numbers of the taxa to be retained
+(or discarded if keep is FALSE).}
 
-\item{keep}{logical, indicates whether the specified clade should be
-kept, and the rest of the database purged. Defaults to FALSE.}
+\item{keep}{logical, indicates whether the specified taxa should be
+kept and the rest of the database purged or vice versa. Defaults to TRUE.}
 }
 \value{
 a smaller or equal sized dataframe with the same column names as
   the input object
-  ("tax_id", "parent_tax_id", "rank", "name", "parent_tax_index").
+  ("tax_id", "parent_tax_id", "rank", "name").
 }
 \description{
-This function prunes the taxon database, removing specified clades as
+This function prunes the taxon database, removing specified taxa as
   desired to improve speed and memory efficiency.
 }
 \details{

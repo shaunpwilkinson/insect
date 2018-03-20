@@ -14,7 +14,7 @@ Note that this increases the size of the returned object by around 10\%.}
 }
 \value{
 a dataframe with the following elements:
-  "tax_id", "parent_tax_id", "rank", "name", "parent_tax_index".
+  "tax_id", "parent_tax_id", "rank", "name".
 }
 \description{
 This function accesses the NCBI API and gets an up-to-date copy of the taxon
@@ -23,7 +23,7 @@ This function accesses the NCBI API and gets an up-to-date copy of the taxon
 \details{
 This function downloads the NCBI taxon database as a data.frame
   object with the following columns:
-  "tax_id", "parent_tax_id", "rank", "name", "parent_tax_index".
+  "tax_id", "parent_tax_id", "rank", "name".
   As of early 2018 the zip archive to download is approximately
   40Mb in size, and the output dataframe object is around
   200Mb in memory. Once downloaded, the dataframe can be pruned

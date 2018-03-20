@@ -2,22 +2,41 @@
 % Please edit documentation in R/taxon.R
 \name{get_lineage}
 \alias{get_lineage}
-\title{Convert taxon ID to semicolon-delimited lineage string.}
+\title{Convert taxonomy ID number to lineage.}
 \usage{
-get_lineage(taxID, db)
+get_lineage(taxIDs, db, simplify = TRUE, cores = 1)
 }
 \arguments{
-\item{taxID}{integer, the taxon ID number.}
+\item{taxIDs}{integer or vector of integers giving the taxon ID number(s).}
 
-\item{db}{the NCBI taxon database (as a data.frame object).
+\item{db}{a copy of the NCBI taxonomy database (data.frame object).
 See download_taxon for details.}
+
+\item{simplify}{logical indicating whether a single lineage
+(derived from a length-one input)
+should be simplified from a list to a named character vector.
+Defaults to TRUE.}
+
+\item{cores}{integer giving the number of CPUs to parallelize the operation
+over (Defaults to 1). This argument may alternatively be a 'cluster' object,
+in which case it is the user's responsibility to close the socket
+connection at the conclusion of the operation,
+for example by running \code{parallel::stopCluster(cores)}.
+The string 'autodetect' is also accepted, in which case the maximum
+number of cores to use is one less than the total number of cores available.
+Note that in this case there
+may be a tradeoff in terms of speed depending on the number and size
+of sequences to be processed, due to the extra time required to initialize
+the cluster.}
 }
 \value{
-the full lineage as a semicolon-delimited lineage string.
+the full lineage as a named character vector, or list of named character
+  vectors if the length of the input object is > 1 or simplify = FALSE.
+  "names" attributes are taxonomic ranks.
 }
 \description{
 This function returns the full lineage of a taxon ID number
-  using the NCBI Taxon database.
+  using the NCBI Taxonomy database.
 }
 \details{
 TBA

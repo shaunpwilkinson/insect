@@ -27,6 +27,13 @@
 #'   }
 ################################################################################
 stitch <- function(R1, R2, up = NULL, down = NULL, mindiff = 6, cores = 1){
+  ## forst check that sequences correspond
+  stopifnot(!is.null(names(R1)) & !is.null(names(R2)))
+  name11 <- strsplit(names(R1)[1], split = "")[[1]]
+  name21 <- strsplit(names(R2)[1], split = "")[[1]]
+  wa <- "R1 and R2 may not correspond to the same sequence\n"
+  if(length(name11) != length(name21)) warning(wa)
+  if(sum(suppressWarnings(name11 != name21)) > 2) warning(wa)
   isbin <- .isDNA(R1)
   if(isbin){
     R1c <- dna2char(R1)
@@ -39,7 +46,6 @@ stitch <- function(R1, R2, up = NULL, down = NULL, mindiff = 6, cores = 1){
     R1 <- char2dna(R1)
     R2 <- char2dna(R2)
   }
-
   if(!is.null(up)){
     if(is.null(down)) stop("Expected both primers")
     if(.isDNA(up)){
