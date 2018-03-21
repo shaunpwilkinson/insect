@@ -63,6 +63,7 @@
 ################################################################################
 readFASTQ <- function(file = file.choose(), bin = TRUE){
   x <- scan(file = file, what = "", sep = "\n", quiet = TRUE)
+  if(!grepl("^@", x[1])) stop("Not a valid fastq file\n")
   seqs <- toupper(x[seq(2, length(x), by = 4)])
   seqnames <- gsub("^@", "", x[seq(1, length(x), by = 4)])
   quals <- x[seq(4, length(x), by = 4)]
@@ -85,6 +86,7 @@ readFASTQ <- function(file = file.choose(), bin = TRUE){
 readFASTA <- function(file = file.choose(), bin = TRUE, residues = "DNA",
                       alignment = FALSE){
   x <- scan(file = file, what = "", sep = "\n", quiet = TRUE)
+  if(!grepl("^>", x[1])) stop("Not a valid fasta file\n")
   namelines <- grepl("^>", x)
   f <- cumsum(namelines)
   res <- split(x, f)
