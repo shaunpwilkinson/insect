@@ -63,7 +63,7 @@
 ################################################################################
 readFASTQ <- function(file = file.choose(), bin = TRUE){
   x <- scan(file = file, what = "", sep = "\n", quiet = TRUE)
-  seqs <- x[seq(2, length(x), by = 4)]
+  seqs <- toupper(x[seq(2, length(x), by = 4)])
   seqnames <- gsub("^@", "", x[seq(1, length(x), by = 4)])
   quals <- x[seq(4, length(x), by = 4)]
   if(bin){
@@ -91,7 +91,7 @@ readFASTA <- function(file = file.choose(), bin = TRUE, residues = "DNA",
   resnames <- sapply(res, function(s) s[1])
   resnames <- gsub("^>", "", resnames)
   # resnames <- gsub("\\|.+", "", resnames)
-  res <- sapply(res, function(s) paste0(s[-1], collapse = ""))
+  res <- toupper(sapply(res, function(s) paste0(s[-1], collapse = "")))
   names(res) <- resnames
   if(bin){
     residues <- toupper(residues)

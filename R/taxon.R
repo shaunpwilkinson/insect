@@ -192,7 +192,7 @@ download_taxon <- function(synonyms = FALSE, quiet = FALSE){
 #' @param db a copy of the NCBI taxon database, obtained by running
 #'   \code{\link{download_taxon}}.
 #' @param taxIDs the names or taxon ID numbers of the taxa to be retained
-#'   (or discarded if keep is FALSE).
+#'   (or discarded if \code{keep = FALSE}).
 #' @param keep logical, indicates whether the specified taxa should be
 #'   kept and the rest of the database purged or vice versa. Defaults to TRUE.
 #' @return a smaller or equal sized dataframe with the same column names as

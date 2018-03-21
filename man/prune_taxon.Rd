@@ -11,7 +11,7 @@ prune_taxon(db, taxIDs, keep = TRUE)
 \code{\link{download_taxon}}.}
 
 \item{taxIDs}{the names or taxon ID numbers of the taxa to be retained
-(or discarded if keep is FALSE).}
+(or discarded if \code{keep = FALSE}).}
 
 \item{keep}{logical, indicates whether the specified taxa should be
 kept and the rest of the database purged or vice versa. Defaults to TRUE.}
