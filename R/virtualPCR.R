@@ -55,6 +55,11 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
                        minfsc = 70, minrsc = 70, minamplen = 50,
                        maxamplen = 2000, partialbind = TRUE, cores = 1,
                        quiet = FALSE){
+  if(mode(x) == "character") x <- char2dna(x)
+  if(mode(up) == "character"){
+    up <- char2dna(up)[[1]]
+    if(!is.null(down)) down <- char2dna(down)[[1]]
+  }
   nseq <- length(x)
   if(nseq == 0) stop("No sequences provided\n")
   if(!quiet) cat("Started with", nseq, "sequences\n")

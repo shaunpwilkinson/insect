@@ -6,20 +6,25 @@
 #'    may require further checking before being used as training
 #'    data for downstream tree-learning operations.
 #'
-#' @param x a DNAbin object with lineage attributes.
-#' @param db the taxon database.
-#' @param level taxonomic level at which heterogeneity within an OTUs flags
+#' @param x a DNAbin linst object with "taxID" and/or "lineage" attributes.
+#' @param db a local copy of the NCBI Taxonomy database
+#'   (see \code{\link{download_taxon}} for details).
+#' @param level character string giving the taxonomic level at which
+#'   heterogeneity within a cluster flags
 #'   a sequence as potentially erroneous. Must be a recognized rank
-#'   in the NCBI Taxon database.
-#' @param threshold numeric between 0 and 1 giving the OTU similarity cutoff value.
+#'   within the NCBI Taxonomy database.
+#' @param threshold numeric between 0 and 1 giving the OTU similarity cutoff value
+#'   with which to cluster the sequences.
 #' @param quiet logical indicating whether progress should be printed to the console.
 #' @return a data frame containing the names of the potentially erroneous sequences.
 #' @details This function first clusters the sequence dataset into operational
-#'   taxonomic units (OTUs) based on a given genetic distance threshold,
-#'   and then checks for lineage homogeneity within OTUS, flagging any records
-#'   that appear out of place based on the lineage metadata of other OTU members.
+#'   taxonomic units (OTUs) based on a given genetic distance threshold using the
+#'   \code{\link[kmer]{otu}} function in the \code{\link{kmer}} package.
+#'   It then proceeds to check each cluster
+#'   for lineage homogeneity at a given taxonomic rank,
+#'   flagging any records that appear out of place based on the taxa/lineages
+#'   of the other OTU members.
 #' @author Shaun Wilkinson
-#' @references TBA
 #' @examples
 #'   ##TBA
 ################################################################################
@@ -29,7 +34,7 @@ check <- function(x, db, level = "order", threshold = 0.97, quiet = FALSE){
   otus <- kmer::otu(x, threshold = threshold, k = 5)
   if(!quiet) cat("Comparing lineage metadata within OTUs\n")
   check1 <- function(y){
-    ## input a vector of named lineages (non delimited) of a given rank
+    ## input a vector of named lineages (non delimited) of a certain rank
     ## returns a df
     hashes <- paste0(gsub("(^.{4}).+", "\\1", names(y)), y)
     ## only compare one seq from each study
@@ -69,7 +74,7 @@ check <- function(x, db, level = "order", threshold = 0.97, quiet = FALSE){
   if(length(out) == 0){
     out <- data.frame(listed = character(0), suggested = character(0),
                       confidence = numeric(0), nstudies = integer(0))
-    if(!quiet) cat("Found no erroneous sequences\n")
+    if(!quiet) cat("No sequences flagged\n")
     return(out)
   }
   names(out) <- NULL

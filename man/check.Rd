@@ -7,15 +7,18 @@
 check(x, db, level = "order", threshold = 0.97, quiet = FALSE)
 }
 \arguments{
-\item{x}{a DNAbin object with lineage attributes.}
+\item{x}{a DNAbin linst object with "taxID" and/or "lineage" attributes.}
 
-\item{db}{the taxon database.}
+\item{db}{a local copy of the NCBI Taxonomy database
+(see \code{\link{download_taxon}} for details).}
 
-\item{level}{taxonomic level at which heterogeneity within an OTUs flags
+\item{level}{character string giving the taxonomic level at which
+heterogeneity within a cluster flags
 a sequence as potentially erroneous. Must be a recognized rank
-in the NCBI Taxon database.}
+within the NCBI Taxonomy database.}
 
-\item{threshold}{numeric between 0 and 1 giving the OTU similarity cutoff value.}
+\item{threshold}{numeric between 0 and 1 giving the OTU similarity cutoff value
+with which to cluster the sequences.}
 
 \item{quiet}{logical indicating whether progress should be printed to the console.}
 }
@@ -31,15 +34,15 @@ This function evaluates a list of DNA barcode
 }
 \details{
 This function first clusters the sequence dataset into operational
-  taxonomic units (OTUs) based on a given genetic distance threshold,
-  and then checks for lineage homogeneity within OTUS, flagging any records
-  that appear out of place based on the lineage metadata of other OTU members.
+  taxonomic units (OTUs) based on a given genetic distance threshold using the
+  \code{\link[kmer]{otu}} function in the \code{\link{kmer}} package.
+  It then proceeds to check each cluster
+  for lineage homogeneity at a given taxonomic rank,
+  flagging any records that appear out of place based on the taxa/lineages
+  of the other OTU members.
 }
 \examples{
   ##TBA
-}
-\references{
-TBA
 }
 \author{
 Shaun Wilkinson

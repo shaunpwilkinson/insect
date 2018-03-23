@@ -138,7 +138,7 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
     }
     res <- unlist(seqs, use.names = FALSE)
     accs <- unlist(accs, use.names = FALSE)
-    if(taxIDs) taxs <- unlist(taxs, use.names = FALSE)
+    if(taxIDs) taxs <- as.integer(unlist(taxs, use.names = FALSE))
     if(species) spps <- unlist(spps, use.names = FALSE)
     if(lineages) lins <- unlist(lins, use.names = FALSE)
     if(length(res) == 0) stop("No valid sequences to return\n")

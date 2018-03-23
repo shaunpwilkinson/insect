@@ -2,14 +2,14 @@
 % Please edit documentation in R/utilities.R
 \name{shave}
 \alias{shave}
-\title{Shave ends of DNA sequences}
+\title{Shave ends of DNA of amino acid sequences}
 \usage{
 shave(x, motif, direction = "both", cores = 1, ...)
 }
 \arguments{
-\item{x}{an object of class \code{DNAbin}.}
+\item{x}{an object of class \code{DNAbin} or \code{AAbin}.}
 
-\item{motif}{a \code{DNAbin} or \code{PHMM} object.}
+\item{motif}{a \code{DNAbin}, \code{AAbin} or \code{PHMM} object.}
 
 \item{direction}{character string indicating
 the direction of the shave. Options are "forward" (shaves everything to
@@ -33,11 +33,12 @@ the cluster.}
 (not including 'type').}
 }
 \value{
-an object of class \code{DNAbin}.
+an object of class \code{DNAbin} or \code{AAbin}
+  (depending on the input object).
 }
 \description{
 This function uses the Viterbi algorithm to semi-globally align a motif to
-  a DNA sequence, and removes all nucleotides to the left or right of the
+  a DNA or AA sequence, and removes all nucleotides to the left and/or right of the
   motif.
 }
 \details{

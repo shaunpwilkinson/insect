@@ -39,20 +39,20 @@ join <- function(...){
   return(res)
 }
 ################################################################################
-# shave DNA
+# shave ends off DNA or amino acid sequences
 # x is a DNAbin list or vector
 # motif can be either a PHMM or a DNAbin vector, must not be rc'd (as ordered)
 # resulting sequence includes the motif and anything to the right (if direction
 # == "forward) or left (if direction == "reverse")
 
-#' Shave ends of DNA sequences
+#' Shave ends of DNA of amino acid sequences
 #'
 #' This function uses the Viterbi algorithm to semi-globally align a motif to
-#'   a DNA sequence, and removes all nucleotides to the left or right of the
+#'   a DNA or AA sequence, and removes all nucleotides to the left and/or right of the
 #'   motif.
 #'
-#' @param x an object of class \code{DNAbin}.
-#' @param motif a \code{DNAbin} or \code{PHMM} object.
+#' @param x an object of class \code{DNAbin} or \code{AAbin}.
+#' @param motif a \code{DNAbin}, \code{AAbin} or \code{PHMM} object.
 #' @param direction character string indicating
 #'   the direction of the shave. Options are "forward" (shaves everything to
 #'   the right of the motif), "backward" (shaves everything to the left of
@@ -71,7 +71,8 @@ join <- function(...){
 #'   the cluster.
 #' @param ... further arguments to be passed to \code{\link[aphid]{Viterbi}}
 #'   (not including 'type').
-#' @return an object of class \code{DNAbin}.
+#' @return an object of class \code{DNAbin} or \code{AAbin}
+#'   (depending on the input object).
 #' @details
 #'   This functions finds the optimal semiglobal alignment (a.k.a. "glocal"
 #'   alignment or global alignment with free end gaps) between a

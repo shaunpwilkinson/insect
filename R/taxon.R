@@ -211,7 +211,9 @@ prune_taxon <- function(db, taxIDs, keep = TRUE){
     if(any(is.na(tmp))) stop("Not found in db:", taxIDs[is.na(tmp)], "\n")
     taxIDs <- tmp
   }else{
-    if(any(is.na(match(taxIDs, db$tax_id)))) stop("Not found in db:", taxIDs[is.na(taxIDs)], "\n")
+    if(any(is.na(match(taxIDs, db$tax_id)))) stop("Taxon IDs not found in db:",
+                                                  paste0(taxIDs[is.na(taxIDs)], collapse = " "),
+                                                  "\n")
   }
   taxIDs <- unique(taxIDs)
   if(keep){
