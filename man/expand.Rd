@@ -5,9 +5,9 @@
 \title{Expand an existing classification tree.}
 \usage{
 expand(tree, x, clades = "", refine = "Viterbi", iterations = 50,
-  nstart = 10, minK = 2, maxK = 2, minscore = 0.9, probs = 0.1,
-  retry = TRUE, resize = TRUE, maxsize = NULL, recursive = TRUE,
-  cores = 1, quiet = FALSE, ...)
+  nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
+  retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
+  recursive = TRUE, cores = 1, quiet = TRUE, ...)
 }
 \arguments{
 \item{tree}{an object of class \code{"insect"}.}
@@ -50,9 +50,9 @@ the value given in \code{"probs"}, for the node to be split and the
 recursion process to continue.
 At any given node, if the \emph{n}th percentile of Akaike weights
 falls below this threshold, the recursion process for the node will
-terminate. As an extreme example, if \code{minscore = 0.9} and
-\code{probs = 0.05} (the default settings), and after generating two
-candidate PHMMs to occupy the candidate subnodes the lower 5th percentile
+terminate. As an example, if \code{minscore = 0.9} and
+\code{probs = 0.5} (the default settings), and after generating two
+candidate PHMMs to occupy the candidate subnodes the median
 of Akaike weights is 0.89, the splitting process will
 terminate and the function will simply return the unsplit root node.}
 

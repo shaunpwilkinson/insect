@@ -5,7 +5,7 @@
 \title{Virtual \emph{in situ} hybridization.}
 \usage{
 virtualFISH(x, probe, minscore = 100, minamplen = 50, maxamplen = 500,
-  up = NULL, down = NULL, rcdown = FALSE, minfsc = 60, minrsc = 60,
+  up = NULL, down = NULL, rcdown = TRUE, minfsc = 60, minrsc = 60,
   cores = 1, quiet = FALSE)
 }
 \arguments{

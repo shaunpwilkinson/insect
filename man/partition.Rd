@@ -5,7 +5,7 @@
 \title{Split sequences into subsets with maximum differentiation.}
 \usage{
 partition(x, model = NULL, K = 2, allocation = "cluster",
-  refine = "Viterbi", nstart = 10, iterations = 50, kmers = NULL,
+  refine = "Viterbi", nstart = 20, iterations = 50, kmers = NULL,
   seqweights = "Gerstein", cores = 1, quiet = FALSE, ...)
 }
 \arguments{

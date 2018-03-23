@@ -23,9 +23,9 @@
 #'   ## TBA
 ################################################################################
 expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
-                   nstart = 10, minK = 2, maxK = 2, minscore = 0.9, probs = 0.1,
-                   retry = TRUE, resize = TRUE, maxsize = NULL, recursive = TRUE,
-                   cores = 1, quiet = FALSE, ...){
+                   nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
+                   retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
+                   recursive = TRUE, cores = 1, quiet = TRUE, ...){
   ## Establish which parts fof the tree to expand
   if(!(identical(attr(tree, "sequences"), seq_along(x)))){
     stop("tree is incompatible with sequences")

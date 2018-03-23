@@ -34,9 +34,9 @@
 #' @examples
 #'   ## TBA
 ################################################################################
-fork <- function(node, x, lineages, refine = "Viterbi", nstart = 10,
+fork <- function(node, x, lineages, refine = "Viterbi", nstart = 20,
                  iterations = 50, minK = 2, maxK = 2, minscore = 0.9,
-                 probs = 0.05, retry = TRUE, resize = TRUE, maxsize = NULL,
+                 probs = 0.5, retry = TRUE, resize = TRUE, maxsize = NULL,
                  kmers = NULL, seqweights = "Gerstein", cores = 1,
                  quiet = FALSE, ...){
   indices <- attr(node, "sequences")

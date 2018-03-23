@@ -7,7 +7,7 @@
 #'
 #' @param x a list of DNA sequences in \code{DNAbin} format.
 #' @param probe a DNA sequence ("DNAbin" object) or profile hidden
-#'   Markov model ("PHMM" object) to use as the virtual hybridization probe.
+#'   Markov model ("PHMM" object) to be used as the virtual hybridization probe.
 #' @param minscore numeric; the minimum specificity (log-odds score
 #'   for the optimal alignment) between the query sequence and the probe
 #'   for the former to be retained in the output object.
@@ -51,13 +51,26 @@
 #'   ## TBA
 ################################################################################
 virtualFISH <- function(x, probe, minscore = 100, minamplen = 50, maxamplen = 500,
-                        up = NULL, down = NULL, rcdown = FALSE,
+                        up = NULL, down = NULL, rcdown = TRUE,
                         minfsc = 60, minrsc = 60, cores = 1, quiet = FALSE){
-  if(!is.null(down) & rcdown){
+  if(!is.null(up)){
+    if(!inherits(up, "DNAbin")){
+      if(mode(up) == "character"){
+        if(nchar(up[1]) == 1) up <- paste0(up, collapse = "")
+        up <- char2dna(up)
+      }else{
+        stop("Invalid primer(s)\n")
+      }
+    }
+  }
+  if(!is.null(down)){
     if(inherits(down, "DNAbin")){
-      down <- ape::complement(down)
+      if(rcdown) down <- ape::complement(down)
+    }else if(mode(down) == "character"){
+      if(nchar(down[1]) == 1) down <- paste0(down, collapse = "")
+      down <- char2dna(rc(down))
     }else{
-      stop("Reverse primer can't be reverse complemented because it is not a 'DNAbin' object")
+      stop("Invalid primer(s)\n")
     }
   }
   dd1 <- function(s, probe, minscore, minamplen, maxamplen, up, down, minfsc, minrsc){

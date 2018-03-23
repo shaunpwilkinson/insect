@@ -117,7 +117,7 @@
 learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
                   nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
                   retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
-                  recursive = TRUE, cores = 1, quiet = FALSE, ...){
+                  recursive = TRUE, cores = 1, quiet = TRUE, ...){
   ## First initialize the tree as a dendrogram object
   tree <- 1
   attr(tree, "leaf") <- TRUE
