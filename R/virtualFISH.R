@@ -12,15 +12,13 @@
 #'   for the optimal alignment) between the query sequence and the probe
 #'   for the former to be retained in the output object.
 #' @param minamplen,maxamplen integers giving the minimum and maximum
-#'   acceptable amplicon lengths. Sequences are discarded if the number
-#'   of base pairs between the primer-binding sites falls outside of these
-#'   limits.
+#'   acceptable amplicon lengths.
 #' @param up,down optional objects of class \code{DNAbin}
 #'   giving the forward and reverse primer sequences with which
 #'   to query the sequence list following virtual probe hybridization.
 #' @param rcdown logical indicating whether the reverse primer should be
-#'   reverse-complemented prior to aligning with the input sequences. Set
-#'   to TRUE if \code{down} is not NULL and
+#'   reverse-complemented prior to aligning with the input sequences.
+#'   Should be set to TRUE if \code{down}
 #'   is the reverse complement of the target sequence (e.g. the sequence of
 #'   a reverse primer as would be ordered from an oligo supplier).
 #' @param minfsc numeric, giving the minimum specificity(log-odds score
@@ -45,8 +43,18 @@
 #'   the console.
 #' @return a list of trimmed sequences, returned as an object of class
 #'   \code{DNAbin}.
-#' @details TBA
+#' @details This function is generally used when filtering/trimming a
+#'   local sequence database,
+#'   to mop up any high-scoring sequences with partial/missing primer
+#'   bind sites that were not included in the output of the
+#'   \code{\link{virtualPCR}}.
+#'   For example, this includes sequences that were generated using the same
+#'   primer set as used in the virtual PCR, and whose primer binding sites
+#'   were trimmed prior to depostion in the sequence database.
+#'   Unlike the virtualPCR function, there is
+#'   no option to retain the primer binding sites in the returned sequences.
 #' @author Shaun Wilkinson
+#' @seealso \code{\link{virtualPCR}}
 #' @examples
 #'   ## TBA
 ################################################################################

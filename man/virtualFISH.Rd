@@ -12,24 +12,22 @@ virtualFISH(x, probe, minscore = 100, minamplen = 50, maxamplen = 500,
 \item{x}{a list of DNA sequences in \code{DNAbin} format.}
 
 \item{probe}{a DNA sequence ("DNAbin" object) or profile hidden
-Markov model ("PHMM" object) to use as the virtual hybridization probe.}
+Markov model ("PHMM" object) to be used as the virtual hybridization probe.}
 
 \item{minscore}{numeric; the minimum specificity (log-odds score
 for the optimal alignment) between the query sequence and the probe
 for the former to be retained in the output object.}
 
 \item{minamplen, maxamplen}{integers giving the minimum and maximum
-acceptable amplicon lengths. Sequences are discarded if the number
-of base pairs between the primer-binding sites falls outside of these
-limits.}
+acceptable amplicon lengths.}
 
-\item{up, down}{optional objects of class \code{DNAbin} or \code{PHMM}
-giving the virtual forward and reverse primer sequences with which
+\item{up, down}{optional objects of class \code{DNAbin}
+giving the forward and reverse primer sequences with which
 to query the sequence list following virtual probe hybridization.}
 
 \item{rcdown}{logical indicating whether the reverse primer should be
-reverse-complemented prior to aligning with the input sequences. Set
-to TRUE only if \code{down} is not NULL, is of class \code{DNAbin}, and
+reverse-complemented prior to aligning with the input sequences.
+Should be set to TRUE if \code{down}
 is the reverse complement of the target sequence (e.g. the sequence of
 a reverse primer as would be ordered from an oligo supplier).}
 
@@ -68,10 +66,22 @@ This function queries a list of DNA sequences with a virtual probe
   log-odds alignment scoring.
 }
 \details{
-TBA
+This function is generally used when filtering/trimming a
+  local sequence database,
+  to mop up any high-scoring sequences with partial/missing primer
+  bind sites that were not included in the output of the
+  \code{\link{virtualPCR}}.
+  For example, this includes sequences that were generated using the same
+  primer set as used in the virtual PCR, and whose primer binding sites
+  were trimmed prior to depostion in the sequence database.
+  Unlike the virtualPCR function, there is
+  no option to retain the primer binding sites in the returned sequences.
 }
 \examples{
   ## TBA
+}
+\seealso{
+\code{\link{virtualPCR}}
 }
 \author{
 Shaun Wilkinson
