@@ -15,12 +15,12 @@
 #'   acceptable amplicon lengths. Sequences are discarded if the number
 #'   of base pairs between the primer-binding sites falls outside of these
 #'   limits.
-#' @param up,down optional objects of class \code{DNAbin} or \code{PHMM}
-#'   giving the virtual forward and reverse primer sequences with which
+#' @param up,down optional objects of class \code{DNAbin}
+#'   giving the forward and reverse primer sequences with which
 #'   to query the sequence list following virtual probe hybridization.
 #' @param rcdown logical indicating whether the reverse primer should be
 #'   reverse-complemented prior to aligning with the input sequences. Set
-#'   to TRUE only if \code{down} is not NULL, is of class \code{DNAbin}, and
+#'   to TRUE if \code{down} is not NULL and
 #'   is the reverse complement of the target sequence (e.g. the sequence of
 #'   a reverse primer as would be ordered from an oligo supplier).
 #' @param minfsc numeric, giving the minimum specificity(log-odds score
@@ -59,7 +59,7 @@ virtualFISH <- function(x, probe, minscore = 100, minamplen = 50, maxamplen = 50
         if(nchar(up[1]) == 1) up <- paste0(up, collapse = "")
         up <- char2dna(up)
       }else{
-        stop("Invalid primer(s)\n")
+        if(!inherits(up, "PHMM")) stop("Invalid primer(s)\n")
       }
     }
   }
@@ -70,7 +70,7 @@ virtualFISH <- function(x, probe, minscore = 100, minamplen = 50, maxamplen = 50
       if(nchar(down[1]) == 1) down <- paste0(down, collapse = "")
       down <- char2dna(rc(down))
     }else{
-      stop("Invalid primer(s)\n")
+      if(!inherits(down, "PHMM")) stop("Invalid primer(s)\n")
     }
   }
   dd1 <- function(s, probe, minscore, minamplen, maxamplen, up, down, minfsc, minrsc){
