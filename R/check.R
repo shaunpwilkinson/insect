@@ -62,7 +62,7 @@ check <- function(x, db, level = "order", threshold = 0.97, quiet = FALSE){
       attr(x, "taxID") <- sapply(attr(x, "lineage"), get_taxID, db)
     }
   }
-  lins <- lapply(attr(x, "taxID"), get_lineage, db)
+  lins <- get_lineage(attr(x, "taxID"), db)
   lins <- sapply(lins, function(e) e[level])
   names(lins) <- names(x)
   f <- as.factor(otus)[!is.na(lins)]
