@@ -6,7 +6,7 @@
 \usage{
 virtualPCR(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   minfsc = 70, minrsc = 70, minamplen = 50, maxamplen = 2000,
-  partialbind = TRUE, cores = 1, quiet = FALSE)
+  maxN = 0.02, partialbind = TRUE, cores = 1, quiet = FALSE)
 }
 \arguments{
 \item{x}{a list of DNA sequences in \code{DNAbin} format.}
@@ -39,6 +39,10 @@ a sequence for that sequence to be retained.}
 acceptable amplicon lengths. Sequences are discarded if the number
 of base pairs between the primer-binding sites falls outside of these
 limits.}
+
+\item{maxN}{numeric giving the maximum acceptable proportion
+of the ambiguous residue "N" within the output sequences.
+Defaults to 0.02.}
 
 \item{partialbind}{logical indicating whether partial primer matching is
 accepted. Defaults to TRUE.}

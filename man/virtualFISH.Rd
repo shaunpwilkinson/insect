@@ -6,7 +6,7 @@
 \usage{
 virtualFISH(x, probe, minscore = 100, minamplen = 50, maxamplen = 500,
   up = NULL, down = NULL, rcdown = TRUE, minfsc = 60, minrsc = 60,
-  cores = 1, quiet = FALSE)
+  maxN = 0.02, cores = 1, quiet = FALSE)
 }
 \arguments{
 \item{x}{a list of DNA sequences in \code{DNAbin} format.}
@@ -38,6 +38,10 @@ for that sequence to be retained.}
 \item{minrsc}{numeric, the minimum specificity (log-odds score for
 the optimal alignment) between the reverse primer (if provided) and
 a sequence for that sequence to be retained.}
+
+\item{maxN}{numeric giving the maximum acceptable proportion
+of the ambiguous residue "N" within the output sequences.
+Defaults to 0.02.}
 
 \item{cores}{integer giving the number of CPUs to parallelize the operation
 over. Defaults to 1, and reverts to 1 if \code{x} is not a list.

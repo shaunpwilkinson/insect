@@ -27,6 +27,9 @@
 #' @param minrsc numeric, the minimum specificity (log-odds score for
 #'   the optimal alignment) between the reverse primer (if provided) and
 #'   a sequence for that sequence to be retained.
+#' @param maxN numeric giving the maximum acceptable proportion
+#'   of the ambiguous residue "N" within the output sequences.
+#'   Defaults to 0.02.
 #' @param cores integer giving the number of CPUs to parallelize the operation
 #'   over. Defaults to 1, and reverts to 1 if \code{x} is not a list.
 #'   This argument may alternatively be a 'cluster' object,
@@ -58,9 +61,10 @@
 #' @examples
 #'   ## TBA
 ################################################################################
-virtualFISH <- function(x, probe, minscore = 100, minamplen = 50, maxamplen = 500,
-                        up = NULL, down = NULL, rcdown = TRUE,
-                        minfsc = 60, minrsc = 60, cores = 1, quiet = FALSE){
+virtualFISH <- function(x, probe, minscore = 100, minamplen = 50,
+                        maxamplen = 500, up = NULL, down = NULL, rcdown = TRUE,
+                        minfsc = 60, minrsc = 60, maxN = 0.02, cores = 1,
+                        quiet = FALSE){
   if(!is.null(up)){
     if(!inherits(up, "DNAbin")){
       if(mode(up) == "character"){
@@ -142,6 +146,7 @@ virtualFISH <- function(x, probe, minscore = 100, minamplen = 50, maxamplen = 50
     if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores'")
     # if(cores > navailcores) stop("Number of cores is more than available")
     if(cores > 1){
+      if(!quiet) cat("Multithreading over", cores, "cores\n")
       cl <- parallel::makeCluster(cores)
       x <- parallel::parLapply(cl, x, dd1, probe, minscore, minamplen, maxamplen,
                                up, down, minfsc, minrsc)
@@ -161,9 +166,14 @@ virtualFISH <- function(x, probe, minscore = 100, minamplen = 50, maxamplen = 50
     attributes(x) <- tmpattr
     attr(x, "scores") <- scores
   }else{
-    cat("None of the sequences met primer specificity criteria. Returning NULL\n")
+    if(!quiet) cat("None of the sequences met primer specificity criteria. Returning NULL\n")
     x <- NULL
   }
+  if(!quiet) cat("Filtering ambiguous sequences\n")
+  discards <- sapply(x, function(s) sum(s == 0xf0)/length(s)) > maxN
+  x <- subset.DNAbin(x, subset = !discards)
+  if(!quiet) cat(length(x), "sequences retained after applying ambiguity filter\n")
+  if(!quiet) cat("Done\n")
   return(x)
 }
 ################################################################################
