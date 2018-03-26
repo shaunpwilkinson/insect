@@ -4,7 +4,7 @@
 \alias{stitch}
 \title{Paired-end read stitching.}
 \usage{
-stitch(R1, R2, up = NULL, down = NULL, mindiff = 6, cores = 1)
+stitch(R1, R2, up = NULL, down = NULL, mindiff = 6, minoverlap = 16)
 }
 \arguments{
 \item{R1, R2}{DNAbin objects with quality attributes (see \code{\link{readFASTQ}} to
@@ -13,14 +13,17 @@ reverse reads to be stitched. These objects can be either vectors or lists.
 In the latter case, the two objects must be equal length.}
 
 \item{up, down}{forward and reverse primer sequences (either as concatenated
-character strings or "DNAbin" objects). Either both or neither should be provided.}
+character strings or "DNAbin" objects).
+Either both or neither should be provided (not one or the other).}
 
 \item{mindiff}{the minimum difference in quality between two different base calls
 for the higher quality call to be added to the consensus alignment. In cases where
 the quality differences are less than this threshold, the ambiguity code "N" is added
-to the consensus sequence.}
+to the consensus sequence. Defaults to 6.}
 
-\item{cores}{The number of threads to be used to process the operation.}
+\item{minoverlap}{integer giving the minimum number of nucleotides that
+should be shared between the forward and reverse sequence alignments.
+Defaults to 16.}
 }
 \value{
 a "DNAbin" object or a vector of concatenated character strings,

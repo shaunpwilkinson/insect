@@ -26,6 +26,10 @@ rc <- function(z){
   z <- toupper(z)
   tmpnames <- names(z)
   res <- unname(sapply(z, rc1))
+  if(!is.null(attr(z, "quality"))){
+    strev <- function(x) sapply(lapply(lapply(unname(x), charToRaw), rev), rawToChar)
+    attr(res, "quality") <- unname(sapply(attr(z, "quality"), strev))
+  }
   names(res) <- tmpnames
   return(res)
 }
