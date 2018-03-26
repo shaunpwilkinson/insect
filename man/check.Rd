@@ -7,7 +7,8 @@
 check(x, db, level = "order", threshold = 0.97, quiet = FALSE)
 }
 \arguments{
-\item{x}{a DNAbin linst object with "taxID" and/or "lineage" attributes.}
+\item{x}{a DNAbin list object with "taxID" and/or "lineage" attributes
+(see \code{\link{searchGB}} for details).}
 
 \item{db}{a local copy of the NCBI Taxonomy database
 (see \code{\link{download_taxon}} for details).}
@@ -40,9 +41,6 @@ This function first clusters the sequence dataset into operational
   for lineage homogeneity at a given taxonomic rank,
   flagging any records that appear out of place based on the taxa/lineages
   of the other OTU members.
-}
-\examples{
-  ##TBA
 }
 \author{
 Shaun Wilkinson

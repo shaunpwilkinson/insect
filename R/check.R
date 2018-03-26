@@ -6,7 +6,8 @@
 #'    may require further checking before being used as training
 #'    data for downstream tree-learning operations.
 #'
-#' @param x a DNAbin linst object with "taxID" and/or "lineage" attributes.
+#' @param x a DNAbin list object with "taxID" and/or "lineage" attributes
+#'   (see \code{\link{searchGB}} for details).
 #' @param db a local copy of the NCBI Taxonomy database
 #'   (see \code{\link{download_taxon}} for details).
 #' @param level character string giving the taxonomic level at which
@@ -25,8 +26,6 @@
 #'   flagging any records that appear out of place based on the taxa/lineages
 #'   of the other OTU members.
 #' @author Shaun Wilkinson
-#' @examples
-#'   ##TBA
 ################################################################################
 check <- function(x, db, level = "order", threshold = 0.97, quiet = FALSE){
   level <- tolower(level)

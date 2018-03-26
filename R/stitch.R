@@ -47,6 +47,7 @@ stitch <- function(R1, R2, up = NULL, down = NULL, mindiff = 6, minoverlap = 16)
   }
   Q1 <- attr(R1, "quality")
   Q2 <- attr(R2, "quality")
+  strev <- function(x) sapply(lapply(lapply(unname(x), charToRaw), rev), rawToChar)
   if(!is.null(up)){
     if(is.null(down)) stop("Expected both primers")
     if(.isDNA(up)){
@@ -67,7 +68,6 @@ stitch <- function(R1, R2, up = NULL, down = NULL, mindiff = 6, minoverlap = 16)
     g1f <- gregexpr(up, R1)
     g2f <- gregexpr(down, R2)
     isok <- function(z) z[1] > 0 & length(z) == 1
-    strev <- function(x) sapply(lapply(lapply(unname(x), charToRaw), rev), rawToChar)
     forwards <- sapply(g1f, isok) & sapply(g2f, isok) #129
     g1r <- g2r <- vector(mode = "list", length = length(R1))
     g1r[!forwards] <- gregexpr(down, R1[!forwards]) #shorter
@@ -109,7 +109,7 @@ stitch <- function(R1, R2, up = NULL, down = NULL, mindiff = 6, minoverlap = 16)
   # pointers <- .point(hashes)
   # dupes <- duplicated(pointers)
   #
-  find_alistart <- function(r1, r2, minoverlap){
+  find_alistart1 <- function(r1, r2, minoverlap){
     nchar2 <- nchar(r2)
     r2mers <- substring(r2, first = seq(1, nchar2 - (minoverlap - 1)),
                         last = seq(minoverlap, nchar2))
@@ -124,14 +124,17 @@ stitch <- function(R1, R2, up = NULL, down = NULL, mindiff = 6, minoverlap = 16)
     }
     return(res)
   }
+
   # alistarts <- mapply(find_alistart, R1[!dupes], R2[!dupes], USE.NAMES = FALSE)[pointers]
-  alistarts <- mapply(find_alistart, R1, R2, minoverlap, USE.NAMES = FALSE)
+
+  alistarts <- mapply(find_alistart1, R1, R2, minoverlap, USE.NAMES = FALSE)
   keeps <- !is.na(alistarts)
   R1 <- R1[keeps]
   R2 <- R2[keeps]
   attr(R1, "quality") <- Q1[keeps]
   attr(R2, "quality") <- Q2[keeps]
   alistarts <- alistarts[keeps]
+
   R1 <- char2dna(R1)
   R2 <- char2dna(R2)
   stitch1 <- function(r1, r2, alistart, mindiff){
