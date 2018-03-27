@@ -2,21 +2,20 @@
 % Please edit documentation in R/check.R
 \name{check}
 \alias{check}
-\title{Identify sequences with potentially incorrect lineage metadata.}
+\title{Identify sequences with potentially erroneous lineage metadata.}
 \usage{
 check(x, db, level = "order", threshold = 0.97, quiet = FALSE)
 }
 \arguments{
-\item{x}{a DNAbin list object with "taxID" and/or "lineage" attributes
+\item{x}{a DNAbin list object with "taxID", "lineage" and/or "species" attributes
 (see \code{\link{searchGB}} for details).}
 
-\item{db}{a local copy of the NCBI Taxonomy database
-(see \code{\link{download_taxon}} for details).}
+\item{db}{a copy of the NCBI taxonomy database as a data.frame object
+(see \code{\link{download_taxon}}).}
 
 \item{level}{character string giving the taxonomic level at which
-heterogeneity within a cluster flags
-a sequence as potentially erroneous. Must be a recognized rank
-within the NCBI Taxonomy database.}
+heterogeneity within a cluster will flag a sequence as potentially erroneous.
+Should be a recognized rank within the NCBI taxonomy database.}
 
 \item{threshold}{numeric between 0 and 1 giving the OTU similarity cutoff value
 with which to cluster the sequences.}
@@ -25,11 +24,13 @@ with which to cluster the sequences.}
 }
 \value{
 a data frame containing the names of the potentially erroneous sequences.
+  The output object has zero rows if no sequences are flagged.
 }
 \description{
-This function evaluates a list of DNA barcode
-   sequences (a "DNAbin" object with lineage attributes)
-   and returns a table of sequences that
+This function evaluates a list of DNA barcode sequences
+   (a "DNAbin" object with "taxID", "lineage" and/or "species" attributes;
+   see \code{\link{searchGB}} for details)
+   and returns a table identifying the sequences that
    may require further checking before being used as training
    data for downstream tree-learning operations.
 }
@@ -41,6 +42,12 @@ This function first clusters the sequence dataset into operational
   for lineage homogeneity at a given taxonomic rank,
   flagging any records that appear out of place based on the taxa/lineages
   of the other OTU members.
+}
+\examples{
+  data(whales)
+  data(whale_taxa)
+  dodgy_seqs <- check(whales, db = whale_taxa, level = "species")
+  whales <- subset.DNAbin(whales, subset = !names(whales) \%in\% rownames(dodgy_seqs))
 }
 \author{
 Shaun Wilkinson

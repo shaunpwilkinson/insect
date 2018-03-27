@@ -1,11 +1,15 @@
-#' Taxonomic classification for DNA barcode sequences.
+#' Tree-based taxonomic classification.
 #'
 #' \code{"classify"} assigns a DNA barcode or other
 #'   taxonomically-informative sequence to a node of a classification
 #'   tree probabilistically, using a series of nested profile
 #'   hidden Markov models.
 #'
-#' @param x a \code{"DNAbin"} object, either as a vector or a list of vectors.
+#' @param x a DNA sequence or set of sequences. Acceptable input formats are
+#'   a single sequence (either as a character string or a "DNAbin" vector),
+#'   a vector of character strings, a DNAbin list,
+#'   a list of character string vectors (one vector for each sample),
+#'   or a list of DNAbin list objects (one DNAbin object for each sample).
 #' @param tree an object of class \code{"insect"}.
 #' @param threshold numeric value between 0 and 1 giving the minimum
 #'   Akaike weight for the recursive classification procedure
@@ -93,6 +97,20 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     akw <- 1
     cakw <- 1
     res <- "" # lineage above the root node
+    ## test at root node first - not needed?
+    # rootsc <- aphid::forward.PHMM(decodePHMM(attr(tree, "model")), x, odds = FALSE)$score
+    # minscore_met <- if(is.null(attr(tree, "minscore"))) TRUE else rootsc > (attr(tree, "minscore") - 4)
+    # ## trees made before 27 Mar 18 don't have top level minscore attr
+    # minlength_met <- length(x) >= attr(tree, "minlength") - 3
+    # maxlength_met <- length(x) <= attr(tree, "maxlength") + 3
+    # threshold_met <- TRUE
+    # score <- if(decay) cakw else akw
+    # if(!(threshold_met & minscore_met & minlength_met & maxlength_met)){
+    #   res <- paste(c(res, path, paste(score), paste(threshold_met),
+    #                  paste(minscore_met), paste(minlength_met),
+    #                  paste(maxlength_met)), collapse = "%")
+    #   return(res)
+    # }
     while(is.list(tree)){
       no_mods <- length(tree)
       sc <- numeric(no_mods) # scores (log probabilities)

@@ -176,6 +176,10 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     model <- decodePHMM(model)
   }
   attr(tree, "model") <- model
+  # score <- function(s, model) aphid::forward(model, s, odds = FALSE)$score
+  # # could multithread at some stage
+  # scores <- sapply(x[!attr(x, "duplicates")], score, model)
+  # attr(tree, "minscore") <- min(scores)
   tree <- expand(tree, x, clades = "", refine = refine, iterations = iterations,
                  nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
                  probs = probs, retry = retry, resize = resize, maxsize = maxsize,

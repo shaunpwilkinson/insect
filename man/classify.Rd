@@ -2,14 +2,18 @@
 % Please edit documentation in R/classify.R
 \name{classify}
 \alias{classify}
-\title{Taxonomic classification for DNA barcode sequences.}
+\title{Tree-based taxonomic classification.}
 \usage{
 classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE, cores = 1,
   scores = TRUE, paths = FALSE, seqlengths = FALSE, threshs = FALSE,
   minscores = FALSE, minlengths = FALSE, maxlengths = FALSE)
 }
 \arguments{
-\item{x}{a \code{"DNAbin"} object, either as a vector or a list of vectors.}
+\item{x}{a DNA sequence or set of sequences. Acceptable input formats are
+a single sequence (either as a character string or a "DNAbin" vector),
+a vector of character strings, a DNAbin list,
+a list of character string vectors (one vector for each sample),
+or a list of DNAbin list objects (one DNAbin object for each sample).}
 
 \item{tree}{an object of class \code{"insect"}.}
 
