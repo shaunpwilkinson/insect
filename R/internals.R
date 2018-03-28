@@ -187,7 +187,7 @@
     return(lin)
   }
   res <- list()
-  tmp <- xml2::as_list(tmp)[[1]]
+  tmp <- xml2::as_list(x)[[1]]
   accs <- unname(sapply(tmp, find_accession))
   seqs <- unname(sapply(tmp, find_sequence))
   if(species) spps <- unname(sapply(tmp, find_species))
