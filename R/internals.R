@@ -120,9 +120,13 @@
 
 .scanURL <- function(x, retmode = "xml", ...){
   scanURL <- function(z, retmode = "xml", ...){
+    errfun <- function(er){
+      closeAllConnections()
+      return(NULL)
+    }
     res <- tryCatch(if(retmode == "xml") xml2::read_xml(z, ... = ...) else scan(file = z, ... = ...),
-                    error = function(er) return(NULL),
-                    warning = function(wa) return(NULL))
+                    error = errfun,
+                    warning = errfun)
     return(res)
   }
   for(l in 1:10){
