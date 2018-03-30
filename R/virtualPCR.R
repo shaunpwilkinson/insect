@@ -55,7 +55,7 @@
 #'   ## TBA
 ################################################################################
 virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
-                       minfsc = 70, minrsc = 70, minamplen = 50,
+                       minfsc = 50, minrsc = 50, minamplen = 50,
                        maxamplen = 2000, maxN = 0.02, partialbind = TRUE, cores = 1,
                        quiet = FALSE){
   if(mode(x) == "character") x <- char2dna(x)
