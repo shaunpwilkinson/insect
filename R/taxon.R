@@ -83,6 +83,9 @@ get_lineage <- function(taxIDs, db, simplify = TRUE, cores = 1){
 #' @param lineage A semicolon-delimited lineage string or lineage name.
 #' @param db the NCBI taxon database (as a data.frame object).
 #'   See download_taxon for details.
+#' @param multimatch character, the value to return if the query matches multiple
+#'   entries in the database. Accepted values are "NA" (default), and "first"
+#'   (the first match).
 #' @return The unique taxon database ID (integer).
 #' @details This function will return NA if the lineage is not found in the
 #'   database or it matches multiple entries.
@@ -91,7 +94,7 @@ get_lineage <- function(taxIDs, db, simplify = TRUE, cores = 1){
 #' @examples
 #'   ##TBA
 ################################################################################
-get_taxID <- function(lineage, db){
+get_taxID <- function(lineage, db, multimatch = "NA"){
   if(identical(lineage, "")) lineage <- "root"
   linvec <- rev(strsplit(lineage, split = "; ")[[1]])
   indices <- which(db$name == linvec[1])
@@ -103,8 +106,11 @@ get_taxID <- function(lineage, db){
       # warning(paste("Taxon name matches multiple entries in database,",
       #            "returning first matching entry.\n",
       #            "Tip: try entering semicolon-delimited lineage string\n"))
-      # return(taxIDs[1])
-      return(NA)
+      if(identical(multimatch, "NA")){
+        return(NA)
+      }else if(identical(multimatch, "first")){
+        return(taxids[1])
+      }else return(as.integer(multimatch))
     }else{
       tmp <- lapply(taxids, get_lineage, db = db)
       nmatches <- sapply(tmp, function(l) sum(sapply(l, grepl, lineage)))

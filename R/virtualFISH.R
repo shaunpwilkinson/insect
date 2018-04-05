@@ -86,6 +86,7 @@ virtualFISH <- function(x, probe, minscore = 100, minamplen = 50,
     }
   }
   dd1 <- function(s, probe, minscore, minamplen, maxamplen, up, down, minfsc, minrsc){
+    s <- s[!s %in% as.raw(c(2, 4))]
     if(!is.null(up)) fpl <- length(up)
     if(!is.null(down)) rpl <- length(down)
     vit <- aphid::Viterbi(probe, s, odds = TRUE, type = "semiglobal")

@@ -36,6 +36,7 @@ join <- function(...){
   for(i in validattrs){
     attr(res, i) <- unlist(lapply(dots, attr, i), use.names = FALSE)
   }
+  class(res) <- "DNAbin"
   return(res)
 }
 ################################################################################

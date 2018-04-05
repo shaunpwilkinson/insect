@@ -4,13 +4,17 @@
 \alias{get_taxID}
 \title{Derive taxon ID from a given lineage.}
 \usage{
-get_taxID(lineage, db)
+get_taxID(lineage, db, multimatch = "NA")
 }
 \arguments{
 \item{lineage}{A semicolon-delimited lineage string or lineage name.}
 
 \item{db}{the NCBI taxon database (as a data.frame object).
 See download_taxon for details.}
+
+\item{multimatch}{character, the value to return if the query matches multiple
+entries in the database. Accepted values are "NA" (default), and "first"
+(the first match).}
 }
 \value{
 The unique taxon database ID (integer).

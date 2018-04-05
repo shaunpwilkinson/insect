@@ -35,8 +35,14 @@
 ################################################################################
 check <- function(x, db, level = "order", threshold = 0.97, quiet = FALSE){
   level <- tolower(level)
-  if(!quiet) cat("Clustering OTUs\n")
-  otus <- kmer::otu(x, threshold = threshold, k = 5)
+  if(is.null(attr(x, "OTU"))){
+    if(!quiet) cat("Clustering OTUs\n")
+    otus <- kmer::otu(x, threshold = threshold, k = 5)
+  }else{
+    if(!quiet) cat("Obtaining OTU membership from input object\n")
+    otus <- attr(x, "OTU")
+    stopifnot(length(x) == length(otus))
+  }
   if(!quiet) cat("Comparing lineage metadata within OTUs\n")
   check1 <- function(y){
     ## input a vector of named lineages (non delimited) of a certain rank
