@@ -37,7 +37,7 @@ check <- function(x, db, level = "order", threshold = 0.97, quiet = FALSE){
   level <- tolower(level)
   if(is.null(attr(x, "OTU"))){
     if(!quiet) cat("Clustering OTUs\n")
-    otus <- kmer::otu(x, threshold = threshold, k = 5)
+    otus <- kmer::otu(x, threshold = threshold, k = 5, nstart = 20)
   }else{
     if(!quiet) cat("Obtaining OTU membership from input object\n")
     otus <- attr(x, "OTU")
