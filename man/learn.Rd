@@ -123,7 +123,19 @@ This function creates classification trees using recursive
 Leaf node labels are not included in order to save on memory.
 }
 \examples{
-  ## TBA
+\dontrun{
+  data(whales)
+  ## use sequences 2-19 to learn the tree
+  ## note that training data must retain lineage attribute
+  training_data <- subset.DNAbin(whales, subset = seq_along(whales) > 1)
+  ## learn the tree
+  set.seed(999)
+  tree <- learn(training_data, cores = 2, quiet = FALSE, maxiter = 5)
+  ## find predicted lineage for sequence #1
+  classify(whales[[1]], tree)
+  ## compare with actual lineage
+  attr(whales, "lineage")[1]
+}
 }
 \references{
 Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
