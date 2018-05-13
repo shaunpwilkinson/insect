@@ -1,15 +1,16 @@
 #' Concatenate DNAbin objects while preserving attributes.
 #'
-#' This function joins two or more \code{DNAbin} objects, as well as the
-#'   attributes whose lengths match the objects themselves
+#' This function joins two or more \code{DNAbin} objects, retaining any
+#'   attributes whose lengths match those of the input objects (e.g. "species",
+#'   "lineage" and/or "taxID" attributes).
 #'
 #' @param ... \code{DNAbin} objects to be concatenated.
 #' @return an object of class \code{DNAbin}.
-#' @details TBA
 #' @author Shaun Wilkinson
-#' @seealso \code{\link{subset.DNAbin}}
+#' @seealso \code{\link{subset.DNAbin}}.
 #' @examples
-#'   ## TBA
+#' data(whales)
+#' join(whales, whales)
 ################################################################################
 join <- function(...){
   dots <- list(...)
@@ -40,13 +41,7 @@ join <- function(...){
   return(res)
 }
 ################################################################################
-# shave ends off DNA or amino acid sequences
-# x is a DNAbin list or vector
-# motif can be either a PHMM or a DNAbin vector, must not be rc'd (as ordered)
-# resulting sequence includes the motif and anything to the right (if direction
-# == "forward) or left (if direction == "reverse")
-
-#' Shave ends of DNA of amino acid sequences
+#' Shave ends from DNA and amino acid sequences
 #'
 #' This function uses the Viterbi algorithm to semi-globally align a motif to
 #'   a DNA or AA sequence, and removes all nucleotides to the left and/or right of the
@@ -82,9 +77,11 @@ join <- function(...){
 #'   if \code{direction} is set to \code{"reverse"} or \code{"forward"},
 #'   respectively.
 #' @author Shaun Wilkinson
-#' @seealso \code{\link{virtualPCR}}
+#' @seealso \code{\link{virtualPCR}}.
 #' @examples
-#'   ## TBA
+#'   data(whales)
+#'   motif = char2dna("AAGTGTAGCATCACTTATTGATCCAAATT")
+#'   shave(whales, motif = motif, direction = "both")
 ################################################################################
 shave <- function(x, motif, direction = "both", cores = 1, ...){
   tmpattr <- attributes(x)

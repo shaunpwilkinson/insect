@@ -2,7 +2,7 @@
 % Please edit documentation in R/disambiguate.R
 \name{disambiguate}
 \alias{disambiguate}
-\title{Convert oligonucleotide sequences to regular expressions.}
+\title{Convert oligonucleotide sequences into regular expressions.}
 \usage{
 disambiguate(z)
 }
@@ -14,18 +14,13 @@ possibly with IUPAC ambiguity codes (all in upper case).}
 a regular expression.
 }
 \description{
-This function is used to convert an oligonucleotide sequence to a regular
-  expression that can be used to query a sequence dataset and possibly
-  remove primer sequences.
-}
-\details{
-TBA
+This function is used to convert an oligonucleotide sequence into a regular
+  expression that can be used to query a sequence dataset.
+  This is generally used for finding and removing primer,
+  adapter and/or index sequences.
 }
 \examples{
 disambiguate("GGWACWGGWTGAACWGTWTAYCCYCC")
-}
-\references{
-TBA
 }
 \author{
 Shaun Wilkinson

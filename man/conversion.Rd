@@ -6,7 +6,7 @@
 \alias{aa2char}
 \alias{char2dna}
 \alias{char2aa}
-\title{Convert sequences between binary and string formats.}
+\title{Convert sequences between binary and character string formats.}
 \usage{
 dna2char(x)
 
@@ -19,29 +19,56 @@ char2aa(z, simplify = FALSE)
 \arguments{
 \item{x}{a "DNAbin" or "AAbin" object.}
 
-\item{z}{a vector of concatenated strings representing DNA or amino acid sequences
-(upper case).}
+\item{z}{a vector of concatenated strings representing DNA or
+amino acid sequences in upper case.}
 
-\item{simplify}{logical indicating whether length-one "DNAbin" or "AAbin" objects
-should be simplified to vectors. Defaults to FALSE.}
+\item{simplify}{logical indicating whether length-one "DNAbin"
+or "AAbin" objects should be simplified to vectors.
+Defaults to FALSE.}
 }
 \value{
-\code{dna2char} and \code{aa2char} return vectors of concatenated strings
-  (in upper case).
-  char2dna and char2aa return "DNAbin" and "AAbin" objects, respectively.
+\code{dna2char} and \code{aa2char} return upper case
+  concatenated character strings.
+  \code{char2dna} and \code{char2aa} return "DNAbin" and "AAbin" objects,
+  respectively. These will be lists unless the input object
+  has length one and simplify = TRUE, in which case the returned object
+  will be a vector.
 }
 \description{
-These functions are used to convert DNA and amino acid sequences in
-  "DNAbin" or "AAbin" format to character strings, and vice versa.
+These functions convert DNA and amino acid sequences in
+  "DNAbin" or "AAbin" format to concatenated character strings,
+  and vice versa.
 }
 \details{
-TBA
+These functions are used to convert concatenated character strings
+  (e.g. "TAACGC") to binary format and vice versa.
+  To convert DNAbin and AAbin objects to non-concatenated
+  character objects (e.g. \code{c("T", "A", "A", "C", "G", "C")})
+  refer to the \code{\link[ape]{ape}} package functions
+  \code{\link[ape]{as.character.DNAbin}} and
+  \code{\link[ape]{as.character.AAbin}}.
+  Likewise the \code{\link[ape]{ape}} package functions
+  \code{\link[ape]{as.DNAbin}} and \code{\link[ape]{as.AAbin}}
+  are used to convert non-concatenated character
+  objects to binary format.
 }
 \examples{
-##TBA
+  char2dna("TAACGC")
+  char2aa("VGAHAGEY")
+  dna2char(char2dna("TAACGC"))
+  aa2char(char2aa("VGAHAGEY"))
+  char2dna(list(seq1 = "TAACGC", seq2 = "ATTGCG"))
+  char2aa(list(seq1 = "VGAHAGEY", seq2 = "VNVDEV"))
 }
 \references{
-TBA
+Paradis E, Claude J, Strimmer K, (2004) APE: analyses of phylogenetics
+  and evolution in R language. \emph{Bioinformatics} \strong{20}, 289-290.
+
+  Paradis E (2007) A bit-level coding scheme for nucleotides. \url{
+  http://ape-package.ird.fr/misc/BitLevelCodingScheme.html}.
+
+  Paradis E (2012) Analysis of Phylogenetics and Evolution with R
+  (Second Edition). Springer, New York.
 }
 \author{
 Shaun Wilkinson

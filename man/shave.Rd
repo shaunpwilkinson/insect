@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{shave}
 \alias{shave}
-\title{Shave ends of DNA of amino acid sequences}
+\title{Shave ends from DNA and amino acid sequences}
 \usage{
 shave(x, motif, direction = "both", cores = 1, ...)
 }
@@ -50,10 +50,12 @@ This functions finds the optimal semiglobal alignment (a.k.a. "glocal"
   respectively.
 }
 \examples{
-  ## TBA
+  data(whales)
+  motif = char2dna("AAGTGTAGCATCACTTATTGATCCAAATT")
+  shave(whales, motif = motif, direction = "both")
 }
 \seealso{
-\code{\link{virtualPCR}}
+\code{\link{virtualPCR}}.
 }
 \author{
 Shaun Wilkinson

@@ -16,8 +16,6 @@ LazyData: TRUE
 URL: http://github.com/shaunpwilkinson/insect
 BugReports: http://github.com/shaunpwilkinson/insect/issues
 Encoding: UTF-8
-Depends:
-    R (>= 3.0.0)
 Imports:
     ape (>= 3.0.0),
     aphid (>= 1.1.0),

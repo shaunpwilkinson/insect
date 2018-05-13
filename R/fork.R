@@ -1,40 +1,6 @@
-#' Split nodes of a classification tree.
-#'
-#' This function is used to split a leaf node of a classification tree,
-#'   given a set of sequences.
-#'
-#' @param node an object of class \code{"insect"}.
-#' @param x an object of class \code{"DNAbin"}.
-#' @param lineages a character vector (the same length as x) of
-#'   semi-colon delimited strings providing the lineage metadata
-#'   for each sequence.
-#' @param kmers an optional matrix of k-mer frequencies used for
-#'   initial assignment of sequences to groups via k-means clustering.
-#'   Rows should sum to one to account for differences in sequence length.
-#'   Defaults to NULL, in which case k-mers are automatically
-#'   counted (using k = 5) and normalized to sequence length.
-#' @param seqweights either NULL (all sequences are given weights
-#'   of 1), a numeric vector the same length as \code{x} representing
-#'   the sequence weights used to derive the model, or a character string giving
-#'   the method to derive the weights from the sequences. Currently only the
-#'   \code{"Gerstein"} method is supported (default). For this method, a
-#'   tree is first created by k-mer counting (see \code{\link[kmer]{cluster}}),
-#'   and sequence weights are then derived from the tree using the 'bottom up'
-#'   algorithm of Gerstein et al (1994).
-#' @inheritParams learn
-#' @return an object of class \code{"insect"}.
-#' @details Note that seqweights argument should have the same length as x.
-#' @author Shaun Wilkinson
-#' @references
-#'   Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
-#'   for fast construction of guide trees for multiple sequence alignment.
-#'   \emph{Algorithms for Molecular Biology}, \strong{5}, 21.
-#' @seealso \code{\link{learn}} (parent function),
-#'   \code{\link{partition}} (child function).
-#' @examples
-#'   ## TBA
+#' @noRd
 ################################################################################
-fork <- function(node, x, lineages, refine = "Viterbi", nstart = 20,
+.fork <- function(node, x, lineages, refine = "Viterbi", nstart = 20,
                  iterations = 50, minK = 2, maxK = 2, minscore = 0.9,
                  probs = 0.5, retry = TRUE, resize = TRUE, maxsize = NULL,
                  kmers = NULL, seqweights = "Gerstein", cores = 1,
@@ -114,7 +80,7 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 20,
     nclades <- minK
     alternative <- FALSE
     repeat{
-      seqsplit <- partition(x[indices], model = mod, refine = refine, K = nclades,
+      seqsplit <- .partition(x[indices], model = mod, refine = refine, K = nclades,
                             allocation = "cluster", nstart = nstart,
                             iterations = iterations, kmers = kmers,
                             seqweights = seqweights, cores = cores, quiet = quiet,
@@ -159,7 +125,7 @@ fork <- function(node, x, lineages, refine = "Viterbi", nstart = 20,
           ## convert from logical to integer
           alloc2 <- unname(alloc2 == alloc2[1]) + 1
           if(!all(alloc2 == membership) & !all(alloc2 == seqsplit$init_membership)){
-            seqsplit2 <- partition(x[indices], model = mod, refine = refine, K = 2,
+            seqsplit2 <- .partition(x[indices], model = mod, refine = refine, K = 2,
                                    allocation = alloc2, nstart = nstart,
                                    iterations = iterations, kmers = kmers,
                                    seqweights = seqweights, cores = cores,

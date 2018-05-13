@@ -1,12 +1,15 @@
-#' Filter NGS sequences.
+#' Quality filtering for amplicon sequences.
 #'
-#' This function checks that the average Phred quality scores of sequences (imported
-#'   from a FASTQ file) are above a given threshold, and that the maximum number
-#'   of ambiguities is below another given threshold.
+#' This function performs several quality checks for FASTQ input files,
+#'   removing any sequences that do not conform to the specified
+#'   quality standards.
+#'   This includes an average quality score assessment, size selection,
+#'   singleton removal (or an alternative minimum count) and ambiguous
+#'   base-call filtering.
 #'
 #' @param x a vector of concatenated strings representing DNA sequences
 #'   (in upper case) or a DNAbin list object with quality attributes.
-#'   This argument will usually be the output from \code{readFASTQ}.
+#'   This argument will usually be produced by \code{readFASTQ}.
 #' @param minqual integer, the minimum average quality score for a
 #'   sequence to pass the filter. Defaults to 30.
 #' @param maxambigs integer, the maximum number of ambiguities for a sequence
@@ -17,14 +20,22 @@
 #'   Defaults to 50.
 #' @param maxlength integer, the maximum acceptable sequence length.
 #'   Defaults to 500.
-#' @return a possibly shortened object of the same type as the primary
-#'   input argument
-#'   (i.e. a "DNAbin" object if x is a "DNAbin" object and a vector
+#' @return an object of the same type as the primary input argument
+#'   (i.e. a "DNAbin" object if x is a "DNAbin" object, or a vector
 #'   of concatenated character strings otherwise).
-#' @details TBA
 #' @author Shaun Wilkinson
-#' @references TBA
-#' @examples ##TBA
+#' @examples
+#' \dontrun{
+#'   ## download example FASTQ file
+#'   URL <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
+#'   download.file(URL, destfile = "insect_tutorial1_files.zip", mode = "wb")
+#'   unzip("insect_tutorial1_files.zip")
+#'   file.remove("insect_tutorial1_files.zip")
+#'   x <- readFASTQ("COI_sample2.fastq", bin = FALSE)
+#'   x <- trim(x, up = "GGWACWGGWTGAACWGTWTAYCCYCC", down = "TAIACYTCIGGRTGICCRAARAAYCA")
+#'   x <- qfilter(x, minlength = 250, maxlength = 350)
+#'   ## see https://rpubs.com/shaunpwilkinson/insect for full tutorial
+#'  }
 ################################################################################
 qfilter <- function(x, minqual = 30, maxambigs = 0, mincount = 2,
                minlength = 50, maxlength = 500){
@@ -110,6 +121,3 @@ qfilter <- function(x, minqual = 30, maxambigs = 0, mincount = 2,
   return(x)
 }
 ################################################################################
-
-# a logical vector the same length as the input object, with TRUE for
-# sequences passing the filter and FALSE otherwise.

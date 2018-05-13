@@ -2,7 +2,7 @@
 % Please edit documentation in R/taxon.R
 \name{download_taxon}
 \alias{download_taxon}
-\title{Download taxon database.}
+\title{Download NCBI taxonomy database.}
 \usage{
 download_taxon(synonyms = FALSE, quiet = FALSE)
 }
@@ -17,7 +17,7 @@ a dataframe with the following elements:
   "tax_id", "parent_tax_id", "rank", "name".
 }
 \description{
-This function accesses the NCBI API and gets an up-to-date copy of the taxon
+This function accesses the NCBI API and gets an up-to-date copy of the taxonomy
   database.
 }
 \details{
@@ -28,13 +28,19 @@ This function downloads the NCBI taxon database as a data.frame
   40Mb in size, and the output dataframe object is around
   200Mb in memory. Once downloaded, the dataframe can be pruned
   for increased speed and memory efficiency using the function
-  prune_taxon.
+  \code{\link{prune_taxon}}.
 }
 \examples{
-  ##TBA
+\dontrun{
+taxonomy <- download_taxon()
+}
 }
 \references{
-TBA
+Federhen S (2012) The NCBI Taxonomy database.
+ \emph{Nucleic Acids Research}
+ \strong{40}, D136-D143. doi:10.1093/nar/gkr1178.
+
+ \url{https://www.ncbi.nlm.nih.gov/taxonomy/}
 }
 \author{
 Shaun Wilkinson

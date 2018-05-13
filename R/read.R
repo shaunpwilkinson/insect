@@ -12,7 +12,8 @@
 #'   be read are composed of nucleotides ("DNA"; default) or amino acids ("AA").
 #'   Only required for \code{readFASTA} and if \code{bin = TRUE}.
 #' @param alignment logical indicating whether the sequences represent
-#'   an alignment to be parsed as a matrix. Only applies to \code{readFASTA}.
+#'   an alignment to be parsed as a matrix.
+#'   Only applies to \code{readFASTA}.
 #' @return Either a vector of character strings (if bin = FALSE),
 #'   or a list of raw ("DNAbin" or "AAbin") vectors,
 #'   with each element having a "quality" attribute.
@@ -56,9 +57,14 @@
 #'   for writing sequences to text in the FASTA or FASTQ format.
 #'   See also \code{\link[ape]{read.dna}} in the \code{\link[ape]{ape}} package.
 #' @examples
-#'   \dontrun{
-#'     ##TBA
-#'   }
+#' \dontrun{
+#'   ## download example FASTQ file
+#'   URL <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
+#'   download.file(URL, destfile = "insect_tutorial1_files.zip", mode = "wb")
+#'   unzip("insect_tutorial1_files.zip")
+#'   file.remove("insect_tutorial1_files.zip")
+#'   x <- readFASTQ("COI_sample2.fastq", bin = FALSE)
+#'  }
 #' @name read
 ################################################################################
 readFASTQ <- function(file = file.choose(), bin = TRUE){

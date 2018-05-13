@@ -1,5 +1,5 @@
 # Internal 'insect' functions
-
+#' @noRd
 .qual2char <- function(x){
   if(is.null(x)) return(NULL) # needed for dna2char
   qbytes <- as.raw(0:93)
@@ -9,7 +9,7 @@
   return(paste0(qchars[match(x, qbytes)], collapse = ""))
 }
 
-
+#' @noRd
 .char2qual <- function(x){
   if(is.null(x)) return(NULL)# needed for chardna
   qbytes <- as.raw(0:93)
@@ -20,7 +20,7 @@
 }
 
 
-
+#' @noRd
 ## tree is a "dendrogram" object (can be a node)
 ## x is a DNAbin object - should not contain duplicates, must have lineage attrs
 .forkr <- function(tree, x, lineages, refine = "Viterbi", nstart = 10,
@@ -28,7 +28,7 @@
                    minscore = 0.9, probs = 0.05, retry = TRUE, resize = TRUE,
                    maxsize = NULL, kmers = NULL,
                    seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
-  tree <- fork(tree, x, lineages, refine = refine, nstart = nstart,
+  tree <- .fork(tree, x, lineages, refine = refine, nstart = nstart,
                iterations = iterations, minK = minK,
                maxK = maxK, minscore = minscore, probs = probs,
                retry = retry, resize = resize, maxsize = maxsize,
@@ -46,23 +46,8 @@
 
 
 
-.reindex <- function(tree){
-  #indices <- character(length(attr(tree, "sequences")))
-  fun <- function(node){
-    if(is.leaf(node)){
-      newnode <- attr(node, "sequences")
-      names(newnode) <- rep(attr(node, "clade"), length(newnode))
-      node <- newnode
-    }
-    return(node)
-  }
-  tmp <- dendrapply(tree, fun)
-  indices <- unlist(tmp, use.names = TRUE)
-  indices <- sort(indices)
-  return(names(indices))
-}
 
-
+#' @noRd
 .ancestor <- function(lineages){
   # input and output both semicolon-delimited character string(s)
   if(all(lineages == lineages[1])) return(lineages[1])
@@ -78,16 +63,6 @@
   return(lineage)
 }
 
-.ldistance <- function(x, y){
-  # x and y are lineage strings (semicolon delim)
-  # returns a rough distance measure based on relatedness
-  getlinlen <- function(l) sum(gregexpr(";", l, fixed = TRUE)[[1]] > 0) + 1
-  if(x == y) return(0)
-  minlinlen <- min(sapply(c(x, y), getlinlen))
-  anc <- .ancestor(c(x, y))
-  anlen <- getlinlen(anc)
-  return(1 - anlen/minlinlen)
-}
 
 
 ################################################################################
@@ -103,6 +78,7 @@
 # @author Shaun Wilkinson
 # @examples ##TBA
 ################################################################################
+#' @noRd
 .point <- function(h){
   uh <- unique(h)
   pointers <- seq_along(uh)
@@ -111,13 +87,7 @@
 }
 ################################################################################
 
-.trimprimer <- function(s, nbases){
-  qual <- attr(s, "quality")
-  s <- s[-(1:nbases)]
-  attr(s, "quality") <- qual[-(1:nbases)]
-  return(s)
-}
-
+#' @noRd
 .scanURL <- function(x, retmode = "xml", ...){
   scanURL <- function(z, retmode = "xml", ...){
     errfun <- function(er){
@@ -137,7 +107,7 @@
   return(res)
 }
 
-
+#' @noRd
 .extractXML <- function(x, species = FALSE, lineages = FALSE, taxIDs = FALSE){
   # x is an xml document
   res <- list()
@@ -154,6 +124,7 @@
   return(res)
 }
 
+#' @noRd
 # this function is much slower but can return NAs
 .extractXML2 <- function(x, species = FALSE, lineages = FALSE, taxIDs = FALSE){
   find_accession <- function(e){
@@ -206,7 +177,7 @@
   return(res)
 }
 
-
+#' @noRd
 # Check if object is DNA
 .isDNA <- function(x){
   if(inherits(x, "DNAbin")){
@@ -231,6 +202,7 @@
   }
 }
 
+#' @noRd
 # Check if object is amino acid sequence
 .isAA <- function(x){
   if(inherits(x, "AAbin")){

@@ -2,7 +2,7 @@
 % Please edit documentation in R/taxon.R
 \name{prune_taxon}
 \alias{prune_taxon}
-\title{Purge taxa from taxonomy database.}
+\title{Prune taxa from taxonomy database.}
 \usage{
 prune_taxon(db, taxIDs, keep = TRUE)
 }
@@ -14,10 +14,10 @@ prune_taxon(db, taxIDs, keep = TRUE)
 (or discarded if \code{keep = FALSE}).}
 
 \item{keep}{logical, indicates whether the specified taxa should be
-kept and the rest of the database purged or vice versa. Defaults to TRUE.}
+kept and the rest of the database removed or vice versa. Defaults to TRUE.}
 }
 \value{
-a smaller or equal sized dataframe with the same column names as
+a data.frame with the same column names as
   the input object
   ("tax_id", "parent_tax_id", "rank", "name").
 }
@@ -29,10 +29,16 @@ This function prunes the taxon database, removing specified taxa as
 TBA
 }
 \examples{
-  ##TBA
+## remove Odontoceti suborder from cetacean taxonomy database
+data(whale_taxa)
+prune_taxon(whale_taxa, taxIDs = 9722, keep = FALSE)
 }
 \references{
-TBA
+Federhen S (2012) The NCBI Taxonomy database.
+ \emph{Nucleic Acids Research}
+ \strong{40}, D136-D143. doi:10.1093/nar/gkr1178.
+
+ \url{https://www.ncbi.nlm.nih.gov/taxonomy/}
 }
 \author{
 Shaun Wilkinson

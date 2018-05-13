@@ -28,7 +28,7 @@
 #'   acceptable amplicon lengths. Sequences are discarded if the number
 #'   of base pairs between the primer-binding sites falls outside of these
 #'   limits.
-#' @param maxN numeric giving the maximum acceptable proportion
+#' @param maxNs numeric giving the maximum acceptable proportion
 #'   of the ambiguous residue "N" within the output sequences.
 #'   Defaults to 0.02.
 #' @param partialbind logical indicating whether partial primer matching is
@@ -47,16 +47,19 @@
 #'   the cluster.
 #' @param quiet logical indicating whether progress should be printed to
 #'   the console.
-#' @return a list of trimmed sequences, returned as an object of class
+#' @return a list of trimmed sequences, an object of class
 #'   \code{DNAbin}.
-#' @details TBA
 #' @author Shaun Wilkinson
 #' @examples
-#'   ## TBA
+#'   ## trim whale sequences using a new set of inner primers
+#'   inner_for <- "CGGTTGGGGTGACCTCGGAGTA"
+#'   inner_rev <- "GCTGTTATCCCTAGGGTAA"
+#'   whales_short <- virtualPCR(whales, up = inner_for, down = inner_rev,
+#'                              trimprimers = TRUE)
 ################################################################################
 virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
                        minfsc = 50, minrsc = 50, minamplen = 50,
-                       maxamplen = 2000, maxN = 0.02, partialbind = TRUE, cores = 1,
+                       maxamplen = 2000, maxNs = 0.02, partialbind = TRUE, cores = 1,
                        quiet = FALSE){
   if(mode(x) == "character") x <- char2dna(x)
   if(mode(up) == "character"){
@@ -183,7 +186,7 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   if(para & stopclustr) parallel::stopCluster(cores)
   if(is.null(x)) return(x)
   if(!quiet) cat("Filtering ambiguous sequences\n")
-  discards <- sapply(x, function(s) sum(s == 0xf0)/length(s)) > maxN
+  discards <- sapply(x, function(s) sum(s == 0xf0)/length(s)) > maxNs
   x <- subset.DNAbin(x, subset = !discards)
   if(!quiet) cat(length(x), "sequences retained after applying ambiguity filter\n")
   if(!quiet) cat("Done\n")

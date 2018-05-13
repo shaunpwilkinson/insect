@@ -28,7 +28,7 @@ whales
 }
 \description{
 A dataset containing 19 mitochondrial 16S rDNA sequences from 18 cetacean species,
-  downloaded from GenBank 27 March 2018.
+  downloaded from GenBank on 27 March 2018.
 }
 \references{
 Taylor PG (1996) Reproducibility of ancient DNA sequences from extinct

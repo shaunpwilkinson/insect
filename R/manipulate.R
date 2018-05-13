@@ -1,11 +1,12 @@
-#' Further bit-level manipulation of sequences.
+#' Further bit-level manipulation of DNA and amino acid sequences.
 #'
 #' These functions provide additional methods to manipulate objects of class
-#'   \code{"DNAbin"}.
+#'   \code{"DNAbin"} and \code{"AAbin"} to supplement those available in the
+#'   \code{\link[ape]{ape}} package.
 #'
-#' @param x a \code{DNAbin} or \code{AAbin} object.
+#' @param x a \code{"DNAbin"} or \code{"AAbin"} object.
 #' @param incomparables placeholder, not currently functional.
-#' @param pointers logical indicating whether the re-replication key
+#' @param pointers logical indicating whether the re-replication index key
 #'   should be returned as a \code{"pointers"} attribute of the output vector
 #'   (only applicable for \code{duplicated.DNAbin} and \code{duplicated.AAbin}).
 #'   Note that this can increase the computational
@@ -17,37 +18,33 @@
 #'   metadata that need to be retained following the duplicate analysis.
 #' @param drop logical; indicates whether the input matrix (assuming one is
 #'   passed) should be reduced to a vector if subset to a single sequence.
-#'   Defaults to FALSE in keeping with the style of the \code{\link{ape}} package.
+#'   Defaults to FALSE in keeping with the style of the \code{\link{ape}}
+#'   package functions.
 #' @param subset logical vector giving the elements or rows to be kept.
 #' @param ... further agruments to be passed between methods.
 #' @return \code{unique} and \code{subset} return a
 #'   \code{DNAbin} or \code{AAbin} object. \code{duplicated} returns a logical vector.
-#' @details
-#' \code{duplicated} returns a logical vector indicating the sequences
-#'   that are duplicated, and optionally provides a "pointers" attribute
-#'   indicating which of the unique sequences they are duplicates of.
-#' \code{unique} takes a list or matrix of DNA or amino acid sequences and returns
-#' the subset of sequences that are unique.
 #' @author Shaun Wilkinson
 #' @references
+#'   Paradis E, Claude J, Strimmer K, (2004) APE: analyses of phylogenetics
+#'   and evolution in R language. \emph{Bioinformatics} \strong{20}, 289-290.
+#'
 #'   Paradis E (2007) A bit-level coding scheme for nucleotides. \url{
 #'   http://ape-package.ird.fr/misc/BitLevelCodingScheme.html}.
+#'
+#'   Paradis E (2012) Analysis of Phylogenetics and Evolution with R
+#'   (Second Edition). Springer, New York.
 #' @seealso \code{\link[ape]{DNAbin}}
 #' @examples
-#'   ## find duplicates in a small subsection of the woodmouse alignment
-#'   library(ape)
-#'   data(woodmouse)
-#'   x <- woodmouse[, 100:150]
-#'   duplicates <- duplicated.DNAbin(x, point = TRUE)
-#'   duplicates
-#'   ## shows that there are 3 unique sequences, No305, No304, and No0910S
-#'   ## pointers attribute shows that most are identical to the second one (No304)
-#'   ##
-#'   ## reduce the alignment to only include the unique sequences
-#'   x <- unique.DNAbin(x)
-#'   x
-#'   ## further subset the alignment to only include the first 2 sequences
-#'   x <- subset.DNAbin(x, subset = c(TRUE, TRUE, FALSE))
+#'   data(whales)
+#'   duplicates <- duplicated.DNAbin(whales, point = TRUE)
+#'   attr(duplicates, "pointers")
+#'   ## returned indices show that the last sequence is
+#'   ## identical to the second one.
+#'   ## subset the reference sequence database to only include unques
+#'   whales <- subset.DNAbin(whales, subset = !duplicates)
+#'   ## this gives the same result as
+#'   unique.DNAbin(whales)
 #' @name manipulate
 ################################################################################
 duplicated.DNAbin <- function(x, incomparables = FALSE, pointers = TRUE, ...){

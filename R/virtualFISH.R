@@ -27,7 +27,7 @@
 #' @param minrsc numeric, the minimum specificity (log-odds score for
 #'   the optimal alignment) between the reverse primer (if provided) and
 #'   a sequence for that sequence to be retained.
-#' @param maxN numeric giving the maximum acceptable proportion
+#' @param maxNs numeric giving the maximum acceptable proportion
 #'   of the ambiguous residue "N" within the output sequences.
 #'   Defaults to 0.02.
 #' @param cores integer giving the number of CPUs to parallelize the operation
@@ -59,11 +59,14 @@
 #' @author Shaun Wilkinson
 #' @seealso \code{\link{virtualPCR}}
 #' @examples
-#'   ## TBA
+#'   ## ensure whale sequences are globally alignable
+#'   data(whales)
+#'   model <- aphid::derivePHMM(whales)
+#'   z <- virtualFISH(whales, probe = model)
 ################################################################################
 virtualFISH <- function(x, probe, minscore = 100, minamplen = 50,
                         maxamplen = 500, up = NULL, down = NULL, rcdown = TRUE,
-                        minfsc = 60, minrsc = 60, maxN = 0.02, cores = 1,
+                        minfsc = 60, minrsc = 60, maxNs = 0.02, cores = 1,
                         quiet = FALSE){
   if(!is.null(up)){
     if(!inherits(up, "DNAbin")){
@@ -171,7 +174,7 @@ virtualFISH <- function(x, probe, minscore = 100, minamplen = 50,
     x <- NULL
   }
   if(!quiet) cat("Filtering ambiguous sequences\n")
-  discards <- sapply(x, function(s) sum(s == 0xf0)/length(s)) > maxN
+  discards <- sapply(x, function(s) sum(s == 0xf0)/length(s)) > maxNs
   x <- subset.DNAbin(x, subset = !discards)
   if(!quiet) cat(length(x), "sequences retained after applying ambiguity filter\n")
   if(!quiet) cat("Done\n")

@@ -1,18 +1,19 @@
 #' Informatic sequence classification tree learning.
 #'
-#' This function creates classification trees using recursive
-#'   partitioning and nested profile hidden Markov models.
+#' This function learns a classification tree from a reference sequence database
+#'   using a recursive partitioning procedure.
 #'
 #' @param x an object of class\code{"DNAbin"} representing a list of
 #'   DNA sequences to be used as the traning data for the tree-learning process.
 #'   All sequences should be from the same genetic region of interest
 #'   and be globally alignable (i.e. without unjustified end-gaps).
 #'   This object must have a "lineage" attribute, a vector the same length as the
-#'   sequence list, composed of semicolon-delimited lineage strings.
+#'   sequence list that is composed of semicolon-delimited lineage strings.
+#'   See \code{\link{searchGB}} for details on creating a reference sequence database.
 #' @param model an optional object of class \code{"PHMM"} to form the model
 #'   at the root node of the classification tree. Used to train (optimize
 #'   parameters for) subsequent nested models to be positioned at successive
-#'   sub-nodes. If NULL, the root model is derived \emph{de-novo} from the
+#'   sub-nodes. If NULL, the root model is derived from the
 #'   sequence list prior to the recursive partitioning process.
 #' @param refine character string giving the iterative model refinement
 #'   method to be used in the partitioning process. Valid options are
@@ -20,7 +21,7 @@
 #'   \code{"BaumWelch"} (a modified version of the Expectation-Maximization
 #'   algorithm).
 #' @param iterations integer giving the maximum number of training-classification
-#'   iterations to be used in the splitting process (see details section).
+#'   iterations to be used in the splitting process.
 #'   Note that this is not necessarily the same as the number of Viterbi training
 #'   or Baum Welch iterations to be used in model training, which can be set
 #'   using the argument \code{"maxiter"} (eventually passed to
@@ -71,27 +72,32 @@
 #'   number of cores to use is one less than the total number of cores
 #'   available.
 #' @param quiet logical indicating whether feedback should be printed
-#'   to the console. Note that the output can be rather verbose for
-#'   larger trees.
-#' @param ... further arguments to be passed to \code{\link{partition}}
-#'   (which may then be passed on to \code{\link[aphid]{train}}).
-#' @return an object of class \code{"insect"}. This object is a
-#'   \code{"dendrogram"} with several additional attributes including:
-#'   "sequences" the sequences attribute of the root node is the
-#'   original object \code{x}, while the sequences attributes of all
-#'   subnodes are indices pointing to which sequences in \code{x}
-#'   belong to the node (this saves on memory).
-#'   "weights" (root node only) a numeric vector giving the weights of the
-#'   \emph{unique} sequences in \code{x} (as indicated by
-#'   \code{duplicates}).
-#'   "duplicates" (root node only) a logical vector the same length as
-#'   \code{x} indicating which sequences are duplicated.
-#'   "pointers" (root node only) integer vector the same length as
-#'   \code{x} indicating which sequence in \code{x} each sequence
-#'   is a duplicate of. If there are no duplicates this is simply
-#'   \code{1:length(x)}.
+#'   to the console. Note that the output can be verbose.
+#' @param ... further arguments to be passed on to \code{\link[aphid]{train}}).
+#' @return an object of class \code{"insect"}.
+#' @details The "insect" object type is a dendrogram
+#'   with several additional attributes stored at each node.
+#'   These include:
+#'   "clade" the index of the node (see further details below);
+#'   "sequences" the indices of the sequences in the reference
+#'   database used to create the object;
+#'   "lineage" the lowest common taxon of the sequences belonging to the node;
+#'   "minscore" the lowest likelihood among the training sequences given
+#'   the profile HMM stored at the node;
+#'   "minlength" the minimum length of the sequences belonging to the node;
+#'   "maxlength" the maximum length of the sequences belonging to the node;
+#'   "key" the hash key used for exact sequence matching
+#'   (bypasses the classification procedure);
+#'   "model" the profile HMM derived from the sequence subset belonging to the node;
+#'   "nunique" the number of unique sequences belonging to the node;
+#'   "ntotal" the total number of sequences belonging to the node (including duplicates).
 #'
-#' @details Leaf node labels are not included in order to save on memory.
+#'   The clade indexing system used here is based on character strings,
+#'   where "0" refers to the root node,
+#'   "01" is the first child node, "02" is the second child node,
+#'   "011" is the first child node of the first child node, etc.
+#'   The leading zero may be omitted for brevity.
+#'   Note that each node cannot have more than 9 child nodes.
 #' @author Shaun Wilkinson
 #' @references
 #'   Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
@@ -110,7 +116,6 @@
 #'   \emph{IEEE Transactions on Acoustics, Speech, and Signal Processing},
 #'   \strong{38}, 1639-1641.
 #'
-#' @seealso \code{\link{partition}}
 #' @examples
 #' \dontrun{
 #'   data(whales)
@@ -119,7 +124,7 @@
 #'   training_data <- subset.DNAbin(whales, subset = seq_along(whales) > 1)
 #'   ## learn the tree
 #'   set.seed(999)
-#'   tree <- learn(training_data, cores = 2, quiet = FALSE, maxiter = 5)
+#'   tree <- learn(training_data, quiet = FALSE, maxiter = 5)
 #'   ## find predicted lineage for sequence #1
 #'   classify(whales[[1]], tree)
 #'   ## compare with actual lineage

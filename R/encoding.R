@@ -1,15 +1,39 @@
-#' Encode and decode profile HMMs in raw bytes
+#' Encode and decode profile HMMs in raw byte format.
 #'
 #' These functions are used to compress and decompress profile
 #'   hidden Markov models for DNA to improve memory efficiency.
 #'
 #' @param x an object of class "PHMM"
-#' @param z a raw vector in the encodePHMM schema
+#' @param z a raw vector in the encodePHMM schema.
 #' @return encodePHMM returns a raw vector. \code{decodePHMM} returns
-#'   an object of class "PHMM".
-#' @details TBA
+#'   an object of class "PHMM" (see Durbin et al (1998) and
+#'   the \code{\link[aphid]{aphid}}
+#'   package for more details
+#'   on profile hidden Markov models).
+#' @details Profile HMMs used in tree-based classification
+#'   usually include many parameters, and hence large trees with
+#'   many PHMMs can occupy a lot of memory. Hence a basic encoding
+#'   system was devised to store the emission and transition probabilities
+#'   in raw-byte format to three (nearly four) decimal places.
+#'   This does not seem to significantly affect the accuracy of likelihood scoring,
+#'   and has a moderate impact on classification speed, but can
+#'   reduce the memory allocation requirements for large trees by up to
+#'   95 percent.
 #' @author Shaun Wilkinson
-#' @examples #TBA
+#' @references
+#'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
+#'   sequence analysis: probabilistic models of proteins and nucleic acids.
+#'   Cambridge University Press, Cambridge, United Kingdom.
+#' @examples
+#' \dontrun{
+#'   ## generate a simple classification tree with two child nodes
+#'   data(whales)
+#'   tree <- learn(whales, recursive = FALSE, quiet = FALSE)
+#'   ## extract the omnibus profile HMM from the root node
+#'   PHMM0 <- decodePHMM(attr(tree, "model"))
+#'   ## extract the profile HMM from the first child node
+#'   PHMM1 <- decodePHMM(attr(tree[[1]], "model"))
+#'  }
 #' @name encoding
 ################################################################################
 encodePHMM <- function(x){

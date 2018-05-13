@@ -12,8 +12,3 @@ R package 'insect' contains functions to create and use
   large numbers of DNA barcodes or other informative sequences
   generated on one of the standard high-throughput sequencing platforms.
 }
-\section{insect functions}{
-
-  TBA
-}
-

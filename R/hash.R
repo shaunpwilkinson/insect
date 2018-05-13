@@ -1,7 +1,7 @@
 #' Convert sequences to MD5 hashes.
 #'
 #'  This function converts DNA or amino acid sequences to 128-bit
-#'    MD5 hash balues for efficient identification of duplicates.
+#'    MD5 hash values for efficient duplicate identification and dereplication.
 #'
 #' @param x a sequence or list of sequences, either in character string,
 #'   character vector, or raw byte format (eg DNAbin or AAbin objects).
@@ -18,7 +18,7 @@
 #'   of sequences to be processed, due to the extra time required to initialize
 #'   the cluster.
 #' @return a character vector.
-#' @details This function uses the \code{md5} function from the OpenSSL library
+#' @details This function uses the \code{md5} function from the openSSL library
 #'   (\url{https://www.openssl.org/})
 #'   to digest sequences to 128-bit hashes.
 #'   These can be compared using base functions such
@@ -29,8 +29,10 @@
 #'   Ooms J (2017) openssl: toolkit for encryption, signatures and
 #'     certificates based on OpenSSL. R package version 0.9.7.
 #'     \url{https://CRAN.R-project.org/package=openssl}
-#' @examples ## TBA
-#'
+#' @examples
+#'  data(whales)
+#'  hashes <- hash(whales)
+#'  sum(duplicated(hashes))
 ################################################################################
 hash <- function(x, cores = 1){
   if(mode(x) == "raw") x <- list(x)

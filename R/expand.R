@@ -1,34 +1,49 @@
-################################################################################
-################################################################################
 #' Expand an existing classification tree.
 #'
 #' This function is used to grow an existing classification tree, typically
-#'   using more relaxed settings to those used when the tree was created.
+#'   using more relaxed parameter settings than those used when the tree was
+#'   created, or if fine-scale control over the tree-learning operation
+#'   is required.
+#'   Note that the same reference sequence database used to
+#'   build the original tree is required for the second argument.
 #'
 #' @param tree an object of class \code{"insect"}.
 #' @param clades a vector of character strings giving the binary indices
-#'   matching the labels of the nodes that are to be collapsed.
+#'   matching the labels of the nodes that are to be expanded.
+#'   Defaults to "0", meaning all subclades are expanded.
+#'   See below for further details on clade indexing.
 #' @param recursive logical indicating whether the splitting process
 #'   should continue recursively until the discrimination criteria
 #'   are not met (TRUE; default), or whether a single split should
 #'   take place at each of the nodes specified in \code{clades}.
-#' @param ... further arguments to be passed to \code{\link{fork}}.
+#' @param ... further arguments to be passed on to \code{\link[aphid]{train}}).
 #' @inheritParams learn
 #' @return an object of class \code{"insect"}.
-#' @details Leaf node labels are not included in order to save on memory.
+#' @details
+#'   The clade indexing system used here is based on character strings,
+#'   where "0" refers to the root node,
+#'   "01" is the first child node, "02" is the second child node,
+#'   "011" is the first child node of the first child node, etc.
+#'   Note that this means each node cannot have more than 9 child nodes.
 #' @author Shaun Wilkinson
-#' @references TBA
-#' @seealso \code{\link{contract}}, \code{\link{learn}}
+#' @seealso \code{\link{learn}}.
 #' @examples
-#'   ## TBA
+#' \dontrun{
+#'   data(whales)
+#'   ## split the first node
+#'   tree <- learn(whales, recursive = FALSE, quiet = FALSE)
+#'   ## expand only the first clade
+#'   tree <- expand(tree, whales, clades = "1", quiet = TRUE)
+#'  }
 ################################################################################
-expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
+expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
                    nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
                    retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
                    recursive = TRUE, cores = 1, quiet = TRUE, ...){
   ## Establish which parts fof the tree to expand
+  clades <- gsub("0", "", clades)
   if(!(identical(attr(tree, "sequences"), seq_along(x)))){
-    stop("tree is incompatible with sequences")
+    stop("tree is incompatible with sequences\n")
   }
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
   findnestedleaves <- function(node){
@@ -169,7 +184,7 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
       if(!any(eligible) | all(nmembers < 50)) break
       whichclade <- names(nmembers)[which.max(nmembers)]
       index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
-      toeval <- paste0("tree", index, "<- fork(tree",
+      toeval <- paste0("tree", index, "<- .fork(tree",
                        index, ", x, lineages, refine = refine, ",
                        "nstart = nstart, iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, retry = retry, resize = resize, ",
@@ -211,7 +226,7 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
     indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
     for(i in seq_along(indices)){
       toeval <- paste0("tree", indices[i],
-                       if(recursive) "<-.forkr(tree" else "<-fork(tree",
+                       if(recursive) "<-.forkr(tree" else "<-.fork(tree",
                        indices[i], ", x, lineages, refine = refine, nstart = nstart, ",
                        "iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, retry = retry, resize = resize, ",
@@ -265,62 +280,4 @@ expand <- function(tree, x, clades = "", refine = "Viterbi", iterations = 50,
   return(tree)
 }
 ################################################################################
-#' Contract a classification tree based on pattern matching.
-#'
-#' This function is used to collapse over-extended nodes.
-#'
-#' @param tree an object of class \code{"insect"}.
-#' @param clades a vector of character strings giving the binary indices
-#'   matching the labels of the nodes that are to be collapsed.
-#' @param quiet logical indicating whether feedback should be printed
-#'   to the console.
-#' @return an object of class \code{"insect"}.
-#' @details TBA
-#' @author Shaun Wilkinson
-#' @references TBA
-#' @seealso \code{\link{expand}}
-#' @examples
-#'   ## TBA
-################################################################################
-contract <- function(tree, clades = "", quiet = FALSE){
-  # clades is a character vector eg c("22111", "22112")
-  if(identical(clades, "")){
-    if(!is.leaf(tree)){
-      tmpattr <- attributes(tree)
-      tree <- 1
-      attributes(tree) <- tmpattr
-      attr(tree, "height") <- 0
-      attr(tree, "members") <- 1L
-      attr(tree, "midpoint") <- 0
-      attr(tree, "leaf") <- TRUE
-    }
-  }else{
-    for(i in seq_along(clades)){
-      clade_i <- as.numeric(strsplit(clades[i], split = "")[[1]])
-      subtree <- tree
-      for(j in clade_i) subtree <- subtree[[j]]
-      if(is.list(subtree)){
-        tmpattr <- attributes(subtree)
-        subtree <- 1
-        attributes(subtree) <- tmpattr
-        attr(subtree, "height") <- 0
-        attr(subtree, "members") <- 1L
-        attr(subtree, "midpoint") <- NULL
-        attr(subtree, "leaf") <- TRUE
-        toeval <- paste0(paste0("tree[[",
-                                paste0(clade_i, collapse = "]][["),
-                                "]]"), " <- subtree")
-        eval(parse(text = toeval))
-      }else stop("Clade", i, "is a leaf or non-existent index\n")
-    }
-    if(!quiet) cat("Setting midpoints and members attributes\n")
-    tree <- phylogram::remidpoint(tree)
-    class(tree) <- "dendrogram"
-    if(!quiet) cat("Resetting node heights\n")
-    tree <- phylogram::reposition(tree)
-    if(!quiet) cat("Making tree ultrametric\n")
-    tree <- phylogram::ultrametricize(tree)
-  }
-  return(tree)
-}
-################################################################################
+

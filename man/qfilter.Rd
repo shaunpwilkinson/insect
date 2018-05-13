@@ -2,7 +2,7 @@
 % Please edit documentation in R/filter.R
 \name{qfilter}
 \alias{qfilter}
-\title{Filter NGS sequences.}
+\title{Quality filtering for amplicon sequences.}
 \usage{
 qfilter(x, minqual = 30, maxambigs = 0, mincount = 2, minlength = 50,
   maxlength = 500)
@@ -10,7 +10,7 @@ qfilter(x, minqual = 30, maxambigs = 0, mincount = 2, minlength = 50,
 \arguments{
 \item{x}{a vector of concatenated strings representing DNA sequences
 (in upper case) or a DNAbin list object with quality attributes.
-This argument will usually be the output from \code{readFASTQ}.}
+This argument will usually be produced by \code{readFASTQ}.}
 
 \item{minqual}{integer, the minimum average quality score for a
 sequence to pass the filter. Defaults to 30.}
@@ -28,24 +28,30 @@ Defaults to 50.}
 Defaults to 500.}
 }
 \value{
-a possibly shortened object of the same type as the primary
-  input argument
-  (i.e. a "DNAbin" object if x is a "DNAbin" object and a vector
+an object of the same type as the primary input argument
+  (i.e. a "DNAbin" object if x is a "DNAbin" object, or a vector
   of concatenated character strings otherwise).
 }
 \description{
-This function checks that the average Phred quality scores of sequences (imported
-  from a FASTQ file) are above a given threshold, and that the maximum number
-  of ambiguities is below another given threshold.
-}
-\details{
-TBA
+This function performs several quality checks for FASTQ input files,
+  removing any sequences that do not conform to the specified
+  quality standards.
+  This includes an average quality score assessment, size selection,
+  singleton removal (or an alternative minimum count) and ambiguous
+  base-call filtering.
 }
 \examples{
-##TBA
-}
-\references{
-TBA
+\dontrun{
+  ## download example FASTQ file
+  URL <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
+  download.file(URL, destfile = "insect_tutorial1_files.zip", mode = "wb")
+  unzip("insect_tutorial1_files.zip")
+  file.remove("insect_tutorial1_files.zip")
+  x <- readFASTQ("COI_sample2.fastq", bin = FALSE)
+  x <- trim(x, up = "GGWACWGGWTGAACWGTWTAYCCYCC", down = "TAIACYTCIGGRTGICCRAARAAYCA")
+  x <- qfilter(x, minlength = 250, maxlength = 350)
+  ## see https://rpubs.com/shaunpwilkinson/insect for full tutorial
+ }
 }
 \author{
 Shaun Wilkinson

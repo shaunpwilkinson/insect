@@ -6,13 +6,21 @@
 #'
 #' @param x a list of sequences in \code{DNAbin} or \code{AAbin} format, or a
 #'   vector of sequences as concatenated upper-case character strings.
-#' @param cores integer, the number of processors to use (advanced).
+#' @param cores integer giving the number of CPUs to use (defaults to 1).
+#'   This argument may alternatively be a 'cluster' object,
+#'   in which case it is the user's responsibility to close the socket
+#'   connection at the conclusion of the operation,
+#'   e.g. by running \code{parallel::stopCluster(cores)}.
+#'   The string 'autodetect' is also accepted, in which case the maximum
+#'   number of cores to use is one less than the total number of cores
+#'   available.
 #' @return either a DNAbin/AAbin object, or a vector of concatenated
-#'   upper-case character strings, depending on the original input object.
-#' @details TBA
+#'   upper-case character strings, depending on the input object.
 #' @author Shaun Wilkinson
-#' @references TBA
-#' @examples ##TBA
+#' @examples
+#'   data(whales)
+#'   tmp <- dereplicate(whales)
+#'   whales <- rereplicate(tmp)
 #' @name replicate
 ################################################################################
 dereplicate <- function(x, cores = 1){

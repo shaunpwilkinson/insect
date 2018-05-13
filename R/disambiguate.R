@@ -1,15 +1,14 @@
-#' Convert oligonucleotide sequences to regular expressions.
+#' Convert oligonucleotide sequences into regular expressions.
 #'
-#' This function is used to convert an oligonucleotide sequence to a regular
-#'   expression that can be used to query a sequence dataset and possibly
-#'   remove primer sequences.
+#' This function is used to convert an oligonucleotide sequence into a regular
+#'   expression that can be used to query a sequence dataset.
+#'   This is generally used for finding and removing primer,
+#'   adapter and/or index sequences.
 #'
 #' @param z a concatenated string representing a DNA oligonucleotide sequence,
 #'   possibly with IUPAC ambiguity codes (all in upper case).
 #' @return a regular expression.
-#' @details TBA
 #' @author Shaun Wilkinson
-#' @references TBA
 #' @examples disambiguate("GGWACWGGWTGAACWGTWTAYCCYCC")
 ################################################################################
 disambiguate <- function(z){

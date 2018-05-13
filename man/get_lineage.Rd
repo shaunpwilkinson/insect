@@ -2,18 +2,18 @@
 % Please edit documentation in R/taxon.R
 \name{get_lineage}
 \alias{get_lineage}
-\title{Convert taxonomy ID number to lineage.}
+\title{Derive full lineage details from taxonomy ID number.}
 \usage{
 get_lineage(taxIDs, db, simplify = TRUE, cores = 1)
 }
 \arguments{
 \item{taxIDs}{integer or vector of integers giving the taxon ID number(s).}
 
-\item{db}{a copy of the NCBI taxonomy database (data.frame object).
-See download_taxon for details.}
+\item{db}{a copy of the NCBI taxonomy database (a data.frame object).
+See \code{\link{download_taxon}} for details.}
 
 \item{simplify}{logical indicating whether a single lineage
-(derived from a length-one input)
+derived from a length-one input
 should be simplified from a list to a named character vector.
 Defaults to TRUE.}
 
@@ -36,16 +36,19 @@ the full lineage as a named character vector, or list of named character
 }
 \description{
 This function returns the full lineage of a taxon ID number
-  using the NCBI Taxonomy database.
-}
-\details{
-TBA
+  using the NCBI taxonomy database.
 }
 \examples{
-  ##TBA
+data(whales)
+data(whale_taxa)
+get_lineage(attr(whales, "taxID")[1], db = whale_taxa)
 }
 \references{
-TBA
+Federhen S (2012) The NCBI Taxonomy database.
+ \emph{Nucleic Acids Research}
+ \strong{40}, D136-D143. doi:10.1093/nar/gkr1178.
+
+ \url{https://www.ncbi.nlm.nih.gov/taxonomy/}
 }
 \author{
 Shaun Wilkinson

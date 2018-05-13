@@ -1,7 +1,7 @@
 #' Cetacean 16S rDNA sequences.
 #'
 #' A dataset containing 19 mitochondrial 16S rDNA sequences from 18 cetacean species,
-#'   downloaded from GenBank 27 March 2018.
+#'   downloaded from GenBank on 27 March 2018.
 #'
 #' @format A "DNAbin" list object containing 19 sequences in raw-byte format,
 #' averaging 130 nucleotides in length. The object also contains the following attributes,
@@ -27,7 +27,7 @@
 #'
 "whales"
 ################################################################################
-#' NCBI taxonomy reference database.
+#' Cetacean section of NCBI taxonomy database.
 #'
 #' A copy of the NCBI taxonomy reference database, subsetted to include only the
 #'   cetacean taxa in the \code{\link{whales}} dataset.

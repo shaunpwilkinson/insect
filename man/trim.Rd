@@ -2,15 +2,15 @@
 % Please edit documentation in R/trim.R
 \name{trim}
 \alias{trim}
-\title{Trim primers.}
+\title{Trim primer and/or index sequences.}
 \usage{
 trim(x, up, down = NULL)
 }
 \arguments{
 \item{x}{a "DNAbin" object or a vector of concatenated upper-case character strings,
-representing the sequences to be trimmed.}
+containing the sequences to be trimmed.}
 
-\item{up, down}{"DNAbin" objects or  vectors of concatenated upper-case character strings,
+\item{up, down}{"DNAbin" objects or vectors of concatenated upper-case character strings,
 representing the primer sequences.}
 }
 \value{
@@ -18,7 +18,7 @@ a "DNAbin" object or a vector of concatenated character strings,
   depending on the input.
 }
 \description{
-This function trims the primer sequence(s) from a set of DNA sequences.
+This function trims the primer and/or index sequence(s) from a set of DNA sequences.
 }
 \details{
 Any sequences not containing the primer(s) in either direction are discarded.
@@ -27,10 +27,21 @@ Any sequences not containing the primer(s) in either direction are discarded.
   exporting the FASTQ files.
 }
 \examples{
-##TBA
+\dontrun{
+## download and read in fastq file from working directory
+URL1 <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
+download.file(URL1, destfile = "insect_tutorial1_files.zip", mode = "wb")
+unzip("insect_tutorial1_files.zip")
+file.remove("insect_tutorial1_files.zip")
+x <- readFASTQ("COI_sample2.fastq", bin = FALSE)
+## download pre-computed classification tree
+URL2 <- "https://www.dropbox.com/s/m0on8ykooa9buoz/mlCOIintF_jgHCO2198_marine.RData?dl=1"
+download.file(URL2, destfile = "mlCOIintF_jgHCO2198_marine.RData", mode = "wb")
+load("mlCOIintF_jgHCO2198_marine.RData")
+## bundle includes tree ("tree"), reference db ("z"), NCBI taxon db ("taxonomy") and primers
+## trim primers from sequences
+x <- trim(x, up = primers[1], down = primers[2])
 }
-\references{
-TBA
 }
 \author{
 Shaun Wilkinson

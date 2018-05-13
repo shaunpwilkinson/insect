@@ -4,10 +4,10 @@
 \alias{stitch}
 \title{Paired-end read stitching.}
 \usage{
-stitch(R1, R2, up = NULL, down = NULL, mindiff = 6, minoverlap = 16)
+stitch(x, y, up = NULL, down = NULL, mindiff = 6, minoverlap = 16)
 }
 \arguments{
-\item{R1, R2}{DNAbin objects with quality attributes (see \code{\link{readFASTQ}} to
+\item{x, y}{DNAbin objects with quality attributes (see \code{\link{readFASTQ}} to
 generate these objects from fastq text files), representing the forward and
 reverse reads to be stitched. These objects can be either vectors or lists.
 In the latter case, the two objects must be equal length.}
@@ -30,23 +30,26 @@ a "DNAbin" object or a vector of concatenated character strings,
   depending on the input.
 }
 \description{
-This function aligns forward and reverse reads generated from the Illumina
-  2x amplicon sequencing platforms, and produces a consensus sequence with
-  maximum Phred scores attached as "quality" attributes.
-}
-\details{
-TBA
+This function aligns forward and reverse reads generated from a
+  2x amplicon sequencing platform, and produces a consensus sequence with
+  maximum base-call quality scores attached as "quality" attributes.
 }
 \examples{
   \dontrun{
-    ##TBA
+  ## download example FASTQ files
+  URL <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
+  download.file(URL, destfile = "insect_tutorial1_files.zip", mode = "wb")
+  unzip("insect_tutorial1_files.zip")
+  file.remove("insect_tutorial1_files.zip")
+  x <- readFASTQ("COI_sample1_read1.fastq", bin = FALSE)
+  y <- readFASTQ("COI_sample1_read2.fastq", bin = FALSE)
+  z <- stitch(x, y)
+  z[1]
+  attr(z, "quality")[1]
   }
 }
-\references{
-TBA
-}
 \seealso{
-\code{\link{readFASTQ}} for reading FASTQ text files into R.
+\code{\link{readFASTQ}}.
 }
 \author{
 Shaun Wilkinson

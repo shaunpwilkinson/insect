@@ -1,15 +1,16 @@
 #' Reverse complement DNA in character string format.
 #'
-#' This function reverse complements a DNA sequence or set of DNA
-#'   sequences that are in concatenated character string format.
+#' This function reverse complements a DNA sequence or vector of DNA
+#'   sequences that are stored as character strings.
 #'
-#' @param z a vector of concatenated strings representing DNA sequences
-#'   (in upper case).
-#' @return a vector of concatenated strings representing DNA sequences
-#'   (in upper case).
-#' @details TBA
+#' @param z a vector of DNA sequences in upper case character string format.
+#' @return a vector of DNA sequences as upper case character strings.
+#' @details This function accepts only DNA sequences in concatenated character
+#'   string format, see \code{\link[ape]{complement}} in the \code{\link[ape]{ape}}
+#'   package for "DNAbin" input objects, and \code{\link[seqinr]{comp}} in the
+#'   \code{\link[seqinr]{seqinr}} package for when the input object is a character
+#'   vector.
 #' @author Shaun Wilkinson
-#' @references TBA
 #' @examples rc("TATTG")
 ################################################################################
 rc <- function(z){

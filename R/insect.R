@@ -6,9 +6,6 @@
 #'   large numbers of DNA barcodes or other informative sequences
 #'   generated on one of the standard high-throughput sequencing platforms.
 #'
-#' @section insect functions:
-#'   TBA
-#'
 #' @docType package
 #' @name insect
 ################################################################################

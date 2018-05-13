@@ -1,13 +1,13 @@
-#' Convert taxonomy ID number to lineage.
+#' Derive full lineage details from taxonomy ID number.
 #'
 #' This function returns the full lineage of a taxon ID number
-#'   using the NCBI Taxonomy database.
+#'   using the NCBI taxonomy database.
 #'
 #' @param taxIDs integer or vector of integers giving the taxon ID number(s).
-#' @param db a copy of the NCBI taxonomy database (data.frame object).
-#'   See download_taxon for details.
+#' @param db a copy of the NCBI taxonomy database (a data.frame object).
+#'   See \code{\link{download_taxon}} for details.
 #' @param simplify logical indicating whether a single lineage
-#'   (derived from a length-one input)
+#'   derived from a length-one input
 #'   should be simplified from a list to a named character vector.
 #'   Defaults to TRUE.
 #' @param cores integer giving the number of CPUs to parallelize the operation
@@ -24,11 +24,17 @@
 #' @return the full lineage as a named character vector, or list of named character
 #'   vectors if the length of the input object is > 1 or simplify = FALSE.
 #'   "names" attributes are taxonomic ranks.
-#' @details TBA
 #' @author Shaun Wilkinson
-#' @references TBA
+#' @references
+#'  Federhen S (2012) The NCBI Taxonomy database.
+#'  \emph{Nucleic Acids Research}
+#'  \strong{40}, D136-D143. doi:10.1093/nar/gkr1178.
+#'
+#'  \url{https://www.ncbi.nlm.nih.gov/taxonomy/}
 #' @examples
-#'   ##TBA
+#' data(whales)
+#' data(whale_taxa)
+#' get_lineage(attr(whales, "taxID")[1], db = whale_taxa)
 ################################################################################
 get_lineage <- function(taxIDs, db, simplify = TRUE, cores = 1){
   gl1 <- function(taxID, db){
@@ -74,11 +80,11 @@ get_lineage <- function(taxIDs, db, simplify = TRUE, cores = 1){
   return(res)
 }
 ################################################################################
-#' Derive taxon ID from a given lineage.
+#' Derive taxon ID from a lineage string or species name.
 #'
 #' This function returns the unique taxon ID associated with a given
-#'   semicolon-delimited lineage string or lineage name,
-#'   using the NCBI taxon database.
+#'   semicolon-delimited lineage string or taxon,
+#'   by looking up the NCBI taxon database.
 #'
 #' @param lineage A semicolon-delimited lineage string or lineage name.
 #' @param db the NCBI taxon database (as a data.frame object).
@@ -90,9 +96,16 @@ get_lineage <- function(taxIDs, db, simplify = TRUE, cores = 1){
 #' @details This function will return NA if the lineage is not found in the
 #'   database or it matches multiple entries.
 #' @author Shaun Wilkinson
-#' @references TBA
+#' @references
+#'  Federhen S (2012) The NCBI Taxonomy database.
+#'  \emph{Nucleic Acids Research}
+#'  \strong{40}, D136-D143. doi:10.1093/nar/gkr1178.
+#'
+#'  \url{https://www.ncbi.nlm.nih.gov/taxonomy/}
 #' @examples
-#'   ##TBA
+#' data(whales)
+#' data(whale_taxa)
+#' get_taxID(attr(whales, "lineage")[1], db = whale_taxa)
 ################################################################################
 get_taxID <- function(lineage, db, multimatch = "NA"){
   if(identical(lineage, "")) lineage <- "root"
@@ -122,9 +135,9 @@ get_taxID <- function(lineage, db, multimatch = "NA"){
   }
 }
 ################################################################################
-#' Download taxon database.
+#' Download NCBI taxonomy database.
 #'
-#' This function accesses the NCBI API and gets an up-to-date copy of the taxon
+#' This function accesses the NCBI API and gets an up-to-date copy of the taxonomy
 #'   database.
 #'
 #' @param synonyms logical indicating whether synonyms should be included.
@@ -140,11 +153,18 @@ get_taxID <- function(lineage, db, multimatch = "NA"){
 #'   40Mb in size, and the output dataframe object is around
 #'   200Mb in memory. Once downloaded, the dataframe can be pruned
 #'   for increased speed and memory efficiency using the function
-#'   prune_taxon.
+#'   \code{\link{prune_taxon}}.
 #' @author Shaun Wilkinson
-#' @references TBA
+#' @references
+#'  Federhen S (2012) The NCBI Taxonomy database.
+#'  \emph{Nucleic Acids Research}
+#'  \strong{40}, D136-D143. doi:10.1093/nar/gkr1178.
+#'
+#'  \url{https://www.ncbi.nlm.nih.gov/taxonomy/}
 #' @examples
-#'   ##TBA
+#' \dontrun{
+#' taxonomy <- download_taxon()
+#' }
 ################################################################################
 download_taxon <- function(synonyms = FALSE, quiet = FALSE){
   tmp <- tempdir()
@@ -190,7 +210,7 @@ download_taxon <- function(synonyms = FALSE, quiet = FALSE){
   return(taxa)
 }
 ################################################################################
-#' Purge taxa from taxonomy database.
+#' Prune taxa from taxonomy database.
 #'
 #' This function prunes the taxon database, removing specified taxa as
 #'   desired to improve speed and memory efficiency.
@@ -200,15 +220,22 @@ download_taxon <- function(synonyms = FALSE, quiet = FALSE){
 #' @param taxIDs the names or taxon ID numbers of the taxa to be retained
 #'   (or discarded if \code{keep = FALSE}).
 #' @param keep logical, indicates whether the specified taxa should be
-#'   kept and the rest of the database purged or vice versa. Defaults to TRUE.
-#' @return a smaller or equal sized dataframe with the same column names as
+#'   kept and the rest of the database removed or vice versa. Defaults to TRUE.
+#' @return a data.frame with the same column names as
 #'   the input object
 #'   ("tax_id", "parent_tax_id", "rank", "name").
 #' @details TBA
 #' @author Shaun Wilkinson
-#' @references TBA
+#' @references
+#'  Federhen S (2012) The NCBI Taxonomy database.
+#'  \emph{Nucleic Acids Research}
+#'  \strong{40}, D136-D143. doi:10.1093/nar/gkr1178.
+#'
+#'  \url{https://www.ncbi.nlm.nih.gov/taxonomy/}
 #' @examples
-#'   ##TBA
+#' ## remove Odontoceti suborder from cetacean taxonomy database
+#' data(whale_taxa)
+#' prune_taxon(whale_taxa, taxIDs = 9722, keep = FALSE)
 ################################################################################
 prune_taxon <- function(db, taxIDs, keep = TRUE){
   ### taxIDs can be character or taxIDs

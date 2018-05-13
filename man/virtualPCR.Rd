@@ -6,7 +6,7 @@
 \usage{
 virtualPCR(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   minfsc = 50, minrsc = 50, minamplen = 50, maxamplen = 2000,
-  maxN = 0.02, partialbind = TRUE, cores = 1, quiet = FALSE)
+  maxNs = 0.02, partialbind = TRUE, cores = 1, quiet = FALSE)
 }
 \arguments{
 \item{x}{a list of DNA sequences in \code{DNAbin} format.}
@@ -40,7 +40,7 @@ acceptable amplicon lengths. Sequences are discarded if the number
 of base pairs between the primer-binding sites falls outside of these
 limits.}
 
-\item{maxN}{numeric giving the maximum acceptable proportion
+\item{maxNs}{numeric giving the maximum acceptable proportion
 of the ambiguous residue "N" within the output sequences.
 Defaults to 0.02.}
 
@@ -64,7 +64,7 @@ the cluster.}
 the console.}
 }
 \value{
-a list of trimmed sequences, returned as an object of class
+a list of trimmed sequences, an object of class
   \code{DNAbin}.
 }
 \description{
@@ -73,11 +73,12 @@ a list of trimmed sequences, returned as an object of class
   the sequences that contain regions of sufficient similarity based on
   log-odds alignment scoring.
 }
-\details{
-TBA
-}
 \examples{
-  ## TBA
+  ## trim whale sequences using a new set of inner primers
+  inner_for <- "CGGTTGGGGTGACCTCGGAGTA"
+  inner_rev <- "GCTGTTATCCCTAGGGTAA"
+  whales_short <- virtualPCR(whales, up = inner_for, down = inner_rev,
+                             trimprimers = TRUE)
 }
 \author{
 Shaun Wilkinson

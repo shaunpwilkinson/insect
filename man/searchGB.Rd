@@ -9,13 +9,14 @@ searchGB(query = NULL, accession = NULL, sequences = TRUE, bin = TRUE,
   prompt = TRUE, contact = NULL, quiet = FALSE)
 }
 \arguments{
-\item{query}{an Entrez serch query. For help compiling queries see
+\item{query}{an Entrez serch query. For help compiling Entrez queries see
 \url{https://www.ncbi.nlm.nih.gov/books/NBK3837/#EntrezHelp.Entrez_Searching_Options}
 and \url{https://www.ncbi.nlm.nih.gov/books/NBK49540/}.}
 
 \item{accession}{an optional vector of GenBank accession numbers to be input
 in place of a search query. If both query and accession arguments are
-provided the function returns an error.}
+provided the function returns an error.
+The function currently has a maximum batch size of around 200 accession numbers.}
 
 \item{sequences}{logical. Should the sequences be returned or only the
 GenBank accession numbers? Note that taxon IDs and species

@@ -2,7 +2,7 @@
 % Please edit documentation in R/taxon.R
 \name{get_taxID}
 \alias{get_taxID}
-\title{Derive taxon ID from a given lineage.}
+\title{Derive taxon ID from a lineage string or species name.}
 \usage{
 get_taxID(lineage, db, multimatch = "NA")
 }
@@ -21,18 +21,24 @@ The unique taxon database ID (integer).
 }
 \description{
 This function returns the unique taxon ID associated with a given
-  semicolon-delimited lineage string or lineage name,
-  using the NCBI taxon database.
+  semicolon-delimited lineage string or taxon,
+  by looking up the NCBI taxon database.
 }
 \details{
 This function will return NA if the lineage is not found in the
   database or it matches multiple entries.
 }
 \examples{
-  ##TBA
+data(whales)
+data(whale_taxa)
+get_taxID(attr(whales, "lineage")[1], db = whale_taxa)
 }
 \references{
-TBA
+Federhen S (2012) The NCBI Taxonomy database.
+ \emph{Nucleic Acids Research}
+ \strong{40}, D136-D143. doi:10.1093/nar/gkr1178.
+
+ \url{https://www.ncbi.nlm.nih.gov/taxonomy/}
 }
 \author{
 Shaun Wilkinson

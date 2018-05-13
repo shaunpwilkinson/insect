@@ -28,16 +28,31 @@ a data frame.
 \description{
 This function presents taxonomic classifications in tabular format
   for ease of interpretation, including sequence counts for each sample.
-  This makes for easy exporting to csv or xlsx files.
-}
-\details{
-TBA
+  This facilitates exporting the classification output to csv or xlsx files.
 }
 \examples{
-##TBA
+\dontrun{
+## download and read in fastq file from working directory
+URL1 <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
+download.file(URL1, destfile = "insect_tutorial1_files.zip", mode = "wb")
+unzip("insect_tutorial1_files.zip")
+file.remove("insect_tutorial1_files.zip")
+x <- readFASTQ("COI_sample2.fastq", bin = FALSE)
+## download pre-computed classification tree
+URL2 <- "https://www.dropbox.com/s/m0on8ykooa9buoz/mlCOIintF_jgHCO2198_marine.RData?dl=1"
+download.file(URL2, destfile = "mlCOIintF_jgHCO2198_marine.RData", mode = "wb")
+load("mlCOIintF_jgHCO2198_marine.RData")
+## bundle includes tree ("tree"), reference db ("z"), NCBI taxon db ("taxonomy") and primers
+## trim primers from sequences
+x <- trim(x, up = primers[1], down = primers[2])
+## quality filtering with size selection and singleton removal
+x <- qfilter(x, minlength = 250, maxlength = 350)
+## classify sequences using tree (takes a minute or so)
+y <- classify(x, tree, cores = 2)
+## output taxon ID frequency tables
+shortDF <- tabulize(y, db = taxonomy, aggregated = TRUE)
+longDF <- tabulize(y, db = taxonomy, aggregated = FALSE)
 }
-\references{
-TBA
 }
 \author{
 Shaun Wilkinson

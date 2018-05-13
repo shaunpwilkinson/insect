@@ -28,10 +28,10 @@ a character vector.
 }
 \description{
 This function converts DNA or amino acid sequences to 128-bit
-   MD5 hash balues for efficient identification of duplicates.
+   MD5 hash values for efficient duplicate identification and dereplication.
 }
 \details{
-This function uses the \code{md5} function from the OpenSSL library
+This function uses the \code{md5} function from the openSSL library
   (\url{https://www.openssl.org/})
   to digest sequences to 128-bit hashes.
   These can be compared using base functions such
@@ -39,8 +39,9 @@ This function uses the \code{md5} function from the OpenSSL library
   management of duplicate sequences in large datasets.
 }
 \examples{
-## TBA
-
+ data(whales)
+ hashes <- hash(whales)
+ sum(duplicated(hashes))
 }
 \references{
 Ooms J (2017) openssl: toolkit for encryption, signatures and

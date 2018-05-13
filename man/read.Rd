@@ -25,7 +25,8 @@ be read are composed of nucleotides ("DNA"; default) or amino acids ("AA").
 Only required for \code{readFASTA} and if \code{bin = TRUE}.}
 
 \item{alignment}{logical indicating whether the sequences represent
-an alignment to be parsed as a matrix. Only applies to \code{readFASTA}.}
+an alignment to be parsed as a matrix.
+Only applies to \code{readFASTA}.}
 }
 \value{
 Either a vector of character strings (if bin = FALSE),
@@ -63,9 +64,14 @@ Text parsing functions for reading sequences in the FASTA or FASTQ format into R
   a multithreading option may be available in a future version.}
 }
 \examples{
-  \dontrun{
-    ##TBA
-  }
+\dontrun{
+  ## download example FASTQ file
+  URL <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
+  download.file(URL, destfile = "insect_tutorial1_files.zip", mode = "wb")
+  unzip("insect_tutorial1_files.zip")
+  file.remove("insect_tutorial1_files.zip")
+  x <- readFASTQ("COI_sample2.fastq", bin = FALSE)
+ }
 }
 \references{
 Bokulich NA, Subramanian S, Faith JJ, Gevers D, Gordon JI, Knight R,

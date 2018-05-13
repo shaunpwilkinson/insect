@@ -13,17 +13,16 @@ join(...)
 an object of class \code{DNAbin}.
 }
 \description{
-This function joins two or more \code{DNAbin} objects, as well as the
-  attributes whose lengths match the objects themselves
-}
-\details{
-TBA
+This function joins two or more \code{DNAbin} objects, retaining any
+  attributes whose lengths match those of the input objects (e.g. "species",
+  "lineage" and/or "taxID" attributes).
 }
 \examples{
-  ## TBA
+data(whales)
+join(whales, whales)
 }
 \seealso{
-\code{\link{subset.DNAbin}}
+\code{\link{subset.DNAbin}}.
 }
 \author{
 Shaun Wilkinson

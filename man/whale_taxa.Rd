@@ -3,7 +3,7 @@
 \docType{data}
 \name{whale_taxa}
 \alias{whale_taxa}
-\title{NCBI taxonomy reference database.}
+\title{Cetacean section of NCBI taxonomy database.}
 \format{A data.frame object with 72 rows and four columns, labeled as follows:
 \describe{
   \item{tax_id}{the NCBI unique taxon identifier (integer).}

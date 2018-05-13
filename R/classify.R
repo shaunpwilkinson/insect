@@ -103,7 +103,7 @@
 #'   ## use sequences 2-19 to learn the tree
 #'   ## note that training data must retain lineage attribute
 #'   training_data <- subset.DNAbin(whales, subset = seq_along(whales) > 1)
-#'   ## append species names to semicolon delimited lineage strings
+#'   ## append species names to semicolon-delimited lineage strings for added resolution
 #'   attr(whales, "lineage") <- paste0(attr(whales, "lineage"), "; ", attr(whales, "species"))
 #'   ## learn the tree
 #'   set.seed(999)

@@ -7,12 +7,13 @@
 #'   simply returns the matching sequences from GenBank.
 #'   This function makes a series of API calls so internet connectivity is required.
 #'
-#' @param query an Entrez serch query. For help compiling queries see
+#' @param query an Entrez serch query. For help compiling Entrez queries see
 #'   \url{https://www.ncbi.nlm.nih.gov/books/NBK3837/#EntrezHelp.Entrez_Searching_Options}
 #'   and \url{https://www.ncbi.nlm.nih.gov/books/NBK49540/}.
 #' @param accession an optional vector of GenBank accession numbers to be input
 #'   in place of a search query. If both query and accession arguments are
 #'   provided the function returns an error.
+#'   The function currently has a maximum batch size of around 200 accession numbers.
 #' @param sequences logical. Should the sequences be returned or only the
 #'   GenBank accession numbers? Note that taxon IDs and species
 #'   names are not returned if \code{sequences} is set to FALSE.
