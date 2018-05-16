@@ -11,7 +11,7 @@ learn(x, model = NULL, refine = "Viterbi", iterations = 50, nstart = 20,
 }
 \arguments{
 \item{x}{an object of class\code{"DNAbin"} representing a list of
-DNA sequences to be used as the traning data for the tree-learning process.
+DNA sequences to be used as the training data for the tree-learning process.
 All sequences should be from the same genetic region of interest
 and be globally alignable (i.e. without unjustified end-gaps).
 This object must have a "lineage" attribute, a vector the same length as the
@@ -130,7 +130,7 @@ The "insect" object type is a dendrogram
   Note that each node cannot have more than 9 child nodes.
 }
 \examples{
-\dontrun{
+\donttest{
   data(whales)
   ## use sequences 2-19 to learn the tree
   ## note that training data must retain lineage attribute

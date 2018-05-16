@@ -35,18 +35,19 @@ This function aligns forward and reverse reads generated from a
   maximum base-call quality scores attached as "quality" attributes.
 }
 \examples{
-  \dontrun{
-  ## download example FASTQ files
+\donttest{
+  ## download and extract example FASTQ file to temporary directory
+  td <- tempdir()
   URL <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
-  download.file(URL, destfile = "insect_tutorial1_files.zip", mode = "wb")
-  unzip("insect_tutorial1_files.zip")
-  file.remove("insect_tutorial1_files.zip")
-  x <- readFASTQ("COI_sample1_read1.fastq", bin = FALSE)
-  y <- readFASTQ("COI_sample1_read2.fastq", bin = FALSE)
+  dest <- paste0(td, "/insect_tutorial1_files.zip")
+  download.file(URL, destfile = dest, mode = "wb")
+  unzip(dest, exdir = td)
+  x <- readFASTQ(paste0(td, "/COI_sample1_read1.fastq"), bin = FALSE)
+  y <- readFASTQ(paste0(td, "/COI_sample1_read2.fastq"), bin = FALSE)
   z <- stitch(x, y)
   z[1]
   attr(z, "quality")[1]
-  }
+}
 }
 \seealso{
 \code{\link{readFASTQ}}.

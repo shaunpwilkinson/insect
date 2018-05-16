@@ -111,7 +111,7 @@ This function requires a pre-computed classification tree
   but it minimizes the chance of generating spurious sequence classifications.
 }
 \examples{
-\dontrun{
+\donttest{
   data(whales)
   ## use sequences 2-19 to learn the tree
   ## note that training data must retain lineage attribute

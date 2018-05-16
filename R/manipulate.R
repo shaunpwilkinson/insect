@@ -21,7 +21,7 @@
 #'   Defaults to FALSE in keeping with the style of the \code{\link{ape}}
 #'   package functions.
 #' @param subset logical vector giving the elements or rows to be kept.
-#' @param ... further agruments to be passed between methods.
+#' @param ... further arguments to be passed between methods.
 #' @return \code{unique} and \code{subset} return a
 #'   \code{DNAbin} or \code{AAbin} object. \code{duplicated} returns a logical vector.
 #' @author Shaun Wilkinson

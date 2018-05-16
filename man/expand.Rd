@@ -13,7 +13,7 @@ expand(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
 \item{tree}{an object of class \code{"insect"}.}
 
 \item{x}{an object of class\code{"DNAbin"} representing a list of
-DNA sequences to be used as the traning data for the tree-learning process.
+DNA sequences to be used as the training data for the tree-learning process.
 All sequences should be from the same genetic region of interest
 and be globally alignable (i.e. without unjustified end-gaps).
 This object must have a "lineage" attribute, a vector the same length as the
@@ -117,7 +117,7 @@ The clade indexing system used here is based on character strings,
   Note that this means each node cannot have more than 9 child nodes.
 }
 \examples{
-\dontrun{
+\donttest{
   data(whales)
   ## split the first node
   tree <- learn(whales, recursive = FALSE, quiet = FALSE)

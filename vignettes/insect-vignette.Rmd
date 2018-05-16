@@ -1,0 +1,651 @@
+---
+title: "The 'insect' R package and bioinformatic pipeline."
+subtitle: "Tutorial 1: reading and classifying NGS data."
+author: "Shaun Wilkinson"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    css: kable.css
+vignette: >
+  %\VignetteIndexEntry{Introduction to the insect package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+------------------------------------------------------------------------
+
+Introduction
+------------
+
+Welcome to the **insect** R package, a pipeline for the analysis of next
+generation sequencing (NGS) amplicon libraries using **in**formatic
+**se**quence **c**lassification **t**rees. The pipeline employs a
+machine-learning approach that uses a set of *training* sequences from
+GenBank and other databases to 'learn' a classification tree, which is
+then used to assign taxonomic IDs to a set of *query* sequences
+generated from an NGS platform such as Illumina MiSeq. The package also
+includes a suite of functions for FASTQ/FASTA sequence parsing,
+de-multiplexing, paired-end read stitching, primer trimming, quality
+filtering, de-replication, re-replication, and many more useful
+operations. These functions are designed for use on workstations with
+multiple processors, but can also be used on standard laptop and desktop
+computers provided the user doesn't mind waiting a little longer for the
+results. While not a prerequisite, the pipeline is designed to be used
+in conjunction with the **ape** package (Paradis *et al.*, 2004;
+Paradis, 2012), which contains a memory-efficient binary format for DNA
+(the "DNAbin" object type) among many other useful features. The
+**insect** package is ideal for processing both environmental DNA (eDNA)
+meta-barcode libraries and single-source NGS/Sanger amplicon sequences.
+
+The most time-consuming stage of the workflow generally involves
+building the classification tree. For example, a training dataset
+consisting of 300,000 × 300bp COI sequences recently took around one
+week to learn on a workstation with 48 logical processors (2.3GHz) and
+64 GB RAM. The **insect** classification trees are amplicon specific, so
+a unique tree is generally required for each primer set. However, trees
+are already available for some of the more commonly used barcoding
+primers
+[here](https://www.dropbox.com/sh/0n4a1xsgzzj39el/AADNDDMP5QVj0PmbuEOflZJXa?dl=0)
+(it may be necessary to right-click on the link and open it in a new
+tab/window). The package also includes functions and instructions for
+downloading and filtering training data from sequence databases such as
+GenBank (including a "virtual PCR" tool and a quality filter for lineage
+metadata) and carrying out the tree-learning operation, though these
+methods are beyond the scope of this introductory tutorial. New trees
+are constantly being added to the collection, so please feel free to
+suggest a barcoding primer set with which to generate a tree and we will
+endeavor to add it to the list.
+
+To produce a classification tree, a set of training sequences is first
+obtained from GenBank and/or other databases where accurate lineage
+metadata are available. The training data are filtered to remove those
+with erroneous metadata, and trimmed to retain only the region of
+interest using the `virtualPCR` function (sequences that do not span the
+entire region of interest are removed). the `learn` function then
+recursively partitions the training sequences (a top-down/divisive
+approach as opposed to bottom-up/agglomerative methods such as UPGMA and
+neighbor-joining). The dataset is initially divided in two, and a
+profile hidden Markov model is derived for each subset for downstream
+classification of query sequences (see Durbin et al. (1998) for a
+detailed description of these models). The lowest common taxonomic rank
+of each subset is also stored at each new node, also for downstream
+query sequence classification. The partitioning and model training
+procedure then continues recursively, splitting the training data into
+smaller and smaller subsets while adding new nodes to the classification
+tree.
+
+Once a classification tree has been loaded, query sequences obtained
+from the specified primer set can be classified to produce taxonomic IDs
+with an associated degree of confidence. The classification algorithm
+works as follows: starting from the root node of the classification
+tree, the *likelihood* of the query sequence (the log-probability of the
+sequence given a particular model) is computed for each of the models at
+the child nodes using the forward algorithm (see Durbin et al. (1998)).
+The competing likelihood values are then compared by computing their
+Akaike weights (see Johnson and Omland, 2004). If one model is
+overwhelmingly more likely to have produced the sequence than the other,
+that child node is chosen and the classification is updated to reflect
+the taxonomic ID stored at the node.
+
+This classification procedure is repeated, continuing down the tree
+until either an inconclusive result is returned by a model comparison
+test (i.e. the Akaike weight is lower than a pre-defined threshold,
+usually 0.9), or a terminal leaf node is reached, at which point a
+species-level classification is generally returned. The algorithm
+outputs a taxonomic ID (as a semicolon-delimited lineage string) and the
+Akaike weight of the model at the final node. Note that the default
+behavior is for the Akaike weight to 'decay' as it moves down the tree,
+by computing the cumulative product of all preceding Akaike weight
+values. This is perhaps an overly conservative approach, but it
+minimizes the chance of generating type I errors.
+
+In addition to the two key functions `learn` and `classify`, the package
+includes several tools to encode the entire work-flow from raw sequence
+data input to tabular output. At any stage during the process, users can
+export the sequence data using the functions `writeFASTA` and
+`writeFASTQ`.
+
+A worked example
+----------------
+
+This tutorial will gently guide users through the workflow using an
+example dataset of COI sequences derived from Autonomous Reef Monitoring
+Structures (ARMS) in Timor-Leste, amplified using the metazoan COI
+barcoding primers mlCOIintF and jgHCO2198 (GGWACWGGWTGAACWGTWTAYCCYCC
+and TAIACYTCIGGRTGICCRAARAAYCA, respectively; Leray et al. (2013)).
+
+First download and install the latest development version of the
+**insect** package by following the instructions in the package README
+[here](https://github.com/shaunpwilkinson/insect) (as above, it may be
+necessary to right-click on these links and open them in a new
+tab/window). Then load the package by running
+
+    library(insect)
+
+A zip archive containing three example FASTQ files is available
+[here](https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=0).
+These files contain a subset of 1000 forward and reverse reads from one
+sample and the same number of pre-stitched reads from another. This will
+provide an opportunity to demonstrate the workflow for both of these
+commonly-encountered input data formats. The marine COI classification
+tree and its training sequence dataset is stored as a ~40 Mb RData file
+[here](https://www.dropbox.com/s/m0on8ykooa9buoz/mlCOIintF_jgHCO2198_marine.RData?dl=0).
+First, download both sources and extract the contents of the zip archive
+to the working directory alongside the RData file. This can either be
+done manually or from within R using the following code:
+
+    ## fastq files
+    URL1 <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
+    download.file(URL1, destfile = "insect_tutorial1_files.zip", mode = "wb")
+    unzip("insect_tutorial1_files.zip")
+    file.remove("insect_tutorial1_files.zip")
+
+    ## classification tree
+    URL2 <- "https://www.dropbox.com/s/m0on8ykooa9buoz/mlCOIintF_jgHCO2198_marine.RData?dl=1"
+    download.file(URL2, destfile = "mlCOIintF_jgHCO2198_marine.RData", mode = "wb")
+
+The FASTQ files are then read into R as either concatenated upper-case
+character strings or binary "DNAbin" objects, with "quality" attributes.
+In this example we will opt for the former by setting `bin = FALSE`,
+since the character strings are perhaps a little more intuitive for
+beginners. Intermediate/advanced users who are familiar with the **ape**
+package may prefer to work with "DNAbin" objects by retaining the
+default setting of `bin = TRUE`. One important difference to note is
+that subsetting the character vector (e.g. with square brackets) will
+result in the "quality" attributes being lost, while this isn't an issue
+with DNAbin list objects, whose quality scores are attributed to each
+sequence individually.
+
+    S1R1 <- readFASTQ("COI_sample1_read1.fastq", bin = FALSE)
+    S1R2 <- readFASTQ("COI_sample1_read2.fastq", bin = FALSE)
+    S2 <- readFASTQ("COI_sample2.fastq", bin = FALSE)
+
+The S1R1 and S1R2 vectors are the same length, and have the same names
+apart from a single digit that specifies the read number. The first
+sequence of each object can be viewed as follows:
+
+    S1R1[1]
+    #>                                                                                                                                                                                                                       M...1:1101:26420:11409 1:N:0:1 
+    #> "GTTCTTTAAATTTTATGACGACTTTGTTTAATATAAAAACTAAGAGGTGGAATATGTTTATAATACCTCTTTTTTGTTGAACAGTGTTGGTAACTACGTTGTTGTTGTTACTTTCTTTGCCAGTTTTGGCTGCTGCCATCACTATGTTGTTATTTGATCGTAATTTTAATACTTCTTTTTTTGATCCAGCTAGAGGAGGAGATCCAGTACTATATCAGCATTTGTTTTGATTCTTCGGCCAT"
+    S1R2[1]
+    #>                                                                                                                                                                                                                       M...1:1101:26420:11409 2:N:0:1 
+    #> "ATGGCCGAAGAATCAAAACAAATGCTGATATAGTACTGGATCTCCTCCTCTAGCTGGATCAAAAAAAGAAGTATTAAAATTACGATCAAATAACAACATAGTGATGGCAGCAGCCAAAACTGGCAAAGAAAGTAACAACAACAACGTAGTTACCAACACTGTCCAACAAAAAAGAGGTATTATAAACATATTCCACCTCTTAGTTTTTATATTAAACAAAGTCGTCATAAAATTTAAAGAAC"
+
+The next step is to stitch the forward and reverse reads from sample 1
+together to create a single vector of sequences, similar to sample 2.
+The `stitch` function performs this operation, as well as optionally
+removing any sequences that don't contain the primer sequences in either
+direction, trimming the primers from those that do, and outputting all
+sequences in the 5' -&gt; 3' orientation. The optional primer
+filter-trim and sequence orientation is activated by passing the primer
+sequences to the `stitch` function (again either as character strings or
+"DNAbin" objects).
+
+    mlCOIintF <- "GGWACWGGWTGAACWGTWTAYCCYCC"
+    jgHCO2198 <- "TAIACYTCIGGRTGICCRAARAAYCA"
+    S1 <- stitch(S1R1, S1R2, up = mlCOIintF, down = jgHCO2198)
+
+Of the original 1000 sequences, 289 were retained and stitched for
+sample 1.
+
+The sample 2 sequences were pre-stitched on the Illumina platform but
+still have their primers attached. Here, we will use the `trim` function
+to discard any sequences that don't contain both of the primer sequences
+(in either direction), orientate all sequences in the 5' -&gt; 3'
+direction, and trim the primer sequences from each end:
+
+    S2 <- trim(S2, up = mlCOIintF, down = jgHCO2198)
+
+The sequences from both samples now need further filtering to remove
+low-quality reads, ambiguous base calls, singletons and overly
+short/long sequences. The function `qfilter` is a quality control
+function that can be used to apply any or all of these filters. The
+default behavior is to remove any sequences with a mean quality score of
+less than 30, those that contain at least one ambiguous base call, those
+that appear only once in the dataset, and those with length outside the
+range of 50 - 500 nucleotides (inclusive). To disable any of the
+filters, simply set the parameter value to `NULL`. In this example we
+will stick with the default settings, except that we will change the
+acceptable length range to 250 - 350 bp.
+
+    S1 <- qfilter(S1, minlength = 250, maxlength = 350)
+    S2 <- qfilter(S2, minlength = 250, maxlength = 350)
+
+This has whittled sample 1 down to 144 sequences and sample 2 down to
+181. For the purposes of this exercise we will reduce the dataset down
+even further by subsetting out the duplicate sequences. Note that this
+won't result in a significant speedup, since the `classify` function
+automatically de-replicates and re-replicates the sequence set before
+and after classification anyway. It will just provide us with a
+simplified output to interpret for the tutorial.
+
+    S1 <- dereplicate(S1)
+    S2 <- dereplicate(S2)
+
+Note that we use `dereplicate` instead of `unique` here since the latter
+would strip the sequence names, which will be useful for downstream
+analysis. The `dereplicate` function also stores the information
+necessary to re-replicate the sequence set at a later time if needed
+(with the exception of "quality" attributes). For samples 1 and 2
+respectively we now have 13 and 55 unique, high quality sequences that
+occur more than once in each dataset, are between 250 and 350
+nucleotides long, and are free of ambiguous base calls.
+
+The final step is to load the classification tree and run the `classify`
+function to assign taxonomic IDs and associated Akaike weight confidence
+scores (between 0 and 1, with anything over 0.9 signifying strong
+confidence). First, load the RData bundle containing the classification
+tree ("tree"), the training dataset used to learn the tree ("z"), the
+NCBI taxonomy reference database ("taxonomy") and the two primer
+sequences ("primers").
+
+    load("mlCOIintF_jgHCO2198_marine.RData")
+
+The `classify` function may take a minute or two to process these
+sequences, since it uses a computationally intensive dynamic programming
+algorithm to find their likelihood values at each node of the
+classification tree (the exception is when the argument `ping` is set to
+TRUE and there is an exact match between the query sequence and at least
+one of the sequences in the training dataset, in which case the function
+simply returns the common ancestor of the matching sequences and a score
+of 1). This function is also able to be run in parallel by setting the
+`cores` argument to 2 or more depending on the number available (tip:
+run `parallel::detectCores()` if you are unsure). Classification times
+vary, and depend on several factors including the number of unique
+sequences in the dataset, the size of the tree, the length of the input
+sequences, the processing speed, the number of processors used, etc. The
+average time for classifying COI sequences using the tree above is
+approximately 3 - 4 seconds per unique sequence per processor. For
+example, a dataset containing 1000 unique sequences would take around an
+hour on a single processor, half an hour on two, etc. It is worth noting
+that over-specifying the number of cores can have an adverse effect on
+efficiency due to the extra time taken to initialize the cluster. In
+this very small example (68 unique sequences) the optimal number of
+cores is probably around 4, beyond which the addition of extra cores
+becomes counter-productive.
+
+The `classify` function can accept a single sequence (either as a
+character string or a DNAbin vector), a vector of character strings, a
+DNAbin list, a list of character string vectors (one vector for each
+sample) or a list of DNAbin list objects (one DNAbin object for each
+sample). In this case we will go for the second-to-last option, and
+bundle the two character vectors together in a list. This will make it
+easier to tabulate the results following the classification procedure.
+
+    x <- list(sample1 = S1, sample2 = S2)
+    y <- classify(x, tree, cores = 4)
+    ## inspect the output
+    cat(y$sample2[1:5], sep = "\n")
+    #> Eukaryota
+    #> Eukaryota; Opisthokonta; Metazoa; Eumetazoa; Bilateria; Protostomia
+    #> Eukaryota; Opisthokonta; Metazoa; Eumetazoa; Bilateria; Protostomia; Ecdysozoa; Panarthropoda; Arthropoda; Mandibulata; Pancrustacea; Crustacea; Maxillopoda; Copepoda; Neocopepoda; Podoplea
+    #> Eukaryota; Opisthokonta; Metazoa; Eumetazoa
+    #> Eukaryota; Opisthokonta; Metazoa; Eumetazoa; Bilateria; Protostomia
+    attr(y$sample2, "score")[1:5]
+    #> [1] 0.9985244 0.9181102 0.9595144 0.9987309 0.9879474
+
+The function produces a list the same length as the input object. Each
+list element is a character vector giving the taxonomic IDs of the
+sequences (as semicolon-delimited character strings), which also has a
+"score" attribute, providing the Akaike weight for each classification.
+As shown in the above example, some of the sequences simply returned
+'Eukaryota' as the taxonomic ID, which doesn't seem very informative;
+however this is a fairly typical feature of eDNA datasets that can
+contain a large number of sequences that are highly dissimilar to
+anything in the reference databases. Of course some sequences may have
+come from cryptic species that are completely new to science, but in the
+majority of cases these inconclusive results are probably just
+pseudo-genes, chimeras and other PCR artifacts. It should be noted that
+in some situations even previously documented sequences can score
+similarly against both HMMs at a top-level node, and hence produce an
+inconclusive classification. This may be circumvented by reducing the
+`threshold` parameter or setting `decay = FALSE`; however, users are
+advised against the excessive relaxation of these parameters since it
+may increase the chance of returning spurious classifications (extremely
+rare using the conservative default values of `0.9` and `TRUE`,
+respectively). Further testing and optimization may help to address some
+of these 'best practice' considerations, and will be a focus of future
+research.
+
+The final step in the process is to convert the list of classifications
+into a tidy rectangular output table that can be written to a csv or
+xlsx file. The `tabulize` function takes the output from `classify` and
+produces a data frame with specified taxonomic ranks (passed via the
+`ranks` argument) using the NCBI taxonomy reference database. The
+function also tabulates the sequence counts to a separate column for
+each site. The default option produces a table with one row for each
+unique sequence; however the table can be aggregated to produce one row
+for each unique taxonomic ID by specifying `aggregated = TRUE`. This
+option outputs a much shorter table, but certain information such as
+sequence names and Akaike weights are lost. For example:
+
+    shortDF <- tabulize(y, db = taxonomy, aggregated = TRUE)
+
+produces the following output:
+
+<!-- note newlines needed between html tags and code chunk -->
+<table>
+<thead>
+<tr class="header">
+<th align="right">taxID</th>
+<th align="left">taxon</th>
+<th align="left">rank</th>
+<th align="left">kingdom</th>
+<th align="left">phylum</th>
+<th align="left">class</th>
+<th align="left">order</th>
+<th align="left">family</th>
+<th align="left">genus</th>
+<th align="left">species</th>
+<th align="right">n_unique</th>
+<th align="right">sample1</th>
+<th align="right">sample2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">2759</td>
+<td align="left">Eukaryota</td>
+<td align="left">superkingdom</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">20</td>
+<td align="right">2</td>
+<td align="right">19</td>
+</tr>
+<tr class="even">
+<td align="right">2763</td>
+<td align="left">Rhodophyta</td>
+<td align="left">no rank</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">2</td>
+<td align="right">1</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">6042</td>
+<td align="left">Demospongiae</td>
+<td align="left">class</td>
+<td align="left">Metazoa</td>
+<td align="left">Porifera</td>
+<td align="left">Demospongiae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">6072</td>
+<td align="left">Eumetazoa</td>
+<td align="left">no rank</td>
+<td align="left">Metazoa</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">6820</td>
+<td align="left">Peracarida</td>
+<td align="left">superorder</td>
+<td align="left">Metazoa</td>
+<td align="left">Arthropoda</td>
+<td align="left">Malacostraca</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">6821</td>
+<td align="left">Amphipoda</td>
+<td align="left">order</td>
+<td align="left">Metazoa</td>
+<td align="left">Arthropoda</td>
+<td align="left">Malacostraca</td>
+<td align="left">Amphipoda</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">7720</td>
+<td align="left">Stolidobranchia</td>
+<td align="left">order</td>
+<td align="left">Metazoa</td>
+<td align="left">Chordata</td>
+<td align="left">Ascidiacea</td>
+<td align="left">Stolidobranchia</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">2</td>
+<td align="right">2</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">33154</td>
+<td align="left">Opisthokonta</td>
+<td align="left">no rank</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">33208</td>
+<td align="left">Metazoa</td>
+<td align="left">kingdom</td>
+<td align="left">Metazoa</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">4</td>
+<td align="right">2</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="right">33213</td>
+<td align="left">Bilateria</td>
+<td align="left">no rank</td>
+<td align="left">Metazoa</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">8</td>
+<td align="right">4</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="right">33317</td>
+<td align="left">Protostomia</td>
+<td align="left">no rank</td>
+<td align="left">Metazoa</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">16</td>
+<td align="right">0</td>
+<td align="right">16</td>
+</tr>
+<tr class="odd">
+<td align="right">116569</td>
+<td align="left">Neocopepoda</td>
+<td align="left">infraclass</td>
+<td align="left">Metazoa</td>
+<td align="left">Arthropoda</td>
+<td align="left">Maxillopoda</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">116571</td>
+<td align="left">Podoplea</td>
+<td align="left">superorder</td>
+<td align="left">Metazoa</td>
+<td align="left">Arthropoda</td>
+<td align="left">Maxillopoda</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">5</td>
+<td align="right">0</td>
+<td align="right">5</td>
+</tr>
+<tr class="odd">
+<td align="right">122238</td>
+<td align="left">Syllidae</td>
+<td align="left">family</td>
+<td align="left">Metazoa</td>
+<td align="left">Annelida</td>
+<td align="left">Polychaeta</td>
+<td align="left">Phyllodocida</td>
+<td align="left">Syllidae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1</td>
+<td align="right">0</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">1336888</td>
+<td align="left">Terpios gelatinosa</td>
+<td align="left">species</td>
+<td align="left">Metazoa</td>
+<td align="left">Porifera</td>
+<td align="left">Demospongiae</td>
+<td align="left">Suberitida</td>
+<td align="left"></td>
+<td align="left">Terpios</td>
+<td align="left">Terpios gelatinosa</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">10284388</td>
+<td align="left">Clytia simplex</td>
+<td align="left">species</td>
+<td align="left">Metazoa</td>
+<td align="left">Cnidaria</td>
+<td align="left">Hydrozoa</td>
+<td align="left">Leptothecata</td>
+<td align="left">Campanulariidae</td>
+<td align="left">Clytia</td>
+<td align="left">Clytia simplex</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+
+Finally, the full data frame including sequence names and scores can be
+tabulated by running
+
+    longDF <- tabulize(y, db = taxonomy, aggregated = FALSE)
+
+and output to a csv file using `write.csv`.
+
+This basic introduction to the **insect** package has outlined the steps
+involved in parsing paired-end NGS data, and filtering, trimming
+primers, de-replication, and taxonomic identification using a pre-built
+classification tree. The next tutorial in the series will deal with
+downloading and curating a primer-specific local sequence database and
+using it to build a classification tree.
+
+The **insect** package is released under the GPL-3 license, and is free
+to distribute under certain conditions; however it comes with no
+warranty. Please direct bug reports to the [GitHub issues
+page](http://github.com/shaunpwilkinson/insect/issues)
+
+Acknowledgements
+----------------
+
+This software was developed with funding from a Rutherford Foundation
+Postdoctoral Research Fellowship from the Royal Society of New Zealand.
+Thanks to Molly Trimmers for helpful discussion and sharing COI data,
+and to Danyl McLauchlan and Dinindu Senanayake for assistance with high
+performance computing facilities.
+
+References
+----------
+
+Durbin,R. *et al.* (1998) Biological Sequence Analysis: Probabilistic
+Models of Proteins and Nucleic Acids. Cambridge University Press,
+Cambridge.
+
+Johnson,J.B. and Omland,K.S. (2004) Model selection in ecology and
+evolution. *Trends in Ecology and Evolution*, **19**, 101–108.
+
+Leray,M. *et al.* (2013) A new versatile primer set targeting a short
+fragment of the mitochondrial COI region for metabarcoding metazoan
+diversity: application for characterizing coral reef fish gut contents.
+*Frontiers in Zoology*, **10**, 34.
+
+Paradis,E. (2012) Analysis of Phylogenetics and Evolution with R. Second
+Edition. Springer, New York.
+
+Paradis,E. *et al.* (2004) APE: analyses of phylogenetics and evolution
+in R language. *Bioinformatics*, **20**, 289–290.

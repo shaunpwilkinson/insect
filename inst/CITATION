@@ -1,0 +1,20 @@
+citHeader("To cite phylogram in publications use:")
+
+citEntry(entry = "article",
+   title = "Taxonomic identification of environmental DNA with informatic sequence classification trees.",
+   author = personList(as.person("Shaun P. Wilkinson"),
+                       as.person("Michael Stat"),
+                       as.person("Michael Bunce"),
+                       as.person("Simon K. Davy")),
+   url = "https://peerj.com/preprints/26812",
+   year   = "2018",
+   journal = "PeerJ Preprints",
+   volume = "6",
+   pages = "e26812v1",
+   doi = "10.7287/peerj.preprints.26812v1",
+   textVersion = paste0("Wilkinson SP, Davy SK, Bunce M, Stat M (2018) ",
+                        "Taxonomic identification of environmental DNA ",
+                        "with informatic sequence classification trees. ",
+                        "PeerJ Preprints 6:e26812v1. ",
+                        "doi: 10.7287/peerj.preprints.26812v1")
+)

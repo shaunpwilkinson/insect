@@ -162,8 +162,8 @@ get_taxID <- function(lineage, db, multimatch = "NA"){
 #'
 #'  \url{https://www.ncbi.nlm.nih.gov/taxonomy/}
 #' @examples
-#' \dontrun{
-#' taxonomy <- download_taxon()
+#' \donttest{
+#'   taxonomy <- download_taxon()
 #' }
 ################################################################################
 download_taxon <- function(synonyms = FALSE, quiet = FALSE){

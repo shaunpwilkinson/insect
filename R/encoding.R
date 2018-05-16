@@ -25,7 +25,7 @@
 #'   sequence analysis: probabilistic models of proteins and nucleic acids.
 #'   Cambridge University Press, Cambridge, United Kingdom.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   ## generate a simple classification tree with two child nodes
 #'   data(whales)
 #'   tree <- learn(whales, recursive = FALSE, quiet = FALSE)

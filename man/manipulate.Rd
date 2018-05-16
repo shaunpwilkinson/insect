@@ -35,7 +35,7 @@ should be returned as a \code{"pointers"} attribute of the output vector
 Note that this can increase the computational
 time for larger sequence lists.}
 
-\item{...}{further agruments to be passed between methods.}
+\item{...}{further arguments to be passed between methods.}
 
 \item{attrs}{logical indicating whether the attributes of the input object
 whose length match the object length (or number of rows if it is a matrix)

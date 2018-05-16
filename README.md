@@ -1,9 +1,5 @@
 # insect
 
-[![Build Status](https://travis-ci.org/shaunpwilkinson/insect.svg?branch=master)](https://travis-ci.org/shaunpwilkinson/insect)
-[![ORCiD](https://img.shields.io/badge/ORCiD-0000--0002--7332--7931-brightgreen.svg)](http://orcid.org/0000-0002-7332-7931) 
-[![Project Status: Active - The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
 
 ### Informatic sequence classification trees
 
@@ -12,31 +8,30 @@ bioinformatics pipeline that automates the process from HTS sequence
 de-multiplexing and quality filtering to probabilistic taxonomic 
 assignment using informatic sequence classification trees. 
 It also contains functions for searching and downloading sequences 
-from GenBank, a "virtual PCR" tool, a new algorithm for tree learning, 
+from GenBank, a "virtual PCR" tool, a new algorithm for classification tree learning, 
 and a method for classifying DNA barcode sequences using pre-computed trees.
 
 ### Installation
-`insect` is currently available as a development version, with a stable
-release available on CRAN shortly. To download the package from 
-GitHub you will first need to ensure you have a C/C++ compliler and the 
-[devtools](https://github.com/hadley/devtools) R package installed. 
-Linux users will generally have a compiler such as `gcc` installed by default; 
-however Windows users will need to download 
-[Rtools](https://cran.r-project.org/bin/windows/Rtools/) and Mac 
-OSX users will need [Xcode](https://developer.apple.com/xcode) 
-(note that Rtools and Xcode are not R packages). To download and install 
-devtools, run 
+
+To download **insect** from CRAN and load the package, run
+
 ```R
-install.packages("devtools")
-``` 
-and then install and load `insect` by running 
+install.packages("insect")
+library(insect)
+```
+
+To download the latest development version from GitHub, run:
+
 ```R
 devtools::install_github("shaunpwilkinson/insect") 
 library("insect")
 ```
 
+
 ### Help
+
 An overview of the package and it's functions can be found by running
+
 ```R
 ?insect
 ```

@@ -38,7 +38,7 @@ Profile HMMs used in tree-based classification
   95 percent.
 }
 \examples{
-\dontrun{
+\donttest{
   ## generate a simple classification tree with two child nodes
   data(whales)
   tree <- learn(whales, recursive = FALSE, quiet = FALSE)

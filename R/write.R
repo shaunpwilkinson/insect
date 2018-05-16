@@ -25,13 +25,14 @@
 #'   and \code{\link[ape]{write.dna}} in the ape package
 #'   for writing DNA to text in FASTA and other formats.
 #' @examples
-#' \dontrun{
-#'   ## download example FASTQ file
+#' \donttest{
+#'   ## download and extract example FASTQ file to temporary directory
+#'   td <- tempdir()
 #'   URL <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
-#'   download.file(URL, destfile = "insect_tutorial1_files.zip", mode = "wb")
-#'   unzip("insect_tutorial1_files.zip")
-#'   file.remove("insect_tutorial1_files.zip")
-#'   x <- readFASTQ("COI_sample2.fastq")
+#'   dest <- paste0(td, "/insect_tutorial1_files.zip")
+#'   download.file(URL, destfile = dest, mode = "wb")
+#'   unzip(dest, exdir = td)
+#'   x <- readFASTQ(paste0(td, "/COI_sample2.fastq"))
 #'   ## trim primers from sequences
 #'   mlCOIintF <- "GGWACWGGWTGAACWGTWTAYCCYCC"
 #'   jgHCO2198 <- "TAIACYTCIGGRTGICCRAARAAYCA"
@@ -39,8 +40,8 @@
 #'   ## quality filter with size selection and singleton removal
 #'   x <- qfilter(x, minlength = 250, maxlength = 350)
 #'   ## output filtered FASTQ file
-#'   writeFASTQ(x, file = "COI_sample2_filtered.fastq")
-#'   writeFASTA(x, file = "COI_sample2_filtered.fasta")
+#'   writeFASTQ(x, file = paste0(td, "/COI_sample2_filtered.fastq"))
+#'   writeFASTA(x, file = paste0(td, "/COI_sample2_filtered.fasta"))
 #'  }
 #' @name write
 ################################################################################

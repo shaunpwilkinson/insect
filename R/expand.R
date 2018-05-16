@@ -28,7 +28,7 @@
 #' @author Shaun Wilkinson
 #' @seealso \code{\link{learn}}.
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   data(whales)
 #'   ## split the first node
 #'   tree <- learn(whales, recursive = FALSE, quiet = FALSE)

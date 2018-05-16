@@ -77,7 +77,7 @@ This function is generally used when filtering/trimming a
   \code{\link{virtualPCR}}.
   For example, this includes sequences that were generated using the same
   primer set as used in the virtual PCR, and whose primer binding sites
-  were trimmed prior to depostion in the sequence database.
+  were trimmed prior to deposition in the sequence database.
   Unlike the virtualPCR function, there is
   no option to retain the primer binding sites in the returned sequences.
 }

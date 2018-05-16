@@ -9,7 +9,7 @@ searchGB(query = NULL, accession = NULL, sequences = TRUE, bin = TRUE,
   prompt = TRUE, contact = NULL, quiet = FALSE)
 }
 \arguments{
-\item{query}{an Entrez serch query. For help compiling Entrez queries see
+\item{query}{an Entrez search query. For help compiling Entrez queries see
 \url{https://www.ncbi.nlm.nih.gov/books/NBK3837/#EntrezHelp.Entrez_Searching_Options}
 and \url{https://www.ncbi.nlm.nih.gov/books/NBK49540/}.}
 
@@ -56,7 +56,7 @@ a list of sequences as a \code{DNAbin} or \code{AAbin} object,
 \code{searchGB} searches GenBank using the
   Entrez search utilities, and downloads the matching sequences
   and/or their accession numbers. Alternatively a vector of
-  GenBank accessiion numbers can be passed, in which case the function
+  GenBank accession numbers can be passed, in which case the function
   simply returns the matching sequences from GenBank.
   This function makes a series of API calls so internet connectivity is required.
 }
@@ -75,7 +75,7 @@ This function uses the Entrez e-utilities API to search and download
   ## Query the GenBank database for Eukaryote mitochondrial 16S DNA sequences
   ## between 100 and 300 base pairs in length and last modified between
   ## 1999 and 2000.
-  \dontrun{
+  \donttest{
     query <- "Eukaryota[ORGN]+AND+16S[TITL]+AND+100:300[SLEN]+AND+1999:2000[MDAT]"
     x <- searchGB(query)
   }

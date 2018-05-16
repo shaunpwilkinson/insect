@@ -98,7 +98,7 @@
 #'
 #' @seealso \code{\link{learn}} \code{\link{tabulize}}
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'   data(whales)
 #'   ## use sequences 2-19 to learn the tree
 #'   ## note that training data must retain lineage attribute

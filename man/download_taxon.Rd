@@ -31,8 +31,8 @@ This function downloads the NCBI taxon database as a data.frame
   \code{\link{prune_taxon}}.
 }
 \examples{
-\dontrun{
-taxonomy <- download_taxon()
+\donttest{
+  taxonomy <- download_taxon()
 }
 }
 \references{

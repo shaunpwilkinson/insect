@@ -18,7 +18,7 @@ sequence to pass the filter. Defaults to 30.}
 \item{maxambigs}{integer, the maximum number of ambiguities for a sequence
 to pass the filter. Defaults to 0.}
 
-\item{mincount}{integer, the minimum acceptable number of occurences of a
+\item{mincount}{integer, the minimum acceptable number of occurrences of a
 sequence for it to pass the filter. Defaults to 2 (removes singletons).}
 
 \item{minlength}{integer, the minimum acceptable sequence length.
@@ -41,16 +41,20 @@ This function performs several quality checks for FASTQ input files,
   base-call filtering.
 }
 \examples{
-\dontrun{
-  ## download example FASTQ file
+\donttest{
+  ## download and extract example FASTQ file to temporary directory
+  td <- tempdir()
   URL <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
-  download.file(URL, destfile = "insect_tutorial1_files.zip", mode = "wb")
-  unzip("insect_tutorial1_files.zip")
-  file.remove("insect_tutorial1_files.zip")
-  x <- readFASTQ("COI_sample2.fastq", bin = FALSE)
-  x <- trim(x, up = "GGWACWGGWTGAACWGTWTAYCCYCC", down = "TAIACYTCIGGRTGICCRAARAAYCA")
+  dest <- paste0(td, "/insect_tutorial1_files.zip")
+  download.file(URL, destfile = dest, mode = "wb")
+  unzip(dest, exdir = td)
+  x <- readFASTQ(paste0(td, "/COI_sample2.fastq"))
+  ## trim primers from sequences
+  mlCOIintF <- "GGWACWGGWTGAACWGTWTAYCCYCC"
+  jgHCO2198 <- "TAIACYTCIGGRTGICCRAARAAYCA"
+  x <- trim(x, up = mlCOIintF, down = jgHCO2198)
+  ## filter sequences to remove singletons, low quality & short/long reads
   x <- qfilter(x, minlength = 250, maxlength = 350)
-  ## see https://rpubs.com/shaunpwilkinson/insect for full tutorial
  }
 }
 \author{

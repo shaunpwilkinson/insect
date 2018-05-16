@@ -14,20 +14,18 @@
 #'   exporting the FASTQ files.
 #' @author Shaun Wilkinson
 #' @examples
-#' \dontrun{
-#' ## download and read in fastq file from working directory
-#' URL1 <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
-#' download.file(URL1, destfile = "insect_tutorial1_files.zip", mode = "wb")
-#' unzip("insect_tutorial1_files.zip")
-#' file.remove("insect_tutorial1_files.zip")
-#' x <- readFASTQ("COI_sample2.fastq", bin = FALSE)
-#' ## download pre-computed classification tree
-#' URL2 <- "https://www.dropbox.com/s/m0on8ykooa9buoz/mlCOIintF_jgHCO2198_marine.RData?dl=1"
-#' download.file(URL2, destfile = "mlCOIintF_jgHCO2198_marine.RData", mode = "wb")
-#' load("mlCOIintF_jgHCO2198_marine.RData")
-#' ## bundle includes tree ("tree"), reference db ("z"), NCBI taxon db ("taxonomy") and primers
-#' ## trim primers from sequences
-#' x <- trim(x, up = primers[1], down = primers[2])
+#' \donttest{
+#'   ## download and extract example FASTQ file to temporary directory
+#'   td <- tempdir()
+#'   URL <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
+#'   dest <- paste0(td, "/insect_tutorial1_files.zip")
+#'   download.file(URL, destfile = dest, mode = "wb")
+#'   unzip(dest, exdir = td)
+#'   x <- readFASTQ(paste0(td, "/COI_sample2.fastq"))
+#'   ## trim primers from sequences
+#'   mlCOIintF <- "GGWACWGGWTGAACWGTWTAYCCYCC"
+#'   jgHCO2198 <- "TAIACYTCIGGRTGICCRAARAAYCA"
+#'   x <- trim(x, up = mlCOIintF, down = jgHCO2198)
 #' }
 ################################################################################
 trim <- function(x, up, down = NULL){ # trims primers and/or indices

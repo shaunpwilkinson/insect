@@ -23,7 +23,7 @@
 #'   in the literature. For now, this function supports the Illumina
 #'   convention for FASTQ files, where each sequence and its associated
 #'   metadata occupies four line of the text file as follows : (1) the
-#'   run and cluster metadata preceeded by an @ symbol; (2) the sequence
+#'   run and cluster metadata preceded by an @ symbol; (2) the sequence
 #'   itself in capitals without spaces;
 #'   (3) a single "+" symbol; and (4) the Phred quality
 #'   scores from 0 to 93 represented as ASCII symbols. For more information
@@ -57,13 +57,14 @@
 #'   for writing sequences to text in the FASTA or FASTQ format.
 #'   See also \code{\link[ape]{read.dna}} in the \code{\link[ape]{ape}} package.
 #' @examples
-#' \dontrun{
-#'   ## download example FASTQ file
+#' \donttest{
+#'   ## download and extract example FASTQ file to temporary directory
+#'   td <- tempdir()
 #'   URL <- "https://www.dropbox.com/s/71ixehy8e51etdd/insect_tutorial1_files.zip?dl=1"
-#'   download.file(URL, destfile = "insect_tutorial1_files.zip", mode = "wb")
-#'   unzip("insect_tutorial1_files.zip")
-#'   file.remove("insect_tutorial1_files.zip")
-#'   x <- readFASTQ("COI_sample2.fastq", bin = FALSE)
+#'   dest <- paste0(td, "/insect_tutorial1_files.zip")
+#'   download.file(URL, destfile = dest, mode = "wb")
+#'   unzip(dest, exdir = td)
+#'   x <- readFASTQ(paste0(td, "/COI_sample2.fastq"))
 #'  }
 #' @name read
 ################################################################################
