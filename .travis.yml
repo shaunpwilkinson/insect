@@ -2,4 +2,8 @@ language: r
 
 cache: packages
 
+addons:
+  apt:
+    update: true
+
 
