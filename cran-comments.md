@@ -18,7 +18,7 @@ Best,
 Swetlana Herbrandt
 
 
-Thank you very much for the feedback, these points have all now been remedied.
+Thank you very much for the feedback, these points have now been remedied.
 
 ## Test environments
 
@@ -37,10 +37,12 @@ Maintainer: 'Shaun Wilkinson <shaunpwilkinson@gmail.com>'
 
 Possibly mis-spelled words in DESCRIPTION:
   Informatic (3:8)
+  al (9:257)
   barcoding (9:62)
   bioinformatics (9:25)
-  de (10:47)
-  informatic (11:46)
+  demultiplexing (9:124)
+  et (9:254)
+  informatic (9:198)
 
 These have been checked and are all ok. 
 
