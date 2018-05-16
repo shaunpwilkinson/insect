@@ -24,7 +24,7 @@ Thank you very much for the feedback, these points have now been remedied.
 
  * local ubuntu 16.04.4 x86_64-pc-linux-gnu; R version 3.4.4
  * travis-ci ubuntu 14.04.5 x86_64-pc-linux-gnu; R 3.5.0
- * winbuilder devel R version using R version 3.5.0 beta (2018-04-10 r74581)
+ * winbuilder R Under development (unstable) (2018-05-15 r74727)
 
 ## R CMD check results
 
