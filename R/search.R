@@ -61,7 +61,7 @@
 #'   ## 1999 and 2000.
 #'   \donttest{
 #'     query <- "Eukaryota[ORGN]+AND+16S[TITL]+AND+100:300[SLEN]+AND+1999:2000[MDAT]"
-#'     x <- searchGB(query)
+#'     x <- searchGB(query, species = TRUE, prompt = FALSE)
 #'   }
 ################################################################################
 searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
