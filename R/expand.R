@@ -259,11 +259,6 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   }
   if(!quiet) cat("Repatriating duplicate sequences with tree\n")
   tree <- dendrapply(tree, reduplicate, pointers = pointers)
-  # rmaligs <- function(node){
-  #   if(is.leaf(node)) attr(node, "model")$alignment <- NULL
-  #   return(node)
-  # }
-  # tree <- dendrapply(tree, rmaligs) # more memory efficient
   encodemods <- function(node){
     if(is.leaf(node)) attr(node, "model") <- encodePHMM(attr(node, "model"))
     return(node)
@@ -273,8 +268,6 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   # attributes(x) <- tmpxattr
   if(!quiet) cat("Resetting node heights\n")
   tree <- phylogram::reposition(tree)
-  if(!quiet) cat("Making tree ultrametric\n")
-  tree <- phylogram::ultrametricize(tree)
   if(!quiet) cat("Done\n")
   class(tree) <- c("insect", "dendrogram")
   return(tree)
