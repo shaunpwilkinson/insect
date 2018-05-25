@@ -625,7 +625,7 @@ Acknowledgements
 
 This software was developed with funding from a Rutherford Foundation
 Postdoctoral Research Fellowship from the Royal Society of New Zealand.
-Thanks to Molly Trimmers for helpful discussion and sharing COI data,
+Thanks to Molly Timmers for helpful discussion and sharing COI data,
 and to Danyl McLauchlan and Dinindu Senanayake for assistance with high
 performance computing facilities.
 
