@@ -4,81 +4,62 @@
 \alias{classify}
 \title{Tree-based sequence classification.}
 \usage{
-classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE, cores = 1,
-  scores = TRUE, paths = FALSE, seqlengths = FALSE, threshs = FALSE,
-  minscores = FALSE, minlengths = FALSE, maxlengths = FALSE)
+classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
+  ranks = c("phylum", "class", "order", "family", "genus", "species"),
+  cores = 1)
 }
 \arguments{
-\item{x}{a DNA sequence or set of sequences. Acceptable input formats are
-a single sequence (either as a character string or a "DNAbin" vector),
-a vector of character strings, a DNAbin list,
-a list of character string vectors (one vector for each sample),
-or a list of DNAbin list objects (one DNAbin object for each sample).
-The latter two options enable easier tabulation of sequence
-counts by site/sample by passing the output on to the
-\code{\link{tabulize}} function.}
+\item{x}{a DNA sequence or set of sequences. Can be a
+"DNAbin" object or a named vector of upper-case character strings.}
 
 \item{tree}{an object of class \code{"insect"}
-(see \code{\link{learn}} for details about this object class).}
+(see \code{\link{learn}} for details).}
 
 \item{threshold}{numeric between 0 and 1 giving the minimum
 Akaike weight for the recursive classification procedure
 to continue toward the leaves of the tree. Defaults to 0.9.}
 
 \item{decay}{logical indicating whether the decision to terminate the
-classification process should occur based on decaying Akaike weights
+classification process should be made based on decaying Akaike weights
 (at each node, the Akaike weight of the selected model is multiplied by
 the Akaike weight of the selected model at the parent node) or whether
 each Akaike weight should be calculated independently of that of the
-parent node. Defaults to the latter (FALSE).}
+parent node. Defaults to TRUE (the former).}
 
 \item{ping}{logical indicating whether an exact-match search should
 be carried out before applying the classification algorithm.
-If TRUE (the default value) and the query sequence is identical to
+If TRUE (the default) and the query sequence is identical to
 at least one of the training sequences used to learn the tree,
 the common ancestor of the matching training sequences is returned
-with an associated score value of 1.
+with an score of NA.
 The output lineage string will generally specify the taxonomic ID to species level
-but may be to genus/family, etc in cases where the genetic marker lacks resolution.}
+but may be to genus/family, etc for low resolution genetic markers.}
+
+\item{ranks}{character vector giving the taxonomic ranks to be
+included in the output table. Must be a valid rank from the
+taxonomy database attributed to the classification tree
+(\code{attr(tree, "taxonomy")}). Set to NULL to exclude taxonomic ranks
+from the output table.}
 
 \item{cores}{integer giving the number of CPUs to parallelize the operation
-over. Defaults to 1, and reverts to 1 if x is not a list.
+over (defaults to 1).
 This argument may alternatively be a 'cluster' object,
 in which case it is the user's responsibility to close the socket
 connection at the conclusion of the operation,
 for example by running \code{parallel::stopCluster(cores)}.
 The string 'autodetect' is also accepted, in which case the maximum
 number of cores to use is one less than the total number of cores available.}
-
-\item{scores}{logical indicating whether the Akaike weight confidence
-values should be attributed to the output object as a numeric vector
-called "score". Defaults to TRUE.}
-
-\item{paths}{logical indicating whether the path of each sequence
-through the classification tree should be attributed to the output object
-as a character vector called "path". Defaults to FALSE.}
-
-\item{seqlengths}{logical indicating whether the original sequence
-lengths should be attributed to the returned object.}
-
-\item{threshs, minscores, minlengths, maxlengths}{logicals, indicating
-which classification test results should be attributed to the output object
-(for advanced use).}
 }
 \value{
-a semicolon-delimited character string giving the lineage of the
-  input sequence, usually with additional attributes.
+a data.frame.
 }
 \description{
-\code{"classify"} probabilistically assigns a DNA barcode or other
-  taxonomically-informative sequence to a node of a classification
-  tree by recursively testing the sequence against a series of nested profile
-  hidden Markov models. This enables an Akaike weight confidence
-  score to be output along with the taxon ID.
+\code{"classify"} assigns taxon IDs to DNA sequences using an
+  informatic sequence classification tree.
 }
 \details{
 This function requires a pre-computed classification tree
-  of class "insect", which is simply a dendrogram object with additional attributes
+  of class "insect", which is a dendrogram object with additional attributes
   (see \code{\link{learn}} for details).
   Query sequences obtained from the same primer set used to construct
   the tree are classified to produce taxonomic
@@ -98,33 +79,45 @@ This function requires a pre-computed classification tree
   This classification procedure is repeated, continuing down the
   tree until either an inconclusive result is returned by a
   model comparison test (i.e. the Akaike weight is lower than
-  a pre-defined threshold, usually 0.9),
+  a pre-defined threshold, e.g. 0.9),
   or a terminal leaf node is reached,
   at which point a species-level classification is generally returned.
-  The function outputs a taxonomic ID as a semicolon-delimited lineage string,
-  as well as the Akaike weight of the model at the final node and several
-  other results depending on the argument values.
+  The function outputs a table with one row for each input sequence
+  Output table fields include "name" (the unique sequence identifier),
+  "taxID" (the taxonomic identification number from the taxonomy database),
+  "taxon" (the name of the taxon),
+  "rank" (the rank of the taxon, e.g. species, genus family, etc),
+  and "score" (the Akaike weight from the model selection procedure).
   Note that the default behavior is for the Akaike weight to ‘decay’
   as it moves down the tree, by computing the cumulative product of
   all preceding Akaike weight values.
   This is perhaps an overly conservative approach
-  but it minimizes the chance of generating spurious sequence classifications.
+  but it minimizes the chance of taxon ID errors.
+  The output table also includes the higher taxonomic ranks specified in the
+  \code{ranks} argument, and two additional columns called "path"
+  (the path of the sequence through the classification tree)
+  and "reason" outlining why the recursive classification procedure was
+  terminated. Reason codes are as follows:
+  \itemize{
+    \item 0 reached leaf node
+    \item 1 failed to meet minimum score threshold at inner node
+    \item 2 failed to meet minimum score of training sequences at inner node
+    \item 3 sequence length shorter than minimum length of training sequences at inner node
+    \item 4 sequence length exceeded maximum length of training sequences at inner node
+  }.
 }
 \examples{
 \donttest{
   data(whales)
-  ## use sequences 2-19 to learn the tree
-  ## note that training data must retain lineage attribute
-  training_data <- subset.DNAbin(whales, subset = seq_along(whales) > 1)
-  ## append species names to semicolon-delimited lineage strings for added resolution
-  attr(whales, "lineage") <- paste0(attr(whales, "lineage"), "; ", attr(whales, "species"))
-  ## learn the tree
+  data(whale_taxonomy)
+  ## use sequences 2-19 to train the classifier
   set.seed(999)
-  tree <- learn(training_data, cores = 2, quiet = FALSE, maxiter = 5)
-  ## find predicted lineage for sequence #1
-  classify(whales[[1]], tree)
+  tree <- learn(whales[2:19], db = whale_taxonomy, maxiter = 5, cores = 2)
+  ## find predicted lineage for first sequence
+  classify(whales[1], tree)
   ## compare with actual lineage
-  attr(whales, "lineage")[1]
+  taxID <- as.integer(gsub(".+\\\\|", "", names(whales)[1]))
+  get_lineage(taxID, whale_taxonomy)
 }
 }
 \references{
@@ -136,7 +129,7 @@ Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
   \emph{Trends in Ecology and Evolution}. \strong{19}, 101-108.
 }
 \seealso{
-\code{\link{learn}} \code{\link{tabulize}}
+\code{\link{learn}}
 }
 \author{
 Shaun Wilkinson

@@ -94,21 +94,20 @@
       closeAllConnections()
       return(NULL)
     }
-    res <- tryCatch(if(retmode == "xml") xml2::read_xml(z, ... = ...) else scan(file = z, ... = ...),
-                    error = errfun,
-                    warning = errfun)
+    res <- tryCatch(if(retmode == "xml") xml2::read_xml(z, ... = ...) else
+      scan(file = z, ... = ...), error = errfun, warning = errfun)
     return(res)
   }
   for(l in 1:10){
     res <- scanURL(x, retmode = retmode, ... = ...)
     if(!is.null(res)) break else Sys.sleep(5)
   }
-  if(is.null(res)) stop("Unable to reach URL, please check internet connection\n")
+  if(is.null(res)) stop("Unable to reach URL, please check connectivity\n")
   return(res)
 }
 
 #' @noRd
-.extractXML <- function(x, species = FALSE, lineages = FALSE, taxIDs = FALSE){
+.extractXML <- function(x, taxIDs = TRUE, species = FALSE, lineages = FALSE){
   # x is an xml document
   res <- list()
   x <- xml2::xml_children(x)
@@ -126,7 +125,7 @@
 
 #' @noRd
 # this function is much slower but can return NAs
-.extractXML2 <- function(x, species = FALSE, lineages = FALSE, taxIDs = FALSE){
+.extractXML2 <- function(x, taxIDs = TRUE, species = FALSE, lineages = FALSE){
   find_accession <- function(e){
     accession <- e$GBSeq_locus[[1]]
     if(is.null(accession)) accession <- NA

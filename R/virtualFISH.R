@@ -55,7 +55,7 @@
 #'   primer set as used in the virtual PCR, and whose primer binding sites
 #'   were trimmed prior to deposition in the sequence database.
 #'   Unlike the virtualPCR function, there is
-#'   no option to retain the primer binding sites in the returned sequences.
+#'   no option to retain the primer-bind sites in the returned sequences.
 #' @author Shaun Wilkinson
 #' @seealso \code{\link{virtualPCR}}
 #' @examples

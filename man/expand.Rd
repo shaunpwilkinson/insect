@@ -16,9 +16,12 @@ expand(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
 DNA sequences to be used as the training data for the tree-learning process.
 All sequences should be from the same genetic region of interest
 and be globally alignable (i.e. without unjustified end-gaps).
-This object must have a "lineage" attribute, a vector the same length as the
-sequence list that is composed of semicolon-delimited lineage strings.
-See \code{\link{searchGB}} for details on creating a reference sequence database.}
+The sequnces must have "names" attributes that include
+taxonomic ID numbers corresponding with those in the taxonomy
+database \code{db} (separated from the sequence ID by a "|" character).
+For example: "AF296347|30962", "AF296346|8022", "AF296345|8017", etc.
+See \code{\link{searchGB}} for more details on creating the reference
+sequence database.}
 
 \item{clades}{a vector of character strings giving the binary indices
 matching the labels of the nodes that are to be expanded.
@@ -39,7 +42,7 @@ using the argument \code{"maxiter"} (eventually passed to
 \code{\link[aphid]{train}} via the dots argument "...").}
 
 \item{nstart}{integer. The number of random starting sets to be chosen
-for initial k-means assignment of sequences to groups.}
+for initial k-means assignment of sequences to groups. Defaults to 20.}
 
 \item{minK}{integer. The minimum number of furications allowed at each inner
 node of the tree. Defaults to 2 (all inner nodes are bifuricating).}
@@ -107,7 +110,7 @@ This function is used to grow an existing classification tree, typically
   created, or if fine-scale control over the tree-learning operation
   is required.
   Note that the same reference sequence database used to
-  build the original tree is required for the second argument.
+  build the original tree is required.
 }
 \details{
 The clade indexing system used here is based on character strings,
@@ -120,7 +123,7 @@ The clade indexing system used here is based on character strings,
 \donttest{
   data(whales)
   ## split the first node
-  tree <- learn(whales, recursive = FALSE, quiet = FALSE)
+  tree <- learn(whales, db = whale_taxonomy, recursive = FALSE, quiet = FALSE)
   ## expand only the first clade
   tree <- expand(tree, whales, clades = "1", quiet = TRUE)
  }

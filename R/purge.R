@@ -1,18 +1,17 @@
-#' Identify and remove sequences with potentially erroneous lineage metadata.
+#' Identify and remove erroneous reference sequences.
 #'
-#'  This function evaluates a DNA reference database
-#'    (a "DNAbin" object with "taxID", "lineage" and/or "species" attributes;
-#'    see \code{\link{searchGB}} for details)
+#'  This function evaluates a DNA reference database (a "DNAbin" object)
 #'    and removes any sequences whose taxonomic metadata appear to be inconsistent
-#'    with those of the most closely related sequences.
+#'    with those of their most closely related sequences.
 #'
-#' @param x a DNAbin list object with "taxID", "lineage" and/or "species" attributes
+#' @param x a DNAbin list object whose names include taxonomic identification numbers
 #'   (see \code{\link{searchGB}} for details).
-#' @param db a copy of the NCBI taxonomy database as a data.frame object
-#'   (see \code{\link{download_taxon}}).
+#' @param db a valid taxonomy database containing the taxonomic identification numbers
+#'   included in the "names" attribute of the primary input object (a data.frame object;
+#'   see \code{\link{taxonomy}}).
 #' @param level character string giving the taxonomic level at which
 #'   heterogeneity within a cluster will flag a sequence as potentially erroneous.
-#'   This should be a recognized rank within the NCBI taxonomy database.
+#'   This should be a recognized rank within the taxonomy database.
 #' @param threshold numeric between 0 and 1 giving the OTU similarity cutoff value
 #'   with which to cluster the sequences. Defaults to 0.97.
 #' @param cores integer giving the number of CPUs to parallelize the operation
@@ -28,22 +27,20 @@
 #'   of sequences to be processed, due to the extra time required to initialize
 #'   the cluster.
 #' @param quiet logical indicating whether progress should be printed to the console.
-#' @return a "DNAbin" object with "taxID", "lineage", and/or "species" attributes,
-#'   depending on the attributes of the input object.
+#' @return a "DNAbin" object.
 #' @details This function first clusters the sequence dataset into operational
 #'   taxonomic units (OTUs) based on a given genetic similarity threshold
 #'   using the \code{\link[kmer]{otu}} function from the \code{\link{kmer}}
 #'   package.
-#'   Each cluster is then checked for lineage homogeneity at a given taxonomic rank,
-#'   and any sequences that appear out of place based on the taxon/lineage metadata
-#'   of the other OTU members are removed.
+#'   Each cluster is then checked for taxonomic homogeneity at a given rank,
+#'   and any sequences that appear out of place are removed.
 #'   The criteria for sequence removal are that at least two other independent
 #'   studies should contradict the taxonomic metadata attributed to the sequence.
 #' @author Shaun Wilkinson
 #' @examples
 #'   data(whales)
-#'   data(whale_taxa)
-#'   whales <- purge(whales, db = whale_taxa, level = "species")
+#'   data(whale_taxonomy)
+#'   whales <- purge(whales, db = whale_taxonomy, level = "species")
 ################################################################################
 purge <- function(x, db, level = "order", threshold = 0.97, cores = 1,
                   quiet = FALSE){
@@ -75,18 +72,8 @@ purge <- function(x, db, level = "order", threshold = 0.97, cores = 1,
                       confidence = sum(!dodgiesu)/nu, nstudies = nu)
     return(res)
   }
-  if(is.null(attr(x, "taxID"))){
-    if(is.null(attr(x, "lineage"))){
-      if(is.null(attr(x, "species"))) {
-        stop("taxID, lineage or species attribute required\n")
-      }else{
-        attr(x, "taxID") <- sapply(attr(x, "species"), get_taxID, db)
-      }
-    }else{
-      attr(x, "taxID") <- sapply(attr(x, "lineage"), get_taxID, db)
-    }
-  }
-  lins <- get_lineage(attr(x, "taxID"), db, cores = cores)
+  taxIDs <- as.integer(gsub(".+\\|", "", names(x)))
+  lins <- get_lineage(taxIDs, db, cores = cores)
   lins <- sapply(lins, function(e) e[level])
   lins[is.na(lins)] <- ""
   names(lins) <- names(x)

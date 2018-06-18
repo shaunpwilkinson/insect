@@ -5,8 +5,8 @@
 \title{Query the NCBI GenBank database.}
 \usage{
 searchGB(query = NULL, accession = NULL, sequences = TRUE, bin = TRUE,
-  db = "nucleotide", taxIDs = FALSE, species = FALSE, lineages = FALSE,
-  prompt = TRUE, contact = NULL, quiet = FALSE)
+  db = "nucleotide", taxIDs = TRUE, prompt = TRUE, contact = NULL,
+  quiet = FALSE)
 }
 \arguments{
 \item{query}{an Entrez search query. For help compiling Entrez queries see
@@ -16,27 +16,23 @@ and \url{https://www.ncbi.nlm.nih.gov/books/NBK49540/}.}
 \item{accession}{an optional vector of GenBank accession numbers to be input
 in place of a search query. If both query and accession arguments are
 provided the function returns an error.
-The function currently has a maximum batch size of around 200 accession numbers.}
+Currently, a maximum of 200 accession numbers can be
+processed at a time.}
 
 \item{sequences}{logical. Should the sequences be returned or only the
-GenBank accession numbers? Note that taxon IDs and species
-names are not returned if \code{sequences} is set to FALSE.}
+GenBank accession numbers? Note that taxon IDs
+are not returned if \code{sequences} is set to FALSE.}
 
 \item{bin}{logical indicating whether the returned sequences should
 be in raw-byte format ("DNAbin" or "AAbin" object type) or as a
 vector of named character strings. Defaults to TRUE.}
 
 \item{db}{the NCBI database from which to download the sequences and/or
-accession names. Accepted options are "nucleotide" (default) or "protein".}
+accession names. Accepted options are "nucleotide" (default) and "protein".}
 
 \item{taxIDs}{logical indicating whether the NCBI taxon ID numbers should
-be attributed to the output object. Defaults to FALSE.}
-
-\item{species}{logical indicating whether the species names should
-be attributed to the output object. Defaults to FALSE.}
-
-\item{lineages}{logical indicating whether semicolon-delimited lineage
-strings should be attributed to the output object. Defaults to FALSE.}
+be appended to the names of the output object (delimited by a "|" character).
+Defaults to TRUE.}
 
 \item{prompt}{logical indicating whether to check with the user before
 downloading sequences.}
@@ -49,35 +45,34 @@ the user if the application causes unintended issues.}
 to the console.}
 }
 \value{
-a list of sequences as a \code{DNAbin} or \code{AAbin} object,
+a list of sequences as either a \code{DNAbin} or \code{AAbin}
+  object (depending on \code{"db"}),
   or a named vector of character strings (if \code{bin = FALSE}).
 }
 \description{
-\code{searchGB} searches GenBank using the
+\code{searchGB} queries GenBank using the
   Entrez search utilities, and downloads the matching sequences
-  and/or their accession numbers. Alternatively a vector of
-  GenBank accession numbers can be passed, in which case the function
-  simply returns the matching sequences from GenBank.
-  This function makes a series of API calls so internet connectivity is required.
+  and/or their accession numbers. A vector of
+  accession numbers can be passed in lieu of a query, in which case the function
+  downloads the matching sequences from GenBank.
+  Internet connectivity is required.
 }
 \details{
 This function uses the Entrez e-utilities API to search and download
   sequences from GenBank.
-  Occasionally users may encounter an unknown error that is not reproducible
+  Occasionally users may encounter an unknown non-reproducible error
   and appears to be related to database records being updated in GenBank.
   This can generally be remedied by re-running the function. If problems
   persist please feel free to raise an issue on the package bug-reports page at
   <http://github.com/shaunpwilkinson/insect/issues>.
-  In some cases depending on the user security settings the R session
-  may need to be opened with administrator privileges.
 }
 \examples{
   ## Query the GenBank database for Eukaryote mitochondrial 16S DNA sequences
-  ## between 100 and 300 base pairs in length and last modified between
-  ## 1999 and 2000.
+  ## between 100 and 300 base pairs in length that were modified between
+  ## the years 1999 and 2000.
   \donttest{
     query <- "Eukaryota[ORGN]+AND+16S[TITL]+AND+100:300[SLEN]+AND+1999:2000[MDAT]"
-    x <- searchGB(query, species = TRUE, prompt = FALSE)
+    x <- searchGB(query, prompt = FALSE)
   }
 }
 \references{

@@ -7,12 +7,23 @@
 #'   DNA sequences to be used as the training data for the tree-learning process.
 #'   All sequences should be from the same genetic region of interest
 #'   and be globally alignable (i.e. without unjustified end-gaps).
-#'   This object must have a "lineage" attribute, a vector the same length as the
-#'   sequence list that is composed of semicolon-delimited lineage strings.
-#'   See \code{\link{searchGB}} for details on creating a reference sequence database.
-#' @param model an optional object of class \code{"PHMM"} to form the model
-#'   at the root node of the classification tree. Used to train (optimize
-#'   parameters for) subsequent nested models to be positioned at successive
+#'   The sequnces must have "names" attributes that include
+#'   taxonomic ID numbers corresponding with those in the taxonomy
+#'   database \code{db} (separated from the sequence ID by a "|" character).
+#'   For example: "AF296347|30962", "AF296346|8022", "AF296345|8017", etc.
+#'   See \code{\link{searchGB}} for more details on creating the reference
+#'   sequence database.
+#' @param db a valid taxonomy database (as a data.frame object).
+#'   The object should have
+#'   four columns, labeled "taxID", "parent_taxID", "rank" and "name".
+#'   The first two should be numeric, and all ID numbers in the
+#'   "parent_taxID" column should link to those in the "taxID" column.
+#'   This excludes the first row,
+#'   which should have \code{parent_taxID = 0} and \code{"name" = "root"}.
+#'   See \code{\link{taxonomy}} for more details.
+#' @param model an optional object of class \code{"PHMM"} providing the
+#'   starting parameters. Used to train (optimize parameters for)
+#'   subsequent nested models to be positioned at successive
 #'   sub-nodes. If NULL, the root model is derived from the
 #'   sequence list prior to the recursive partitioning process.
 #' @param refine character string giving the iterative model refinement
@@ -27,7 +38,7 @@
 #'   using the argument \code{"maxiter"} (eventually passed to
 #'   \code{\link[aphid]{train}} via the dots argument "...").
 #' @param nstart integer. The number of random starting sets to be chosen
-#'   for initial k-means assignment of sequences to groups.
+#'   for initial k-means assignment of sequences to groups. Defaults to 20.
 #' @param minK integer. The minimum number of furications allowed at each inner
 #'   node of the tree. Defaults to 2 (all inner nodes are bifuricating).
 #' @param maxK integer. The maximum number of furications allowed at each inner
@@ -81,23 +92,25 @@
 #'   "clade" the index of the node (see further details below);
 #'   "sequences" the indices of the sequences in the reference
 #'   database used to create the object;
-#'   "lineage" the lowest common taxon of the sequences belonging to the node;
+#'   "taxID" the taxonomic identifier of the lowest common taxon
+#'   of the sequences belonging to the node (linking to \code{"db"});
 #'   "minscore" the lowest likelihood among the training sequences given
 #'   the profile HMM stored at the node;
 #'   "minlength" the minimum length of the sequences belonging to the node;
 #'   "maxlength" the maximum length of the sequences belonging to the node;
-#'   "key" the hash key used for exact sequence matching
-#'   (bypasses the classification procedure);
 #'   "model" the profile HMM derived from the sequence subset belonging to the node;
 #'   "nunique" the number of unique sequences belonging to the node;
-#'   "ntotal" the total number of sequences belonging to the node (including duplicates).
+#'   "ntotal" the total number of sequences belonging to the node (including duplicates);
+#'   "key" the hash key used for exact sequence matching
+#'   (bypasses the classification procedure if an exact match is found; root node only);
+#'   "taxonomy" the taxonomy database containing the taxon ID numbers (root node only).
 #'
 #'   The clade indexing system used here is based on character strings,
 #'   where "0" refers to the root node,
 #'   "01" is the first child node, "02" is the second child node,
 #'   "011" is the first child node of the first child node, etc.
 #'   The leading zero may be omitted for brevity.
-#'   Note that each node cannot have more than 9 child nodes.
+#'   Note that each inner node can not have more than 9 child nodes.
 #' @author Shaun Wilkinson
 #' @references
 #'   Blackshields G, Sievers F, Shi W, Wilm A, Higgins DG (2010) Sequence embedding
@@ -119,29 +132,36 @@
 #' @examples
 #' \donttest{
 #'   data(whales)
-#'   ## use sequences 2-19 to learn the tree
-#'   ## note that training data must retain lineage attribute
-#'   training_data <- subset.DNAbin(whales, subset = seq_along(whales) > 1)
-#'   ## learn the tree
+#'   data(whale_taxonomy)
+#'   ## use sequences 2-19 to train the classifier
 #'   set.seed(999)
-#'   tree <- learn(training_data, quiet = FALSE, maxiter = 5)
-#'   ## find predicted lineage for sequence #1
-#'   classify(whales[[1]], tree)
+#'   tree <- learn(whales[2:19], db = whale_taxonomy, maxiter = 5, cores = 2)
+#'   ## find predicted lineage for first sequence
+#'   classify(whales[1], tree)
 #'   ## compare with actual lineage
-#'   attr(whales, "lineage")[1]
+#'   taxID <- as.integer(gsub(".+\\|", "", names(whales)[1]))
+#'   get_lineage(taxID, whale_taxonomy)
 #' }
 ################################################################################
-learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
+learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
                   nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
                   retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
                   recursive = TRUE, cores = 1, quiet = TRUE, ...){
-  ## First initialize the tree as a dendrogram object
+  if(mode(x) == "character") x <- char2dna(x)
+  if(!grepl("\\|", names(x)[1])){
+    stop("Names of input sequences must include taxonomic ID numbers\n")
+  }
+  taxIDs <- as.integer(gsub(".+\\|", "", names(x)))
+  lineages <- get_lineage(taxIDs, db = db, cores = cores, numbers = TRUE)
+  attr(x, "lineage") <- vapply(lineages, paste0, "", collapse = "; ")
+  ## Initialize the tree as a dendrogram object
   tree <- 1
   attr(tree, "leaf") <- TRUE
   attr(tree, "height") <- 0
   attr(tree, "midpoint") <- 0
   attr(tree, "members") <- 1
   class(tree) <- "dendrogram"
+  attr(tree, "taxonomy") <- prune_taxonomy(db, taxIDs = taxIDs, keep = TRUE)
   attr(tree, "clade") <- ""
   attr(tree, "sequences") <- seq_along(x)
   attr(tree, "lineage") <- .ancestor(attr(x, "lineage"))
@@ -161,14 +181,17 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
   for(i in seq_along(ancestors)){
     ancestors[i] <- .ancestor(attr(x, "lineage")[attr(x, "hashes") == names(ancestors)[i]])
   }
-  attr(tree, "key") <- ancestors # for exact matching, the only non-modular attribute
+  tmpnames <- names(ancestors)
+  ancestors <- as.integer(gsub(".+; ", "", ancestors))
+  names(ancestors) <- tmpnames
+  attr(tree, "key") <- ancestors# for exact matching
   if(is.null(model)){
     if(!quiet) cat("Dereplicating sequences\n")
     xu <- x[!attr(x, "duplicates")]
     xuw <- sapply(split(attr(x, "weights"), attr(x, "pointers")), sum)
     if(!quiet) cat("Deriving top level model\n")
     if(length(xu) > 1000){
-      # progressive model training to avoid excessive memory use
+      # progressive model training to avoid excessive memory usage
       samp <- sample(seq_along(xu), size = 1000)
       model <- aphid::derivePHMM(xu[samp], refine = refine,
                                  seqweights = xuw[samp], maxsize = maxsize,
@@ -193,10 +216,6 @@ learn <- function(x, model = NULL, refine = "Viterbi", iterations = 50,
     model <- decodePHMM(model)
   }
   attr(tree, "model") <- model
-  # score <- function(s, model) aphid::forward(model, s, odds = FALSE)$score
-  # # could multithread at some stage
-  # scores <- sapply(x[!attr(x, "duplicates")], score, model)
-  # attr(tree, "minscore") <- min(scores)
   tree <- expand(tree, x, clades = "", refine = refine, iterations = iterations,
                  nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
                  probs = probs, retry = retry, resize = resize, maxsize = maxsize,

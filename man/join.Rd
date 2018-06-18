@@ -19,7 +19,9 @@ This function joins two or more \code{DNAbin} objects, retaining any
 }
 \examples{
 data(whales)
-join(whales, whales)
+whales1 <- whales[1:10]
+whales2 <- whales[11:19]
+join(whales1, whales2)
 }
 \seealso{
 \code{\link{subset.DNAbin}}.

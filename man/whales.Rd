@@ -4,20 +4,14 @@
 \name{whales}
 \alias{whales}
 \title{Cetacean 16S rDNA sequences.}
-\format{A "DNAbin" list object containing 19 sequences in raw-byte format,
-averaging 130 nucleotides in length. The object also contains the following attributes,
-each of which is a vector the same length as the sequence list:
-\describe{
-  \item{"names"}{GenBank accession numbers of the original sequences.}
-  \item{"taxID"}{NCBI taxonomy database identifiers.}
-  \item{"lineage"}{semicolon-delimited lineage strings.}
-  \item{"species"}{species names.}
-}
-The GenBank accession numbers given in the "names" attribute correspond to
-complete mitochondrial genome sequences that were downloaded using the
-\code{\link{searchGB}} function on 27 march 2018
-(query term: "cetacea[ORGN]+AND+16S+rRNA[GENE]+AND+1970:2017[MDAT]").
-The sequences were then trimmed using the
+\format{A "DNAbin" list object containing 19 cetacean mitochondrial sequences
+in raw-byte format,
+averaging 130 nucleotides in length. The sequences are named with the GenBank
+accession numbers followed by a "|" symbol, followed by their NCBI taxonomy ID
+numbers.
+The sequences were downloaded using the
+\code{\link{searchGB}} function on 17 June 2018
+(query term: "cetacea[ORGN]+AND+16S+rRNA[GENE]"), and trimmed using the
 \code{\link{virtualPCR}} function with the primers 16Smam1 and 16Smam2
 (CGGTTGGGGTGACCTCGGA and GCTGTTATCCCTAGGGTAACT, respectively; Taylor 1996).}
 \source{

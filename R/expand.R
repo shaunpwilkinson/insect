@@ -5,7 +5,7 @@
 #'   created, or if fine-scale control over the tree-learning operation
 #'   is required.
 #'   Note that the same reference sequence database used to
-#'   build the original tree is required for the second argument.
+#'   build the original tree is required.
 #'
 #' @param tree an object of class \code{"insect"}.
 #' @param clades a vector of character strings giving the binary indices
@@ -31,7 +31,7 @@
 #' \donttest{
 #'   data(whales)
 #'   ## split the first node
-#'   tree <- learn(whales, recursive = FALSE, quiet = FALSE)
+#'   tree <- learn(whales, db = whale_taxonomy, recursive = FALSE, quiet = FALSE)
 #'   ## expand only the first clade
 #'   tree <- expand(tree, whales, clades = "1", quiet = TRUE)
 #'  }
@@ -40,7 +40,8 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
                    nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
                    retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
                    recursive = TRUE, cores = 1, quiet = TRUE, ...){
-  ## Establish which parts fof the tree to expand
+  ## Establish which parts of the tree to expand
+  if(mode(x) == "character") x <- char2dna(x)
   clades <- gsub("0", "", clades)
   if(!(identical(attr(tree, "sequences"), seq_along(x)))){
     stop("tree is incompatible with sequences\n")
@@ -264,6 +265,12 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
     return(node)
   }
   tree <- dendrapply(tree, encodemods) # more memory efficient
+  truncatetaxIDs <- function(node){
+    attr(node, "taxID") <- as.integer(gsub(".+; ", "", attr(node, "lineage")))
+    attr(node, "lineage") <- NULL
+    return(node)
+  }
+  tree <- dendrapply(tree, truncatetaxIDs) # more memory efficient
   #if(has_duplicates) x <- fullseqset
   # attributes(x) <- tmpxattr
   if(!quiet) cat("Resetting node heights\n")

@@ -10,7 +10,9 @@
 #' @seealso \code{\link{subset.DNAbin}}.
 #' @examples
 #' data(whales)
-#' join(whales, whales)
+#' whales1 <- whales[1:10]
+#' whales2 <- whales[11:19]
+#' join(whales1, whales2)
 ################################################################################
 join <- function(...){
   dots <- list(...)

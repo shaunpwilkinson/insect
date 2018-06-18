@@ -27,8 +27,8 @@ or "AAbin" objects should be simplified to vectors.
 Defaults to FALSE.}
 }
 \value{
-\code{dna2char} and \code{aa2char} return upper case
-  concatenated character strings.
+\code{dna2char} and \code{aa2char} return vectors of upper case
+  character strings.
   \code{char2dna} and \code{char2aa} return "DNAbin" and "AAbin" objects,
   respectively. These will be lists unless the input object
   has length one and simplify = TRUE, in which case the returned object

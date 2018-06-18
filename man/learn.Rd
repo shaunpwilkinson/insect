@@ -4,23 +4,35 @@
 \alias{learn}
 \title{Informatic sequence classification tree learning.}
 \usage{
-learn(x, model = NULL, refine = "Viterbi", iterations = 50, nstart = 20,
-  minK = 2, maxK = 2, minscore = 0.9, probs = 0.5, retry = TRUE,
-  resize = TRUE, maxsize = max(sapply(x, length)), recursive = TRUE,
-  cores = 1, quiet = TRUE, ...)
+learn(x, db, model = NULL, refine = "Viterbi", iterations = 50,
+  nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
+  retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
+  recursive = TRUE, cores = 1, quiet = TRUE, ...)
 }
 \arguments{
 \item{x}{an object of class\code{"DNAbin"} representing a list of
 DNA sequences to be used as the training data for the tree-learning process.
 All sequences should be from the same genetic region of interest
 and be globally alignable (i.e. without unjustified end-gaps).
-This object must have a "lineage" attribute, a vector the same length as the
-sequence list that is composed of semicolon-delimited lineage strings.
-See \code{\link{searchGB}} for details on creating a reference sequence database.}
+The sequnces must have "names" attributes that include
+taxonomic ID numbers corresponding with those in the taxonomy
+database \code{db} (separated from the sequence ID by a "|" character).
+For example: "AF296347|30962", "AF296346|8022", "AF296345|8017", etc.
+See \code{\link{searchGB}} for more details on creating the reference
+sequence database.}
 
-\item{model}{an optional object of class \code{"PHMM"} to form the model
-at the root node of the classification tree. Used to train (optimize
-parameters for) subsequent nested models to be positioned at successive
+\item{db}{a valid taxonomy database (as a data.frame object).
+The object should have
+four columns, labeled "taxID", "parent_taxID", "rank" and "name".
+The first two should be numeric, and all ID numbers in the
+"parent_taxID" column should link to those in the "taxID" column.
+This excludes the first row,
+which should have \code{parent_taxID = 0} and \code{"name" = "root"}.
+See \code{\link{taxonomy}} for more details.}
+
+\item{model}{an optional object of class \code{"PHMM"} providing the
+starting parameters. Used to train (optimize parameters for)
+subsequent nested models to be positioned at successive
 sub-nodes. If NULL, the root model is derived from the
 sequence list prior to the recursive partitioning process.}
 
@@ -38,7 +50,7 @@ using the argument \code{"maxiter"} (eventually passed to
 \code{\link[aphid]{train}} via the dots argument "...").}
 
 \item{nstart}{integer. The number of random starting sets to be chosen
-for initial k-means assignment of sequences to groups.}
+for initial k-means assignment of sequences to groups. Defaults to 20.}
 
 \item{minK}{integer. The minimum number of furications allowed at each inner
 node of the tree. Defaults to 2 (all inner nodes are bifuricating).}
@@ -111,37 +123,38 @@ The "insect" object type is a dendrogram
   "clade" the index of the node (see further details below);
   "sequences" the indices of the sequences in the reference
   database used to create the object;
-  "lineage" the lowest common taxon of the sequences belonging to the node;
+  "taxID" the taxonomic identifier of the lowest common taxon
+  of the sequences belonging to the node (linking to \code{"db"});
   "minscore" the lowest likelihood among the training sequences given
   the profile HMM stored at the node;
   "minlength" the minimum length of the sequences belonging to the node;
   "maxlength" the maximum length of the sequences belonging to the node;
-  "key" the hash key used for exact sequence matching
-  (bypasses the classification procedure);
   "model" the profile HMM derived from the sequence subset belonging to the node;
   "nunique" the number of unique sequences belonging to the node;
-  "ntotal" the total number of sequences belonging to the node (including duplicates).
+  "ntotal" the total number of sequences belonging to the node (including duplicates);
+  "key" the hash key used for exact sequence matching
+  (bypasses the classification procedure if an exact match is found; root node only);
+  "taxonomy" the taxonomy database containing the taxon ID numbers (root node only).
 
   The clade indexing system used here is based on character strings,
   where "0" refers to the root node,
   "01" is the first child node, "02" is the second child node,
   "011" is the first child node of the first child node, etc.
   The leading zero may be omitted for brevity.
-  Note that each node cannot have more than 9 child nodes.
+  Note that each inner node can not have more than 9 child nodes.
 }
 \examples{
 \donttest{
   data(whales)
-  ## use sequences 2-19 to learn the tree
-  ## note that training data must retain lineage attribute
-  training_data <- subset.DNAbin(whales, subset = seq_along(whales) > 1)
-  ## learn the tree
+  data(whale_taxonomy)
+  ## use sequences 2-19 to train the classifier
   set.seed(999)
-  tree <- learn(training_data, quiet = FALSE, maxiter = 5)
-  ## find predicted lineage for sequence #1
-  classify(whales[[1]], tree)
+  tree <- learn(whales[2:19], db = whale_taxonomy, maxiter = 5, cores = 2)
+  ## find predicted lineage for first sequence
+  classify(whales[1], tree)
   ## compare with actual lineage
-  attr(whales, "lineage")[1]
+  taxID <- as.integer(gsub(".+\\\\|", "", names(whales)[1]))
+  get_lineage(taxID, whale_taxonomy)
 }
 }
 \references{
