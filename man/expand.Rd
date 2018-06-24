@@ -122,6 +122,7 @@ The clade indexing system used here is based on character strings,
 \examples{
 \donttest{
   data(whales)
+  data(whale_taxonomy)
   ## split the first node
   tree <- learn(whales, db = whale_taxonomy, recursive = FALSE, quiet = FALSE)
   ## expand only the first clade

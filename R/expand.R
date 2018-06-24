@@ -30,6 +30,7 @@
 #' @examples
 #' \donttest{
 #'   data(whales)
+#'   data(whale_taxonomy)
 #'   ## split the first node
 #'   tree <- learn(whales, db = whale_taxonomy, recursive = FALSE, quiet = FALSE)
 #'   ## expand only the first clade
@@ -42,6 +43,14 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
                    recursive = TRUE, cores = 1, quiet = TRUE, ...){
   ## Establish which parts of the tree to expand
   if(mode(x) == "character") x <- char2dna(x)
+  if(!grepl("\\|", names(x)[1])){
+    stop("Names of input sequences must include taxonomic ID numbers\n")
+  }
+  taxIDs <- as.integer(gsub(".+\\|", "", names(x)))
+  lineages <- get_lineage(taxIDs, db = attr(tree, "taxonomy"),
+                          cores = cores, numbers = TRUE)
+  lineages <- vapply(lineages, paste0, "", collapse = "; ")
+  # attr(x, "lineage") <- lineages
   clades <- gsub("0", "", clades)
   if(!(identical(attr(tree, "sequences"), seq_along(x)))){
     stop("tree is incompatible with sequences\n")
@@ -90,7 +99,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   # attr(tree, "weights") <- NULL ## replaced later
   # lineages <- gsub("\\.$", "", attr(x, "lineage"))
   # lineages <- paste0(lineages, "; ", attr(x, "species"))
-  lineages <- attr(x, "lineage")
+  # lineages <- attr(x, "lineage")
   # lineages <- paste0(lineages, "; ~", attr(x, "species"), "~")
   x <- x[!duplicates]# strip attrs regardless of duplicates
   if(any(duplicates)){
