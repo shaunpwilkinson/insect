@@ -121,6 +121,21 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     names(x) <- nam
     class(x) <- "DNAbin"
   }
+  sampnames <- if(all(grepl("_", names(x)))){
+    gsub("_.+", "", names(x))
+  }else{
+    rep("sample1", length(x))
+  }
+  hashes <- unname(hash(x, cores = cores))
+  duplicates <- duplicated(hashes)
+  x <- x[!duplicates]
+  uhashes <- hashes[!duplicates]
+  indices <- split(match(hashes, uhashes), f = sampnames)
+  #hashtab <- table(hashes)
+  usm <- unique(sampnames)
+  qout <- matrix(NA_integer_, nrow = sum(!duplicates), ncol = length(usm))
+  colnames(qout) <- usm
+  for(i in seq_along(usm)) qout[, i] <- tabulate(indices[[i]], nbins = length(x))
   if(!inherits(tree, "dendrogram")) stop("Unrecognized tree format\n")
   db <- attr(tree, "taxonomy")
   if(is.null(db)) stop("tree is missing taxonomy database\n")
@@ -174,8 +189,8 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       threshold_met <- threshold <= if(decay) newcakw else newakw
       minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 4
       # 4 is approx asymtote for single bp change as n training seqs -> inf
-      minlength_met <- length(x) >= attr(tree[[best_model]], "minlength") - 1
-      maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength") + 1
+      minlength_met <- length(x) >= attr(tree[[best_model]], "minlength") - 2
+      maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength") + 2
       if(!(threshold_met & minscore_met & minlength_met & maxlength_met)) break
       path <- paste0(path, best_model)
       akw <- newakw
@@ -183,7 +198,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       tree <- tree[[best_model]]
       tax <- attr(tree, "taxID")
     }
-    score <- if(decay) cakw else akw
+    score <- round(if(decay) cakw else akw, 4)
     reason <- if(!threshold_met){
       1L
     }else if(!minscore_met){
@@ -221,11 +236,10 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   lineages <- get_lineage(res$taxID, db, cores = cores,
                           simplify = FALSE, numbers = FALSE)
   tmp <- sapply(lineages, tail, 1)
-  lhcols <- data.frame(name = names(x),
+  lhcols <- data.frame(representative = names(x),
                      taxID = res$taxID,
                      taxon = tmp,
-                     rank = names(tmp),
-                     score = round(res$score, 4))
+                     rank = names(tmp))
   if(!is.null(ranks)){
     rnkmat <- matrix(NA_character_, nrow = length(x), ncol = length(ranks))
     rnkmat <- as.data.frame(rnkmat, stringsAsFactors = FALSE)
@@ -236,7 +250,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     }
     lhcols <- cbind(lhcols, rnkmat)
   }
-  lhcols <- cbind(lhcols, res[c("path", "reason")])
+  lhcols <- cbind(lhcols, qout, res[c("score", "reason", "path")])
   rownames(lhcols) <- NULL
   return(lhcols)
 }

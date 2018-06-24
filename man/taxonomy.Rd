@@ -4,7 +4,7 @@
 \alias{taxonomy}
 \title{Download taxonomy database.}
 \usage{
-taxonomy(db = "NCBI", synonyms = FALSE, quiet = FALSE)
+taxonomy(db = "NCBI", synonyms = FALSE)
 }
 \arguments{
 \item{db}{character string specifying which taxaonomy database to download.
@@ -12,8 +12,6 @@ Currently only "NCBI" is supported.}
 
 \item{synonyms}{logical indicating whether synonyms should be included.
 Note that this increases the size of the returned object by around 10\%.}
-
-\item{quiet}{logical indicating whether progress should be printed to the console.}
 }
 \value{
 a dataframe with the following elements:

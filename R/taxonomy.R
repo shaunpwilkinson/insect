@@ -153,11 +153,10 @@ get_taxID <- function(lineage, db, multimatch = "NA"){
 #'
 #' This function downloads an up-to-date copy of the taxonomy database.
 #'
-#' @param db character string specifying which taxaonomy database to download.
+#' @param db character string specifying which taxonomy database to download.
 #'   Currently only "NCBI" is supported.
 #' @param synonyms logical indicating whether synonyms should be included.
 #'   Note that this increases the size of the returned object by around 10\%.
-#' @param quiet logical indicating whether progress should be printed to the console.
 #' @return a dataframe with the following elements:
 #'   "taxID", "parent_taxID", "rank", "name".
 #' @details
@@ -181,17 +180,17 @@ get_taxID <- function(lineage, db, multimatch = "NA"){
 #'   db <- taxonomy()
 #' }
 ################################################################################
-taxonomy <- function(db = "NCBI", synonyms = FALSE, quiet = FALSE){
+taxonomy <- function(db = "NCBI", synonyms = FALSE){
   if(!identical(db, "NCBI")){
     stop("Only the NCBI taxonomy database is available in this version\n")
   }
   tmp <- tempdir()
   fn <- "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz"
-  download.file(fn, destfile = paste0(tmp, "/tmp.tar.gz"), quiet = quiet)
-  if(!quiet) cat("Extracting data\n")
+  download.file(fn, destfile = paste0(tmp, "/tmp.tar.gz"))
+  message("Extracting data\n")
   test <- untar(tarfile = paste0(tmp, "/tmp.tar.gz"), exdir = tmp)
   if(!identical(test, 0L)) stop(cat(test))
-  if(!quiet) cat("Building data frame\n")
+  message("Building data frame\n")
   x <- scan(file = paste0(tmp, "/nodes.dmp"), what = "", sep = "\n", quiet = TRUE)
   x <- strsplit(x, split = "\t")
   x <- sapply(x, function(s) s[c(1, 3, 5)])
@@ -199,7 +198,6 @@ taxonomy <- function(db = "NCBI", synonyms = FALSE, quiet = FALSE){
   nodes[[1]] <- as.integer(nodes[[1]])
   nodes[[2]] <- as.integer(nodes[[2]])
   colnames(nodes) <- c("taxID", "parent_taxID", "rank")
-  #if(!quiet) cat("Parsing data frame\n")
   x <- scan(file = paste0(tmp, "/names.dmp"), what = "", sep = "\n", quiet = TRUE)
   if(synonyms){
     syn <- x[grepl("synonym", x)]
@@ -224,7 +222,7 @@ taxonomy <- function(db = "NCBI", synonyms = FALSE, quiet = FALSE){
     rownames(taxapp) <- NULL
     taxa <- rbind(taxa, taxapp)
   } # attr(taxa, "synonyms") <- syn
-  if(!quiet) cat("Done\n")
+  message("Done\n")
   return(taxa)
 }
 ################################################################################
