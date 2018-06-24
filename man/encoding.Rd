@@ -41,7 +41,8 @@ Profile HMMs used in tree-based classification
 \donttest{
   ## generate a simple classification tree with two child nodes
   data(whales)
-  tree <- learn(whales, recursive = FALSE, quiet = FALSE)
+  data(whale_taxonomy)
+  tree <- learn(whales, db = whale_taxonomy, recursive = FALSE, quiet = FALSE)
   ## extract the omnibus profile HMM from the root node
   PHMM0 <- decodePHMM(attr(tree, "model"))
   ## extract the profile HMM from the first child node

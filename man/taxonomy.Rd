@@ -7,7 +7,7 @@
 taxonomy(db = "NCBI", synonyms = FALSE)
 }
 \arguments{
-\item{db}{character string specifying which taxaonomy database to download.
+\item{db}{character string specifying which taxonomy database to download.
 Currently only "NCBI" is supported.}
 
 \item{synonyms}{logical indicating whether synonyms should be included.

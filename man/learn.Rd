@@ -14,7 +14,7 @@ learn(x, db, model = NULL, refine = "Viterbi", iterations = 50,
 DNA sequences to be used as the training data for the tree-learning process.
 All sequences should be from the same genetic region of interest
 and be globally alignable (i.e. without unjustified end-gaps).
-The sequnces must have "names" attributes that include
+The sequences must have "names" attributes that include
 taxonomic ID numbers corresponding with those in the taxonomy
 database \code{db} (separated from the sequence ID by a "|" character).
 For example: "AF296347|30962", "AF296346|8022", "AF296345|8017", etc.
