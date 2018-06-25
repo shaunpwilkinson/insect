@@ -10,7 +10,7 @@ This is a minor release simplifying some aspects of the workflow.
 
 ## R CMD check results
 
-There were no ERRORs or WARNING or NOTEs.
+There were no ERRORs or WARNINGs or NOTEs
 
 ## Downstream dependencies
 
