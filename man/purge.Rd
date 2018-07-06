@@ -4,8 +4,8 @@
 \alias{purge}
 \title{Identify and remove erroneous reference sequences.}
 \usage{
-purge(x, db, level = "order", threshold = 0.97, cores = 1,
-  quiet = FALSE)
+purge(x, db, level = "order", confidence = 0.8, cores = 1,
+  quiet = FALSE, ...)
 }
 \arguments{
 \item{x}{a DNAbin list object whose names include taxonomic identification numbers
@@ -19,8 +19,10 @@ see \code{\link{taxonomy}}).}
 heterogeneity within a cluster will flag a sequence as potentially erroneous.
 This should be a recognized rank within the taxonomy database.}
 
-\item{threshold}{numeric between 0 and 1 giving the OTU similarity cutoff value
-with which to cluster the sequences. Defaults to 0.97.}
+\item{confidence}{numeric, the minimum confidence value for a sequence to be purged.
+For example, if \code{confidence = 0.8} (the default value) a sequence will only be
+purged if its taxonomy differs from at least four other independent sequences
+in its cluster.}
 
 \item{cores}{integer giving the number of CPUs to parallelize the operation
 over. Defaults to 1.
@@ -36,6 +38,9 @@ of sequences to be processed, due to the extra time required to initialize
 the cluster.}
 
 \item{quiet}{logical indicating whether progress should be printed to the console.}
+
+\item{...}{further arguments to pass to \code{link[kmer]{otu}} (not including
+\code{nstart}).}
 }
 \value{
 a "DNAbin" object.
@@ -58,7 +63,8 @@ This function first clusters the sequence dataset into operational
 \examples{
   data(whales)
   data(whale_taxonomy)
-  whales <- purge(whales, db = whale_taxonomy, level = "species")
+  whales <- purge(whales, db = whale_taxonomy, level = "species",
+                  threshold = 0.97, method = "farthest")
 }
 \author{
 Shaun Wilkinson

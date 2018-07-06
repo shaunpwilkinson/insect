@@ -1,3 +1,10 @@
+# insect 1.1.0.9000
+
+Current development version
+
+* Fixed character vector format bug in writeFASTA.
+
+
 # insect 1.1.0
 
 Minor release with following improvements: 

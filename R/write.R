@@ -73,6 +73,8 @@ writeFASTA <- function(x, file = "", ...){
     }else{
       tmp <- sapply(x, paste0, collapse = "")
     }
+  }else{
+    tmp <- x
   }
   reslen <- 2 * length(tmp)
   res <- character(reslen)

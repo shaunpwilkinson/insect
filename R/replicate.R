@@ -24,7 +24,7 @@
 #' @name replicate
 ################################################################################
 dereplicate <- function(x, cores = 1){
-  hashes <- hash(x, cores = cores)
+  hashes <- hash(x)
   pointers <- .point(hashes)
   orignames <- names(x)
   x <- x[!duplicated(pointers)]

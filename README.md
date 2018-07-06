@@ -31,17 +31,17 @@ library(insect)
 To download the latest development version from GitHub, run:
 
 ```R
-devtools::install_github("shaunpwilkinson/insect") 
+devtools::install_github("shaunpwilkinson/insect", build_vignettes = TRUE) 
 library("insect")
 ```
 
 
 ### Help
 
-An overview of the package and it's functions can be found by running
+An overview of the package and its functions can be found by running
 
 ```R
-?insect
+vignette("insect-vignette")
 ```
 
 If you experience a problem using this package please feel free to

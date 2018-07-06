@@ -4,24 +4,11 @@
 \alias{hash}
 \title{Convert sequences to MD5 hashes.}
 \usage{
-hash(x, cores = 1)
+hash(x)
 }
 \arguments{
 \item{x}{a sequence or list of sequences, either in character string,
 character vector, or raw byte format (eg DNAbin or AAbin objects).}
-
-\item{cores}{integer giving the number of CPUs to parallelize the operation
-over. Defaults to 1, and reverts to 1 if \code{x} is not a list.
-This argument may alternatively be a 'cluster' object,
-in which case it is the user's responsibility to close the socket
-connection at the conclusion of the operation,
-for example by running \code{parallel::stopCluster(cores)}.
-The string 'autodetect' is also accepted, in which case the maximum
-number of cores to use is one less than the total number of cores available.
-Note that in this case there
-may be a tradeoff in terms of speed depending on the number and size
-of sequences to be processed, due to the extra time required to initialize
-the cluster.}
 }
 \value{
 a character vector.

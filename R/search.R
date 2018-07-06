@@ -86,6 +86,7 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
   }else if(!is.null(accession)){
     if(!sequences) stop("Accession numbers both provided and required\n")
     N <- length(accession)
+    if(N > 200) stop("A maximum of 200 accession numbers can be queried\n")
     URL1 <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/epost.fcgi?",
                    "db=", db,
                    "&id=", paste(accession, collapse = ","))

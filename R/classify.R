@@ -113,6 +113,7 @@
 classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      ranks = c("phylum", "class", "order", "family", "genus", "species"),
                      cores = 1){
+  if(is.null(names(x))) names(x) <- paste0("S", seq_along(x))
   if(mode(x) == "character") x <- char2dna(x, simplify = FALSE)
   if(!is.list(x)){
     if(!mode(x) == "raw") stop("Unrecognized format for x\n")
@@ -126,7 +127,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   }else{
     rep("sample1", length(x))
   }
-  hashes <- unname(hash(x, cores = cores))
+  hashes <- hash(x)
   duplicates <- duplicated(hashes)
   x <- x[!duplicates]
   uhashes <- hashes[!duplicates]

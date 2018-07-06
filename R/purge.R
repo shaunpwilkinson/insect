@@ -12,8 +12,10 @@
 #' @param level character string giving the taxonomic level at which
 #'   heterogeneity within a cluster will flag a sequence as potentially erroneous.
 #'   This should be a recognized rank within the taxonomy database.
-#' @param threshold numeric between 0 and 1 giving the OTU similarity cutoff value
-#'   with which to cluster the sequences. Defaults to 0.97.
+#' @param confidence numeric, the minimum confidence value for a sequence to be purged.
+#'   For example, if \code{confidence = 0.8} (the default value) a sequence will only be
+#'   purged if its taxonomy differs from at least four other independent sequences
+#'   in its cluster.
 #' @param cores integer giving the number of CPUs to parallelize the operation
 #'   over. Defaults to 1.
 #'   This argument may alternatively be a 'cluster' object,
@@ -27,6 +29,8 @@
 #'   of sequences to be processed, due to the extra time required to initialize
 #'   the cluster.
 #' @param quiet logical indicating whether progress should be printed to the console.
+#' @param ... further arguments to pass to \code{link[kmer]{otu}} (not including
+#'   \code{nstart}).
 #' @return a "DNAbin" object.
 #' @details This function first clusters the sequence dataset into operational
 #'   taxonomic units (OTUs) based on a given genetic similarity threshold
@@ -40,14 +44,15 @@
 #' @examples
 #'   data(whales)
 #'   data(whale_taxonomy)
-#'   whales <- purge(whales, db = whale_taxonomy, level = "species")
+#'   whales <- purge(whales, db = whale_taxonomy, level = "species",
+#'                   threshold = 0.97, method = "farthest")
 ################################################################################
-purge <- function(x, db, level = "order", threshold = 0.97, cores = 1,
-                  quiet = FALSE){
+purge <- function(x, db, level = "order", confidence = 0.8,
+                  cores = 1, quiet = FALSE, ...){
   level <- tolower(level)
   if(is.null(attr(x, "OTU"))){
     if(!quiet) cat("Clustering OTUs\n")
-    otus <- kmer::otu(x, threshold = threshold, k = 5, nstart = 20)
+    otus <- kmer::otu(x, nstart = 20, ... = ...)
   }else{
     if(!quiet) cat("Obtaining OTU membership from input object\n")
     otus <- attr(x, "OTU")
@@ -91,7 +96,7 @@ purge <- function(x, db, level = "order", threshold = 0.97, cores = 1,
   }
   names(dodgytab) <- NULL
   dodgytab <- do.call("rbind", dodgytab)
-  dodgytab <- dodgytab[dodgytab$confidence > 0.66, ]
+  dodgytab <- dodgytab[dodgytab$confidence >= confidence, ]
   if(length(dodgytab) == 0){
     if(!quiet) cat("No erroneous sequences to remove\n")
     return(x)

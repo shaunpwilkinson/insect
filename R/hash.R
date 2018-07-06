@@ -5,18 +5,6 @@
 #'
 #' @param x a sequence or list of sequences, either in character string,
 #'   character vector, or raw byte format (eg DNAbin or AAbin objects).
-#' @param cores integer giving the number of CPUs to parallelize the operation
-#'   over. Defaults to 1, and reverts to 1 if \code{x} is not a list.
-#'   This argument may alternatively be a 'cluster' object,
-#'   in which case it is the user's responsibility to close the socket
-#'   connection at the conclusion of the operation,
-#'   for example by running \code{parallel::stopCluster(cores)}.
-#'   The string 'autodetect' is also accepted, in which case the maximum
-#'   number of cores to use is one less than the total number of cores available.
-#'   Note that in this case there
-#'   may be a tradeoff in terms of speed depending on the number and size
-#'   of sequences to be processed, due to the extra time required to initialize
-#'   the cluster.
 #' @return a character vector.
 #' @details This function uses the \code{md5} function from the openSSL library
 #'   (\url{https://www.openssl.org/})
@@ -34,36 +22,28 @@
 #'  hashes <- hash(whales)
 #'  sum(duplicated(hashes))
 ################################################################################
-hash <- function(x, cores = 1){
-  if(mode(x) == "raw") x <- list(x)
-  hash1 <- function(s){
-    if(mode(s) != "raw"){
-      if(mode(s) == "character"){
-        s <- charToRaw(s)
-      }else if(mode(s) == "integer"){
-        s <-  as.raw(s)
-      }else if(mode(s) == "numeric"){
-        stop("Can't digest numeric vectors")
+hash <- function(x){
+  if(mode(x) == "raw") x <- rawToChar(x)
+  if(mode(x) == "list"){
+    if(length(x) == 0){
+      return(NULL)
+    }else{
+      if(mode(x[[1]]) == "raw"){
+        x <- vapply(x, rawToChar, "", USE.NAMES = TRUE)
+      }else if(mode(x[[1]]) == "character"){
+        x <- vapply(x, paste0, "", collapse = "", USE.NAMES = TRUE)
+      }else{
+        stop("Invalid input format\n")
       }
     }
-    return(paste(openssl::md5(as.vector(s))))
   }
-  if(inherits(cores, "cluster")){
-    res <- parallel::parSapply(cores, x, hash1)
-  }else if(cores == 1){
-    res <- sapply(x, hash1)
+  if(mode(x) == "character"){
+    nms <- names(x)
+    res <- openssl::md5(x)
+    names(res) <- nms
+    return(res)
   }else{
-    navailcores <- parallel::detectCores()
-    if(identical(cores, "autodetect")) cores <- navailcores - 1
-    if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' argument")
-    if(cores > 1){
-      cl <- parallel::makeCluster(cores)
-      res <- parallel::parSapply(cl, x, hash1)
-      parallel::stopCluster(cl)
-    }else{
-      res <- sapply(x, hash1)
-    }
+    stop("Invalid input format\n")
   }
-  return(res)
 }
 ################################################################################

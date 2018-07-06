@@ -19,7 +19,7 @@
 #'   The first two should be numeric, and all ID numbers in the
 #'   "parent_taxID" column should link to those in the "taxID" column.
 #'   This excludes the first row,
-#'   which should have \code{parent_taxID = 0} and \code{"name" = "root"}.
+#'   which should have \code{parent_taxID = 0} and \code{name = "root"}.
 #'   See \code{\link{taxonomy}} for more details.
 #' @param model an optional object of class \code{"PHMM"} providing the
 #'   starting parameters. Used to train (optimize parameters for)
@@ -169,7 +169,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   xlengths <- sapply(x, length)
   attr(tree, "minlength") <- min(xlengths)
   attr(tree, "maxlength") <- max(xlengths)
-  if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- hash(x, cores = cores)
+  if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- hash(x)
   if(is.null(attr(x, "duplicates"))) attr(x, "duplicates") <- duplicated(attr(x, "hashes"))
   if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
   if(is.null(attr(x, "weights"))){
