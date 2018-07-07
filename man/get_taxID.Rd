@@ -2,31 +2,27 @@
 % Please edit documentation in R/taxonomy.R
 \name{get_taxID}
 \alias{get_taxID}
-\title{Get taxon ID from a species name or lineage string.}
+\title{Get taxon ID from taxonomy database.}
 \usage{
-get_taxID(lineage, db, multimatch = "NA")
+get_taxID(lineage, db, multimatch = NA)
 }
 \arguments{
-\item{lineage}{A semicolon-delimited lineage string or lineage name.}
+\item{lineage}{character vector of taxon names or semicolon-delimited
+lineage strings.}
 
 \item{db}{a valid taxonomy database (as a data.frame object).
 See \code{\link{taxonomy}} for details.}
 
-\item{multimatch}{character, the value to return if the query matches multiple
-entries in the database. Accepted values are "NA" (default), and "first"
-(the first match).}
+\item{multimatch}{integer giving the value to return if the query
+matches multiple entries. Defaults to NA_integer_.}
 }
 \value{
-The unique taxon database ID (integer).
+An integer giving the unique taxon ID,
+  or NA if the taxon is not found in the database.
 }
 \description{
-This function returns the unique taxonomic ID associated with a given
-  semicolon-delimited lineage string or taxon,
-  by looking up a given taxonomy database.
-}
-\details{
-This function will return NA if the lineage is not found in the
-  database or it matches multiple entries.
+This function returns the unique ID for a specified taxon name by looking
+  up a taxonomy database.
 }
 \examples{
 data(whale_taxonomy)

@@ -90,21 +90,19 @@ get_lineage <- function(taxIDs, db, simplify = TRUE, numbers = FALSE, cores = 1)
   return(res)
 }
 ################################################################################
-#' Get taxon ID from a species name or lineage string.
+#' Get taxon ID from taxonomy database.
 #'
-#' This function returns the unique taxonomic ID associated with a given
-#'   semicolon-delimited lineage string or taxon,
-#'   by looking up a given taxonomy database.
+#' This function returns the unique ID for a specified taxon name by looking
+#'   up a taxonomy database.
 #'
-#' @param lineage A semicolon-delimited lineage string or lineage name.
+#' @param lineage character vector of taxon names or semicolon-delimited
+#'   lineage strings.
 #' @param db a valid taxonomy database (as a data.frame object).
 #'   See \code{\link{taxonomy}} for details.
-#' @param multimatch character, the value to return if the query matches multiple
-#'   entries in the database. Accepted values are "NA" (default), and "first"
-#'   (the first match).
-#' @return The unique taxon database ID (integer).
-#' @details This function will return NA if the lineage is not found in the
-#'   database or it matches multiple entries.
+#' @param multimatch integer giving the value to return if the query
+#'   matches multiple entries. Defaults to NA_integer_.
+#' @return An integer giving the unique taxon ID,
+#'   or NA if the taxon is not found in the database.
 #' @author Shaun Wilkinson
 #' @references
 #'  Federhen S (2012) The NCBI Taxonomy database.
@@ -116,37 +114,29 @@ get_lineage <- function(taxIDs, db, simplify = TRUE, numbers = FALSE, cores = 1)
 #' data(whale_taxonomy)
 #' get_taxID("Odontoceti", db = whale_taxonomy)
 ################################################################################
-get_taxID <- function(lineage, db, multimatch = "NA"){
-  if("tax_id" %in% colnames(db)){
-    colnames(db)[colnames(db) == "tax_id"] <- "taxID"
-    colnames(db)[colnames(db) == "parent_tax_id"] <- "parent_taxID"
-    ## for backwards compatibility
-  }
-  if(identical(lineage, "")) lineage <- "root"
-  linvec <- rev(strsplit(lineage, split = "; ")[[1]])
-  indices <- which(db$name == linvec[1])
-  taxids <- db$taxID[indices]
-  if(length(taxids) == 1){
-    return(taxids)
-  }else if(length(taxids) > 1){
-    if(!grepl(";", lineage)){
-      # warning(paste("Taxon name matches multiple entries in database,",
-      #            "returning first matching entry.\n",
-      #            "Tip: try entering semicolon-delimited lineage string\n"))
-      if(identical(multimatch, "NA")){
-        return(NA)
-      }else if(identical(multimatch, "first")){
-        return(taxids[1])
-      }else return(as.integer(multimatch))
-    }else{
-      tmp <- lapply(taxids, get_lineage, db = db)
-      nmatches <- sapply(tmp, function(l) sum(sapply(l, grepl, lineage)))
-      return(taxids[which.max(nmatches)])
+get_taxID <- function(lineage, db, multimatch = NA){
+  db <- db[!duplicated(db), ]
+  multimatch <- as.integer(multimatch)
+  res <- integer(length(lineage))
+  linlist <- strsplit(lineage, split = "; ")
+  spps <- vapply(linlist, tail, "", 1)
+  duplicates <- duplicated(db$name)
+  dupnames <- db$name[duplicates]
+  multimatches <- spps %in% dupnames
+  if(any(multimatches)){
+    db2 <- prune_taxonomy(db, taxIDs = unique(db$taxID[db$name %in% spps[multimatches]]))
+    gtid_slow <- function(x, db2, multimatch){ # x is a character vector
+      indices <- which(db2$name == tail(x, 1)) # should be length >= 2 vector
+      candidates <- get_lineage(db2$taxID[indices], db2, simplify = FALSE) # length 2 list
+      candidates <- vapply(candidates, function(cdd, x) all(x %in% cdd), logical(1), x)
+      return(if(sum(candidates) == 1) db2$taxID[indices[candidates]] else multimatch)
     }
+    res[multimatches] <- vapply(linlist[multimatches], gtid_slow, 0L, db2, multimatch)
+    res[!multimatches] <- db$taxID[match(spps[!multimatches], db$name)]
   }else{
-    #warning("Not found in database\n"))
-    return(NA)
+    res <- db$taxID[match(spps, db$name)]
   }
+  return(res)
 }
 ################################################################################
 #' Download taxonomy database.
