@@ -115,6 +115,8 @@ get_lineage <- function(taxIDs, db, simplify = TRUE, numbers = FALSE, cores = 1)
 #' get_taxID("Odontoceti", db = whale_taxonomy)
 ################################################################################
 get_taxID <- function(lineage, db, multimatch = NA){
+  pointers <- .point(lineage)
+  lineage <- lineage[!duplicated(pointers)]
   db <- db[!duplicated(db), ]
   multimatch <- as.integer(multimatch)
   res <- integer(length(lineage))
@@ -136,6 +138,7 @@ get_taxID <- function(lineage, db, multimatch = NA){
   }else{
     res <- db$taxID[match(spps, db$name)]
   }
+  res <- res[pointers]
   return(res)
 }
 ################################################################################
