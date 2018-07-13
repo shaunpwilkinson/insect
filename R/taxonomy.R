@@ -41,6 +41,10 @@
 #' get_lineage(taxIDs, db = whale_taxonomy)
 ################################################################################
 get_lineage <- function(taxIDs, db, simplify = TRUE, numbers = FALSE, cores = 1){
+  db$rank <- as.character(db$rank)
+  db$name <- as.character(db$name) # avoid stringsasfactor issues
+  pointers <- .point(paste(taxIDs))
+  taxIDs <- taxIDs[!duplicated(pointers)]
   if("tax_id" %in% colnames(db)){
     colnames(db)[colnames(db) == "tax_id"] <- "taxID"
     colnames(db)[colnames(db) == "parent_tax_id"] <- "parent_taxID"
@@ -86,6 +90,7 @@ get_lineage <- function(taxIDs, db, simplify = TRUE, numbers = FALSE, cores = 1)
       res <- lapply(taxIDs, gl1, db)
     }
   }
+  res <- res[pointers]
   if(length(res) == 1 & simplify) res <- res[[1]]
   return(res)
 }

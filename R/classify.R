@@ -117,7 +117,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   if(mode(x) == "character") x <- char2dna(x, simplify = FALSE)
   if(!is.list(x)){
     if(!mode(x) == "raw") stop("Unrecognized format for x\n")
-    nam <- deparse(substitute(x))
+    nam <- "S1"# deparse(substitute(x))
     x <- list(x)
     names(x) <- nam
     class(x) <- "DNAbin"
