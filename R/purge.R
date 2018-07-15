@@ -97,7 +97,7 @@ purge <- function(x, db, level = "order", confidence = 0.8,
   names(dodgytab) <- NULL
   dodgytab <- do.call("rbind", dodgytab)
   dodgytab <- dodgytab[dodgytab$confidence >= confidence, ]
-  if(length(dodgytab) == 0){
+  if(nrow(dodgytab) == 0){
     if(!quiet) cat("No erroneous sequences to remove\n")
     return(x)
   }
