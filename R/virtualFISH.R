@@ -68,6 +68,8 @@ virtualFISH <- function(x, probe, minscore = 100, minamplen = 50,
                         maxamplen = 500, up = NULL, down = NULL, rcdown = TRUE,
                         minfsc = 60, minrsc = 60, maxNs = 0.02, cores = 1,
                         quiet = FALSE){
+  ischar <- mode(x) == "character"
+  if(ischar) x <- char2dna(x)
   if(!is.null(up)){
     if(!inherits(up, "DNAbin")){
       if(mode(up) == "character"){
@@ -177,6 +179,7 @@ virtualFISH <- function(x, probe, minscore = 100, minamplen = 50,
   discards <- sapply(x, function(s) sum(s == 0xf0)/length(s)) > maxNs
   x <- subset.DNAbin(x, subset = !discards)
   if(!quiet) cat(length(x), "sequences retained after applying ambiguity filter\n")
+  if(ischar) x <- dna2char(x)
   if(!quiet) cat("Done\n")
   return(x)
 }

@@ -61,7 +61,8 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
                        minfsc = 50, minrsc = 50, minamplen = 50,
                        maxamplen = 2000, maxNs = 0.02, partialbind = TRUE, cores = 1,
                        quiet = FALSE){
-  if(mode(x) == "character") x <- char2dna(x)
+  ischar <- mode(x) == "character"
+  if(ischar) x <- char2dna(x)
   if(mode(up) == "character"){
     up <- char2dna(up)[[1]]
     if(!is.null(down)) down <- char2dna(down)[[1]]
@@ -189,6 +190,7 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
   discards <- sapply(x, function(s) sum(s == 0xf0)/length(s)) > maxNs
   x <- subset.DNAbin(x, subset = !discards)
   if(!quiet) cat(length(x), "sequences retained after applying ambiguity filter\n")
+  if(ischar) x <- dna2char(x)
   if(!quiet) cat("Done\n")
   return(x)
 }
