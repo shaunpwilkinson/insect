@@ -241,7 +241,8 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   lhcols <- data.frame(representative = names(x),
                      taxID = res$taxID,
                      taxon = tmp,
-                     rank = names(tmp))
+                     rank = names(tmp),
+                     stringsAsFactors = FALSE)
   if(!is.null(ranks)){
     rnkmat <- matrix(NA_character_, nrow = length(x), ncol = length(ranks))
     rnkmat <- as.data.frame(rnkmat, stringsAsFactors = FALSE)
@@ -253,6 +254,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     lhcols <- cbind(lhcols, rnkmat)
   }
   lhcols <- cbind(lhcols, qout, res[c("score", "reason", "path")])
+  lhcols$path <- as.character(lhcols$path)
   rownames(lhcols) <- NULL
   return(lhcols)
 }
