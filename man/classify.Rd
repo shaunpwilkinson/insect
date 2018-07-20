@@ -110,9 +110,9 @@ This function requires a pre-computed classification tree
 \donttest{
   data(whales)
   data(whale_taxonomy)
-  ## use sequences 2-19 to train the classifier
+  ## use all sequences except first one to train the classifier
   set.seed(999)
-  tree <- learn(whales[2:19], db = whale_taxonomy, maxiter = 5, cores = 2)
+  tree <- learn(whales[-1], db = whale_taxonomy, maxiter = 5, cores = 2)
   ## find predicted lineage for first sequence
   classify(whales[1], tree)
   ## compare with actual lineage
