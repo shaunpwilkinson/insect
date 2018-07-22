@@ -1,8 +1,11 @@
-# insect 1.1.0.9000
+# insect 1.1.1
 
-Current development version
+Patch release addressing a bug in `classify` causing rearrangement
+of columns in the output table. Thanks to Rachel Wade for the report.
 
-* Fixed character vector format bug in writeFASTA.
+Also, the `classify` function no longer returns factors in the output 
+table.
+
 
 
 # insect 1.1.0
