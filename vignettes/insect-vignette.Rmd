@@ -464,8 +464,8 @@ procedure; e.g. *Terpios gelatinosus* above), are assigned a score of
 `NA`. For a more succinct output we can aggregate the table to show one
 row for each unique taxon as follows:
 
-    taxa <- aggregate(longDF[3:10], longDF["taxID"], head, 1)
-    counts <- aggregate(longDF[seq(11, ncol(longDF) - 3)], longDF["taxID"], sum)
+    taxa <- aggregate(longDF[3:11], longDF["taxID"], head, 1)
+    counts <- aggregate(longDF[seq(12, ncol(longDF) - 3)], longDF["taxID"], sum)
     shortDF <- merge(taxa, counts, by = "taxID")
 
 <!-- note newlines needed between html tags and code chunk -->
