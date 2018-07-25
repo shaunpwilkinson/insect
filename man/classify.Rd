@@ -5,8 +5,8 @@
 \title{Tree-based sequence classification.}
 \usage{
 classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
-  ranks = c("phylum", "class", "order", "family", "genus", "species"),
-  cores = 1)
+  ranks = c("kingdom", "phylum", "class", "order", "family", "genus",
+  "species"), cores = 1)
 }
 \arguments{
 \item{x}{a DNA sequence or set of sequences. Can be a
