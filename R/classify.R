@@ -111,7 +111,8 @@
 #' }
 ################################################################################
 classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
-                     ranks = c("phylum", "class", "order", "family", "genus", "species"),
+                     ranks = c("kingdom", "phylum", "class", "order",
+                               "family", "genus", "species"),
                      cores = 1){
   if(is.null(names(x))) names(x) <- paste0("S", seq_along(x))
   if(mode(x) == "character") x <- char2dna(x, simplify = FALSE)
