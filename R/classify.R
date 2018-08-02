@@ -175,7 +175,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     path <- ""
     akw <- 1
     cakw <- 1
-    tax <- 0L # lineage above the root node
+    tax <- 1L # root (cant use 0L due to get_lineage call below)
     while(is.list(tree)){
       no_mods <- length(tree)
       sc <- numeric(no_mods) # scores (log probabilities)
