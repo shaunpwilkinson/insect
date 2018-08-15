@@ -10,14 +10,16 @@
 \alias{subset.AAbin}
 \title{Further bit-level manipulation of DNA and amino acid sequences.}
 \usage{
-\method{duplicated}{DNAbin}(x, incomparables = FALSE, pointers = TRUE, ...)
+\method{duplicated}{DNAbin}(x, incomparables = FALSE, pointers = TRUE,
+  ...)
 
 \method{unique}{DNAbin}(x, incomparables = FALSE, attrs = TRUE,
   drop = FALSE, ...)
 
 \method{subset}{DNAbin}(x, subset, attrs = TRUE, drop = FALSE, ...)
 
-\method{duplicated}{AAbin}(x, incomparables = FALSE, pointers = TRUE, ...)
+\method{duplicated}{AAbin}(x, incomparables = FALSE, pointers = TRUE,
+  ...)
 
 \method{unique}{AAbin}(x, incomparables = FALSE, attrs = TRUE,
   drop = FALSE, ...)

@@ -4,9 +4,9 @@
 \alias{searchGB}
 \title{Query the NCBI GenBank database.}
 \usage{
-searchGB(query = NULL, accession = NULL, sequences = TRUE, bin = TRUE,
-  db = "nucleotide", taxIDs = TRUE, prompt = TRUE, contact = NULL,
-  quiet = FALSE)
+searchGB(query = NULL, accession = NULL, sequences = TRUE,
+  bin = TRUE, db = "nucleotide", taxIDs = TRUE, prompt = TRUE,
+  contact = NULL, quiet = FALSE)
 }
 \arguments{
 \item{query}{an Entrez search query. For help compiling Entrez queries see

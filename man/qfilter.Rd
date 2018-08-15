@@ -4,8 +4,8 @@
 \alias{qfilter}
 \title{Quality filtering for amplicon sequences.}
 \usage{
-qfilter(x, minqual = 30, maxambigs = 0, mincount = 2, minlength = 50,
-  maxlength = 500)
+qfilter(x, minqual = 30, maxambigs = 0, mincount = 2,
+  minlength = 50, maxlength = 500)
 }
 \arguments{
 \item{x}{a vector of concatenated strings representing DNA sequences

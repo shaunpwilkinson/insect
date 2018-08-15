@@ -112,7 +112,8 @@
     if(!quiet) cat("Training parent model\n")
     model <- aphid::train(model, x, method = refine, seqweights = seqweights,
                           cores = cores, quiet = quiet, inserts = "inherited",
-                          alignment = TRUE, ... = ...)
+                          alignment = sum(model$inserts)/length(model$inserts) < 0.5,
+                          ... = ...)
   }
   res[["model0"]] <- model
   for(j in 1:K) res[[pnms[j]]] <- model
@@ -128,20 +129,18 @@
     #if(mcn < 4) mcn <- 4
     for(j in 1:K){
       # if(!quiet) cat("Calculating sequence weights given child model", j, "\n")
+      # scale so that weights reflect smallest clade size
       seqweightsj <- seqweights[membership == j]
       seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
       seqweightsj <- seqweightsj * mcn/seq_numbers[j]
-      # scale so that weights reflect smallest clade size
-      #seqweights <- weight(x[membership == j]) * mcn/seq_numbers[j]
       if(!quiet) cat("Training child model", j, "\n")
-      # res[[pnms[j]]] <- aphid::train(res[[pnms[j]]], x[membership == j], #model
-      #                         method = refine, seqweights = seqweightsj,
-      #                         inserts = if(refine == "Viterbi") "inherited" else "map",
-      #                         ... = ...)
+      ins <- if(finetune) res[[pnms[j]]]$inserts else model$inserts
+      if(is.null(ins)) ins <- TRUE # top level only
       modelj <- aphid::train(if(finetune) res[[pnms[j]]] else model,
                              x[membership == j], #model
                              method = refine, seqweights = seqweightsj,
-                             inserts = "inherited", alignment = TRUE,
+                             inserts = "inherited",
+                             alignment = sum(ins)/length(ins) < 0.5,
                              cores = cores, quiet = quiet, ... = ...)
       modelj$weights <- NULL
       modelj$mask <- NULL

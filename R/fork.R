@@ -57,10 +57,14 @@
       mod <- attr(node, "model")
       ## usually models will not be encoded here
       ## grab a copy of the model and encode the one at the node
-      if(mode(mod) == "raw") mod <- decodePHMM(mod) else attr(node, "model") <- encodePHMM(attr(node, "model"))
+      if(mode(mod) == "raw"){
+        mod <- decodePHMM(mod)
+      }else{
+        attr(node, "model") <- encodePHMM(attr(node, "model"))
+      }
       # attr(node, "model")$alignment <- NULL ## save on memory
       ins <- mod$inserts
-      toosparse <- if(is.null(ins)) FALSE else sum(ins)/length(ins) > 0.5
+      toosparse <- if(is.null(ins)) FALSE else sum(ins)/length(ins) >= 0.5
       if(resize & toosparse & !quiet) cat("Skipping resize step\n")
       if(resize & attr(node, "clade") != "" & !toosparse){
         ## don't need to retrain top level model

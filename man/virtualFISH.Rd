@@ -4,9 +4,10 @@
 \alias{virtualFISH}
 \title{Virtual \emph{in situ} hybridization.}
 \usage{
-virtualFISH(x, probe, minscore = 100, minamplen = 50, maxamplen = 500,
-  up = NULL, down = NULL, rcdown = TRUE, minfsc = 60, minrsc = 60,
-  maxNs = 0.02, cores = 1, quiet = FALSE)
+virtualFISH(x, probe, minscore = 100, minamplen = 50,
+  maxamplen = 500, up = NULL, down = NULL, rcdown = TRUE,
+  minfsc = 60, minrsc = 60, maxNs = 0.02, cores = 1,
+  quiet = FALSE)
 }
 \arguments{
 \item{x}{a list of DNA sequences in \code{DNAbin} format.}
