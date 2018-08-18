@@ -26,7 +26,8 @@
     }else stop("Invalid seqweights argument")
     if(is.null(kmers)){# generally will be NULL due to large size
       if(!quiet) cat("\nCounting kmers\n")
-      kmers <- kmer::kcount(x[indices], k = 5)
+      dots <- list(...)
+      kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
     }else{
       if(nrow(kmers) == length(x)) kmers <- kmers[indices, ]
     }
