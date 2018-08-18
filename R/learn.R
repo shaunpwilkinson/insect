@@ -148,6 +148,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
                   retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
                   recursive = TRUE, cores = 1, quiet = TRUE, ...){
   if(mode(x) == "character") x <- char2dna(x)
+  if(!quiet) cat("Converting taxon IDs to full lineage strings\n")
   if(!grepl("\\|", names(x)[1])){
     stop("Names of input sequences must include taxonomic ID numbers\n")
   }
@@ -155,6 +156,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   lineages <- get_lineage(taxIDs, db = db, cores = cores, numbers = TRUE)
   attr(x, "lineage") <- vapply(lineages, paste0, "", collapse = "; ")
   ## Initialize the tree as a dendrogram object
+  if(!quiet) cat("Initializing tree object\n")
   tree <- 1
   attr(tree, "leaf") <- TRUE
   attr(tree, "height") <- 0
@@ -176,6 +178,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
     if(!quiet) cat("Deriving sequence weights\n")
     attr(x, "weights") <- aphid::weight(x, k = 5)
   }
+  if(!quiet) cat("Making hash key for exact sequence matching\n")
   ancestors <- character(max(attr(x, "pointers")))
   names(ancestors) <- attr(x, "hashes")[!attr(x, "duplicates")]
   for(i in seq_along(ancestors)){
@@ -193,17 +196,23 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
     if(length(xu) > 1000){
       # progressive model training to avoid excessive memory usage
       samp <- sample(seq_along(xu), size = 1000)
-      model <- aphid::derivePHMM(xu[samp], refine = refine,
-                                 seqweights = xuw[samp], maxsize = maxsize,
-                                 inserts = "inherited", alignment = FALSE,
-                                 quiet = TRUE, cores = cores, maxiter = 20)
-      model <- aphid::train(model, xu, method = refine, seqweights = xuw,
-                            inserts = "inherited", alignment = FALSE,
-                            cores = cores, quiet = TRUE, maxiter = 20)
+      suppressWarnings(
+        model <- aphid::derivePHMM(xu[samp], refine = refine,
+                                   seqweights = xuw[samp], maxsize = maxsize,
+                                   inserts = "inherited", alignment = FALSE,
+                                   quiet = TRUE, cores = cores, maxiter = 20)
+      )
+      suppressWarnings(
+        model <- aphid::train(model, xu, method = refine, seqweights = xuw,
+                              inserts = "inherited", alignment = FALSE,
+                              cores = cores, quiet = TRUE, maxiter = 20)
+      )
     }else{
-      model <- aphid::derivePHMM(xu, refine = refine, seqweights = xuw,
-                                 inserts = "inherited", alignment = FALSE,
-                                 quiet = TRUE, cores = cores, maxiter = 20)
+      suppressWarnings(
+        model <- aphid::derivePHMM(xu, refine = refine, seqweights = xuw,
+                                   inserts = "inherited", alignment = FALSE,
+                                   quiet = TRUE, cores = cores, maxiter = 20)
+      )
     }
     ## strip memory intensive elements but not alignment yet
     model$weights <- NULL

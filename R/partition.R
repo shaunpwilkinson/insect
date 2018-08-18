@@ -103,12 +103,6 @@
     nseeds <- length(seeds)
     seedmat <- matrix(unlist(x[seeds], use.names = FALSE), nrow = nseeds, byrow = TRUE)
     model <- aphid::derivePHMM.default(seedmat, seqweights = seqweights[seeds])
-    # nseeds <- ceiling(log(nseq, 2)^2)
-    # seeds <- sample(1:nseq, size = nseeds)
-    # model <- aphid::derivePHMM.list(x, refine = "none", seeds = seeds,
-    #                                 seqweights = seqweights)
-    ## just a progressive multiple alignment of seed seqs only
-    ## now train the model
     if(!quiet) cat("Training parent model\n")
     model <- aphid::train(model, x, method = refine, seqweights = seqweights,
                           cores = cores, quiet = quiet, inserts = "inherited",
@@ -136,12 +130,14 @@
       if(!quiet) cat("Training child model", j, "\n")
       ins <- if(finetune) res[[pnms[j]]]$inserts else model$inserts
       if(is.null(ins)) ins <- TRUE # top level only
-      modelj <- aphid::train(if(finetune) res[[pnms[j]]] else model,
-                             x[membership == j], #model
-                             method = refine, seqweights = seqweightsj,
-                             inserts = "inherited",
-                             alignment = sum(ins)/length(ins) < 0.5,
-                             cores = cores, quiet = quiet, ... = ...)
+      suppressWarnings(
+        modelj <- aphid::train(if(finetune) res[[pnms[j]]] else model,
+                               x[membership == j], #model
+                               method = refine, seqweights = seqweightsj,
+                               inserts = "inherited",
+                               alignment = sum(ins)/length(ins) < 0.5,
+                               cores = cores, quiet = quiet, ... = ...)
+      )
       modelj$weights <- NULL
       modelj$mask <- NULL
       modelj$map <- NULL
