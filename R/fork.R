@@ -24,14 +24,20 @@
       seqweights <- seqweights[indices]
       seqweights <- seqweights/mean(seqweights) ##scale weights to average 1
     }else stop("Invalid seqweights argument")
-    if(is.null(kmers)){# generally will be NULL due to large size
-      if(!quiet) cat("\nCounting kmers\n")
-      dots <- list(...)
-      kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
-    }else{
+
+    # if(is.null(kmers)){# generally will be NULL due to large size
+    #   if(!quiet) cat("\nCounting kmers\n")
+    #   dots <- list(...)
+    #   kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
+    # }else{
+    #   if(nrow(kmers) == length(x)) kmers <- kmers[indices, ]
+    # }
+
+    if(!is.null(kmers)) {
       if(nrow(kmers) == length(x)) kmers <- kmers[indices, ]
+      stopifnot(nrow(kmers) == length(indices))
     }
-    stopifnot(nrow(kmers) == length(indices))
+
     ## set up multithread
     if(inherits(cores, "cluster") | identical(cores, 1)){
       stopclustr <- FALSE

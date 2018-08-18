@@ -146,12 +146,15 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   ## otherwise uses excessive memory (since this matrix can be > 1GB)
   # kmers <- attr(tree, "kmers")
   #if(is.null(kmers)) kmers <- kmer::mbed(x)
-  if(ncores == 1){
-    if(!quiet) cat("Counting k-mers\n")
-    kmers <- kmer::kcount(x, k = 5)/(sapply(x, length) - 4) #k - 1 = 4
-  # }else if(has_duplicates & nrow(kmers) == nseq & ncores = 1){
-  #   kmers <- kmers[!duplicates, ]
-  }else kmers <- NULL
+
+
+  # if(ncores == 1){
+  #   if(!quiet) cat("Counting k-mers\n")
+  #   kmers <- kmer::kcount(x, k = 5)/(sapply(x, length) - 4) #k - 1 = 4
+  # }else kmers <- NULL
+
+  kmers <- NULL
+
   # attr(tree, "kmers") <- NULL ## replaced later
   ## prev line commented to prevent k-mer stripping
   ### recursively split nodes

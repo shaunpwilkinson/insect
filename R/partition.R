@@ -30,8 +30,11 @@
   }else if(identical(allocation, "cluster") | identical(allocation, "split")){
     if(!quiet) cat("Clustering sequences into", K, "groups\n")
     if(is.null(kmers)){
-      if(!quiet) cat("Counting k-mers\n")
-      kmers <- kmer::kcount(x, k = 5)
+      # if(!quiet) cat("Counting k-mers\n")
+      # kmers <- kmer::kcount(x, k = 5)
+      if(!quiet) cat("Counting kmers\n")
+      dots <- list(...)
+      kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
     }
     if(!quiet) cat("Assigning sequences to groups ")
     if(identical(allocation, "split")){
@@ -43,7 +46,7 @@
         hfac <- factor(hashes)
         infocol <- match(levels(hfac)[which.max(tabulate(hfac))], hashes)
         tmp <- kmers[, infocols][, infocol]
-        tmp <- unname(tmp == tmp[1]) + 1 ## converts from logical to integer
+        tmp <- unname(tmp == tmp[1]) + 1L ## converts from logical to integer
       }else{
         allocation <- "cluster"
       }
@@ -54,6 +57,7 @@
       tmp <- tryCatch(kmeans(kmers, centers = K, nstart = nstart)$cluster,
                       error = function(er) sample(rep(1:K, nseq)[1:nseq]),
                       warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))
+      kmers <- NULL ### free up memory
     }
   }else{
     if(length(allocation) != nseq) stop("Invalid argument given for 'allocation'")
