@@ -147,6 +147,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
                   nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
                   retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
                   recursive = TRUE, cores = 1, quiet = TRUE, ...){
+  if(!quiet) cat("Training classifier\n")
   if(mode(x) == "character") x <- char2dna(x)
   if(!quiet) cat("Converting taxon IDs to full lineage strings\n")
   if(!grepl("\\|", names(x)[1])){
