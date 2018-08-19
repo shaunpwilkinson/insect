@@ -178,6 +178,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
     if(!quiet) cat("Deriving sequence weights\n")
     attr(x, "weights") <- aphid::weight(x, k = 5)
   }
+
   if(!quiet) cat("Making hash key for exact sequence matching\n")
   ancestors <- character(max(attr(x, "pointers")))
   names(ancestors) <- attr(x, "hashes")[!attr(x, "duplicates")]
@@ -188,6 +189,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   ancestors <- as.integer(gsub(".+; ", "", ancestors))
   names(ancestors) <- tmpnames
   attr(tree, "key") <- ancestors# for exact matching
+
   if(is.null(model)){
     if(!quiet) cat("Dereplicating sequences\n")
     xu <- x[!attr(x, "duplicates")]

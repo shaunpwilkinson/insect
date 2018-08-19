@@ -34,7 +34,7 @@
       # kmers <- kmer::kcount(x, k = 5)
       if(!quiet) cat("Counting kmers\n")
       dots <- list(...)
-      kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
+      kmers <- kmer::kcount(x, k = if(!is.null(dots$k)) dots$k else 5)
     }
     if(!quiet) cat("Assigning sequences to groups ")
     if(identical(allocation, "split")){
