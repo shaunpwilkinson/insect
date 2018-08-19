@@ -50,6 +50,7 @@
 #' @noRd
 .ancestor <- function(lineages){
   # input and output both semicolon-delimited character string(s)
+  if(length(lineages) == 1) return(lineages)
   if(all(lineages == lineages[1])) return(lineages[1])
   # lineages <- gsub("\\.$", "", lineages)
   splitfun <- function(s) strsplit(s, split = "; ")[[1]]

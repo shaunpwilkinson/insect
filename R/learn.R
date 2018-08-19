@@ -176,19 +176,18 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
   if(is.null(attr(x, "weights"))){
     if(!quiet) cat("Deriving sequence weights\n")
-    attr(x, "weights") <- aphid::weight(x, k = 5)
+    dots <- list(...)
+    attr(x, "weights") <- aphid::weight(x, k = if(is.null(dots$k)) 5 else dots$k)
   }
 
   if(!quiet) cat("Making hash key for exact sequence matching\n")
-  ancestors <- character(max(attr(x, "pointers")))
-  names(ancestors) <- attr(x, "hashes")[!attr(x, "duplicates")]
-  for(i in seq_along(ancestors)){
-    ancestors[i] <- .ancestor(attr(x, "lineage")[attr(x, "hashes") == names(ancestors)[i]])
-  }
+  ancestors <- split(attr(x, "lineage"), f = attr(x, "hashes"))
+  anclens <- vapply(ancestors, length, 0L, USE.NAMES = FALSE)
+  ancestors[anclens > 1] <- lapply(ancestors[anclens > 1], insect:::.ancestor)
   tmpnames <- names(ancestors)
   ancestors <- as.integer(gsub(".+; ", "", ancestors))
   names(ancestors) <- tmpnames
-  attr(tree, "key") <- ancestors# for exact matching
+  attr(tree, "key") <- ancestors # for exact matching
 
   if(is.null(model)){
     if(!quiet) cat("Dereplicating sequences\n")

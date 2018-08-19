@@ -150,7 +150,9 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
 
   # if(ncores == 1){
   #   if(!quiet) cat("Counting k-mers\n")
-  #   kmers <- kmer::kcount(x, k = 5)/(sapply(x, length) - 4) #k - 1 = 4
+  #   dots <- list(...)
+  #   kmers <- kmer::kcount(x, k = if(is.null(dots$k)) 5 else dots$k)
+  #   kmers <- kmers/(sapply(x, length) - 4) #k - 1 = 4
   # }else kmers <- NULL
 
   kmers <- NULL
