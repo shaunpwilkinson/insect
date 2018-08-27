@@ -24,14 +24,14 @@
       seqweights <- seqweights[indices]
       seqweights <- seqweights/mean(seqweights) ##scale weights to average 1
     }else stop("Invalid seqweights argument")
-
-    # if(is.null(kmers)){# generally will be NULL due to large size
-    #   if(!quiet) cat("\nCounting kmers\n")
-    #   dots <- list(...)
-    #   kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
-    # }else{
-    #   if(nrow(kmers) == length(x)) kmers <- kmers[indices, ]
-    # }
+    ## uncommented following 20180828 due to fail at retry line 128
+    if(is.null(kmers)){# generally will be NULL due to large size
+      if(!quiet) cat("\nCounting kmers\n")
+      dots <- list(...)
+      kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
+    }else{
+      if(nrow(kmers) == length(x)) kmers <- kmers[indices, ]
+    }
 
     if(!is.null(kmers)) {
       if(nrow(kmers) == length(x)) kmers <- kmers[indices, ]

@@ -29,7 +29,7 @@
 #'   of sequences to be processed, due to the extra time required to initialize
 #'   the cluster.
 #' @param quiet logical indicating whether progress should be printed to the console.
-#' @param ... further arguments to pass to \code{link[kmer]{otu}} (not including
+#' @param ... further arguments to pass to \code{\link[kmer]{otu}} (not including
 #'   \code{nstart}).
 #' @return a "DNAbin" object.
 #' @details This function first clusters the sequence dataset into operational
