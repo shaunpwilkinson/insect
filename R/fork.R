@@ -71,7 +71,7 @@
       }
       # attr(node, "model")$alignment <- NULL ## save on memory
       ins <- mod$inserts
-      toosparse <- if(is.null(ins)) FALSE else sum(ins)/length(ins) >= 0.5
+      toosparse <- if(is.null(ins)) TRUE else sum(ins)/length(ins) >= 0.5
       if(resize & toosparse & !quiet) cat("Skipping resize step\n")
       if(resize & attr(node, "clade") != "" & !toosparse){
         ## don't need to retrain top level model

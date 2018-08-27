@@ -39,7 +39,7 @@ the cluster.}
 
 \item{quiet}{logical indicating whether progress should be printed to the console.}
 
-\item{...}{further arguments to pass to \code{link[kmer]{otu}} (not including
+\item{...}{further arguments to pass to \code{\link[kmer]{otu}} (not including
 \code{nstart}).}
 }
 \value{
