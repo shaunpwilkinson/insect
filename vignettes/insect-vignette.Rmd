@@ -17,38 +17,43 @@ vignette: >
 Introduction
 ------------
 
-Welcome to the **insect** R package, a pipeline for analyzing next
+Welcome to the **insect** R package, a pipeline for classifying next
 generation sequencing (NGS) amplicon libraries with **in**formatic
 **se**quence **c**lassification **t**rees. The pipeline employs a
-machine-learning approach that uses a set of *training* sequences from
-GenBank, BOLD and other databases to *learn* a classification tree,
-which is then used to assign taxonomic IDs to a set of *query* sequences
-generated from an NGS platform such as Illumina MiSeq. The package also
-includes a suite of functions for FASTQ/FASTA sequence parsing,
-de-multiplexing, paired-end read stitching, primer trimming, quality
-filtering, de-replication, re-replication, etc. The functions are
-designed for use with multiple processors, but smaller datasets can be
-run on standard personal computers if time is available. While not a
-prerequisite, **insect** is designed to be used in conjunction with the
-**ape** package (Paradis *et al.*, 2004; Paradis, 2012), which features
-a memory-efficient binary format for DNA (the "DNAbin" object type)
-among many other useful functions. The **insect** package can be used to
-process environmental DNA (eDNA) meta-barcode libraries as well as
-single-source NGS/Sanger amplicon sequences.
+machine-learning approach that uses a set of *training* sequences
+obtained from GenBank, BOLD and other sources to *learn* a
+classification tree, which is then used to assign taxonomic IDs to a set
+of *query* sequences (e.g. generated from an NGS platform such as
+Illumina MiSeq). The package also includes a suite of functions for
+FASTQ/FASTA sequence parsing, de-multiplexing, paired-end read
+stitching, primer trimming, quality filtering, de-replication,
+re-replication, etc. Most of the functions contained within the
+**insect** package are generally better suited to run on multiple
+processors; however, smaller datasets can be run on standard personal
+computers if time is available. While not a prerequisite, **insect** is
+designed to be used in conjunction with the **ape** package (Paradis *et
+al.*, 2004; Paradis, 2012), which features a memory-efficient binary
+format for DNA (the "DNAbin" object type), and the **dada2** package
+(Callahan *et al.*, 2016) which contains essential functions for
+de-noising high-throughput sequencing data and other important
+processing steps.
+
+The **insect** package can be used to analyze environmental DNA (eDNA)
+meta-barcode libraries as well as single-source NGS/Sanger amplicon
+sequences.
 
 The most time-consuming and memory-intensive stage of the **insect**
-work-flow generally involves training the DNA classifier. For example,
-the COI classifier used in this tutorial, which was built from a
-training dataset consisting of 150,000 unique ~310 bp COI barcode
-sequences, took around three days to run on 24 cores and used around 40
-GB of memory. The **insect** classification trees are amplicon specific,
-so a unique tree is generally required for each primer set. However,
-trees are already available for some of the more commonly used barcoding
-primers
+work-flow generally involves training a DNA classifier. For example, the
+COI classifier used in this tutorial, which was built from a training
+dataset consisting of 150,000 unique ~310 bp COI barcode sequences, took
+around three days to run on 24 CPUs and used around 40 GB of memory. The
+**insect** classification trees are amplicon specific, so a unique tree
+is generally required for each primer set. However, trees are already
+available for some of the more commonly used barcoding primers
 [here](https://www.dropbox.com/sh/0n4a1xsgzzj39el/AADNDDMP5QVj0PmbuEOflZJXa?dl=0).
 The package also includes functions and instructions for downloading and
 filtering training data (including a "virtual PCR" tool and a taxonomic
-quality filter), building the taxonomy database and training the
+quality filter), building the taxonomy database, and training the
 classifier; however, these methods are beyond the scope of this
 introductory tutorial. New classification trees and updates are
 frequently added to the collection, so please feel free to suggest a
@@ -74,7 +79,7 @@ Once the classifier tree has been trained, query sequences obtained from
 the specified primer set can be analysed to assign taxonomic IDs along
 with confidence values. The classification algorithm works as follows:
 starting from the root node of the classification tree, the *likelihood*
-of the query sequence (the log-probability of the sequence given a
+of the query sequence (the full probability of the sequence given a
 particular model) is computed for each of the models at the child nodes
 using the forward algorithm (see Durbin et al. (1998)). The competing
 likelihood values are then compared by computing their Akaike weights
@@ -88,14 +93,14 @@ either an inconclusive result is returned from the model comparison test
 (i.e. the Akaike weight is lower than a pre-defined threshold, usually
 0.9), or a terminal leaf node is reached, at which point a species-level
 ID is generally returned. The `classify` function outputs the taxon
-name, rank and serial number (or NCBI taxon ID, WORMS aphia ID, or other
+name, rank and ID number (i.e. NCBI taxon ID, WORMS aphia ID, or other
 identifier depending on the taxonomy database used in the training
 step), along with the Akaike weight of the model at the final node. Note
 that the default behavior is for the Akaike weight to 'decay' as it
 moves down the tree, by computing the cumulative product of all
 preceding Akaike weight values. This is perhaps an overly conservative
-approach, but it minimizes the chance of producing a spurious/incorrect
-taxon ID.
+approach, but it minimizes the chance of mis-classifying or
+over-classifying the query sequences.
 
 In addition to the two key functions `learn` and `classify`, the package
 includes several tools to encode the work-flow from raw sequence data
@@ -136,7 +141,7 @@ The zip archive contains the following files:
     archive
 -   `classification_tree.rds` data file containing the classifier
 -   `training_data.rds` data file containing the training data used to
-    train the classifier, as a "DNAbin" list object with WORMS aphia ID
+    train the classifier, as a "DNAbin" list object with WoRMS aphia ID
     numbers included in the sequence names
 -   `COI_sample1_read1.fastq` and `COI_sample1_read2.fastq` example
     FASTQ files from an ARMS experiment containing 1000 COI amplicons
@@ -144,16 +149,21 @@ The zip archive contains the following files:
 -   `COI_sample2.fastq` example FASTQ file from an ARMS experiment
     containing 1000 pre-stiched COI sequence reads
 
-Non-stitched and pre-stitched example FASTQ files are provided in order
-to demonstrate the work-flow for both of these commonly-encountered
-input data formats. The FASTQ files can be read into R as either
-concatenated upper-case character strings or binary "DNAbin" objects,
-with "quality" attributes. In this example we will opt for the latter by
-leaving `bin = TRUE` (the default option). This is because subsetting or
-concatenating the character vector will result in the loss of the
-"quality" attributes, while this isn't an issue with the DNAbin list
-objects, whose quality scores are attributed to each sequence
-individually.
+We generally recommend using the **dada2** package (Callahan *et al.*,
+2016) to de-noise and stitch sequences prior to taxonomic classification
+with **insect**; however, standard pre-processing functions are provided
+with the insect package for convenience. Non-stitched and pre-stitched
+example FASTQ files are included in the zip archive in order to
+demonstrate the pre-processing work-flow for both of these
+commonly-encountered input data formats.
+
+The FASTQ files can be read into R as either concatenated upper-case
+character strings or binary "DNAbin" objects, with "quality" attributes.
+In this example we will opt for the latter by leaving `bin = TRUE` (the
+default option). This is because subsetting or concatenating the
+character vector will result in the loss of the "quality" attributes,
+while this isn't an issue with the DNAbin list objects, whose quality
+scores are attributed to each sequence individually.
 
     S1R1 <- readFASTQ("COI_sample1_read1.fastq")
     S1R2 <- readFASTQ("COI_sample1_read2.fastq")
@@ -176,20 +186,19 @@ Of the original 1000 sequences in sample 1, 299 were retained and
 stitched while the remainder didn't contain both of the primer sequences
 in either direction and were discarded.
 
-The sample 2 sequences were pre-stitched on the Illumina platform but
-still have their primers attached. Here, we will use the `trim` function
-to discard any sequences that don't contain both primer sequences,
-orientate all sequences in the 5' -&gt; 3' direction, and finally, trim
-the primer sequences from each end:
+The sample 2 sequences have been pre-stitched but still have their
+primers attached. Here, we will use the `trim` function to discard any
+sequences that don't contain both primer sequences, orientate all
+sequences in the 5' -&gt; 3' direction, and finally, trim the primer
+sequences from each end:
 
     S2 <- trim(S2, up = "GGWACWGGWTGAACWGTWTAYCCYCC", 
                  down = "TAIACYTCIGGRTGICCRAARAAYCA")
 
-Next we will merge all samples together into one DNAbin list, while
-retaining the sample origins in the sequence names. In keeping with the
-style of the **qiime** pipeline (Caporaso *et al.*, 2010), we append the
-sample names to the front of each sequence name, delimited with an
-underscore:
+Next we merge all samples together into one DNAbin list, while retaining
+the sample origins in the sequence names. In keeping with the style of
+the **qiime** pipeline (Caporaso *et al.*, 2010), we append the sample
+names to the front of each sequence name, delimited with an underscore:
 
     names(S1) <- paste0("Sample1_", names(S1))
     names(S2) <- paste0("Sample2_", names(S2))
@@ -204,10 +213,24 @@ contain at least one ambiguous base call, those that appear only once in
 the dataset, and those with length outside the range of 50 - 500
 nucleotides (inclusive). To disable any of the filters, simply set the
 parameter value to `NULL`. In this example we will stick with the
-default settings, except that we will change the acceptable length range
-to 250 - 350 bp.
+default settings, except that we change the acceptable length range to
+250 - 350 bp.
 
     x <- qfilter(x, minlength = 250, maxlength = 350)
+
+If sequences were pre-processed with **dada2** instead of **insect**
+(i.e. by following the work-flow
+[here](https://benjjneb.github.io/dada2/tutorial.html)), the table of
+chimera-removed amplicon sequence variants (ASVs) can be read in as
+follows:
+
+    x <- char2dna(colnames(seqtab.nochim))
+    ## optionally remove column names that can flood the console 
+    colnames(seqtab.nochim) <- NULL 
+
+In this case we can simply transpose and append the `seqtab.nochim` ASV
+abundance table to the table of taxonomic information produced by
+`insect::classify`.
 
 The final step is to load the classification tree and run the `classify`
 function to assign taxonomic IDs and confidence scores. First, read in
@@ -246,6 +269,8 @@ processor, half an hour on two, etc.
 <th align="right">taxID</th>
 <th align="left">taxon</th>
 <th align="left">rank</th>
+<th align="right">score</th>
+<th align="left">kingdom</th>
 <th align="left">phylum</th>
 <th align="left">class</th>
 <th align="left">order</th>
@@ -253,8 +278,6 @@ processor, half an hour on two, etc.
 <th align="left">genus</th>
 <th align="left">species</th>
 <th align="right">Sample1</th>
-<th align="right">Sample2</th>
-<th align="right">score</th>
 </tr>
 </thead>
 <tbody>
@@ -263,6 +286,8 @@ processor, half an hour on two, etc.
 <td align="right">2</td>
 <td align="left">Animalia</td>
 <td align="left">kingdom</td>
+<td align="right">0.9999</td>
+<td align="left">Animalia</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -270,14 +295,14 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">4</td>
-<td align="right">0</td>
-<td align="right">0.9999</td>
 </tr>
 <tr class="even">
 <td align="left">Sample1_M...</td>
 <td align="right">1839</td>
 <td align="left">Ascidiacea</td>
 <td align="left">class</td>
+<td align="right">0.9999</td>
+<td align="left">Animalia</td>
 <td align="left">Chordata</td>
 <td align="left">Ascidiacea</td>
 <td align="left"></td>
@@ -285,14 +310,14 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">30</td>
-<td align="right">0</td>
-<td align="right">0.9999</td>
 </tr>
 <tr class="odd">
 <td align="left">Sample1_M...</td>
 <td align="right">2</td>
 <td align="left">Animalia</td>
 <td align="left">kingdom</td>
+<td align="right">0.9922</td>
+<td align="left">Animalia</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -300,14 +325,14 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">16</td>
-<td align="right">0</td>
-<td align="right">0.9922</td>
 </tr>
 <tr class="even">
 <td align="left">Sample1_M...</td>
 <td align="right">2</td>
 <td align="left">Animalia</td>
 <td align="left">kingdom</td>
+<td align="right">0.9561</td>
+<td align="left">Animalia</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -315,14 +340,14 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">23</td>
-<td align="right">2</td>
-<td align="right">0.9561</td>
 </tr>
 <tr class="odd">
 <td align="left">Sample1_M...</td>
 <td align="right">1839</td>
 <td align="left">Ascidiacea</td>
 <td align="left">class</td>
+<td align="right">0.9999</td>
+<td align="left">Animalia</td>
 <td align="left">Chordata</td>
 <td align="left">Ascidiacea</td>
 <td align="left"></td>
@@ -330,14 +355,14 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">2</td>
-<td align="right">0</td>
-<td align="right">0.9999</td>
 </tr>
 <tr class="even">
 <td align="left">Sample1_M...</td>
 <td align="right">1839</td>
 <td align="left">Ascidiacea</td>
 <td align="left">class</td>
+<td align="right">0.9999</td>
+<td align="left">Animalia</td>
 <td align="left">Chordata</td>
 <td align="left">Ascidiacea</td>
 <td align="left"></td>
@@ -345,14 +370,14 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">27</td>
-<td align="right">0</td>
-<td align="right">0.9999</td>
 </tr>
 <tr class="odd">
 <td align="left">Sample1_M...</td>
 <td align="right">1839</td>
 <td align="left">Ascidiacea</td>
 <td align="left">class</td>
+<td align="right">0.9999</td>
+<td align="left">Animalia</td>
 <td align="left">Chordata</td>
 <td align="left">Ascidiacea</td>
 <td align="left"></td>
@@ -360,14 +385,14 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">24</td>
-<td align="right">0</td>
-<td align="right">0.9999</td>
 </tr>
 <tr class="even">
 <td align="left">Sample1_M...</td>
 <td align="right">2</td>
 <td align="left">Animalia</td>
 <td align="left">kingdom</td>
+<td align="right">1.0000</td>
+<td align="left">Animalia</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -375,14 +400,14 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">6</td>
-<td align="right">0</td>
-<td align="right">1.0000</td>
 </tr>
 <tr class="odd">
 <td align="left">Sample1_M...</td>
 <td align="right">368670</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
+<td align="right">0.9599</td>
+<td align="left">Plantae</td>
 <td align="left">Rhodophyta</td>
 <td align="left">Florideophyceae</td>
 <td align="left"></td>
@@ -390,14 +415,14 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">2</td>
-<td align="right">0</td>
-<td align="right">0.9599</td>
 </tr>
 <tr class="even">
 <td align="left">Sample1_M...</td>
 <td align="right">2</td>
 <td align="left">Animalia</td>
 <td align="left">kingdom</td>
+<td align="right">0.9537</td>
+<td align="left">Animalia</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -405,14 +430,14 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">2</td>
-<td align="right">0</td>
-<td align="right">0.9537</td>
 </tr>
 <tr class="odd">
 <td align="left">Sample1_M...</td>
 <td align="right">1839</td>
 <td align="left">Ascidiacea</td>
 <td align="left">class</td>
+<td align="right">0.9999</td>
+<td align="left">Animalia</td>
 <td align="left">Chordata</td>
 <td align="left">Ascidiacea</td>
 <td align="left"></td>
@@ -420,14 +445,14 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">2</td>
-<td align="right">0</td>
-<td align="right">0.9999</td>
 </tr>
 <tr class="even">
 <td align="left">Sample1_M...</td>
 <td align="right">1041930</td>
 <td align="left">Terpios gelatinosus</td>
 <td align="left">species</td>
+<td align="right">NA</td>
+<td align="left">Animalia</td>
 <td align="left">Porifera</td>
 <td align="left">Demospongiae</td>
 <td align="left">Suberitida</td>
@@ -435,14 +460,14 @@ processor, half an hour on two, etc.
 <td align="left">Terpios</td>
 <td align="left">Terpios gelatinosus</td>
 <td align="right">2</td>
-<td align="right">0</td>
-<td align="right">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">Sample1_M...</td>
 <td align="right">2</td>
 <td align="left">Animalia</td>
 <td align="left">kingdom</td>
+<td align="right">0.9984</td>
+<td align="left">Animalia</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -450,8 +475,6 @@ processor, half an hour on two, etc.
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">2</td>
-<td align="right">0</td>
-<td align="right">0.9984</td>
 </tr>
 </tbody>
 </table>
@@ -461,11 +484,19 @@ sequence, the first few rows of which are shown above. Assuming `ping`
 is set to `TRUE`, query sequences that have exact matches in the
 training dataset (and hence bypass the recursive classification
 procedure; e.g. *Terpios gelatinosus* above), are assigned a score of
-`NA`. For a more succinct output we can aggregate the table to show one
-row for each unique taxon as follows:
+`NA`.
 
-    taxa <- aggregate(longDF[3:11], longDF["taxID"], head, 1)
-    counts <- aggregate(longDF[seq(12, ncol(longDF) - 3)], longDF["taxID"], sum)
+For **dada2** users, the ASV abundance table can be transposed and
+appended to the table of taxonomic information at this point if
+required:
+
+    longDF <- cbind(longDF[-ncol(longDF)], t(seqtab.nochim))
+
+For a more succinct output we can aggregate the table to show one row
+for each unique taxon as follows:
+
+    taxa <- aggregate(longDF[3:12], longDF["taxID"], head, 1)
+    counts <- aggregate(longDF[13:ncol(longDF)], longDF["taxID"], sum)
     shortDF <- merge(taxa, counts, by = "taxID")
 
 <!-- note newlines needed between html tags and code chunk -->
@@ -475,6 +506,8 @@ row for each unique taxon as follows:
 <th align="right">taxID</th>
 <th align="left">taxon</th>
 <th align="left">rank</th>
+<th align="right">score</th>
+<th align="left">kingdom</th>
 <th align="left">phylum</th>
 <th align="left">class</th>
 <th align="left">order</th>
@@ -490,6 +523,8 @@ row for each unique taxon as follows:
 <td align="right">1</td>
 <td align="left">Biota</td>
 <td align="left"></td>
+<td align="right">1.0000</td>
+<td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -503,6 +538,8 @@ row for each unique taxon as follows:
 <td align="right">2</td>
 <td align="left">Animalia</td>
 <td align="left">kingdom</td>
+<td align="right">0.9999</td>
+<td align="left">Animalia</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -516,6 +553,8 @@ row for each unique taxon as follows:
 <td align="right">1086</td>
 <td align="left">Eumalacostraca</td>
 <td align="left">subclass</td>
+<td align="right">0.9815</td>
+<td align="left">Animalia</td>
 <td align="left">Arthropoda</td>
 <td align="left">Malacostraca</td>
 <td align="left"></td>
@@ -529,6 +568,8 @@ row for each unique taxon as follows:
 <td align="right">1090</td>
 <td align="left">Peracarida</td>
 <td align="left">superorder</td>
+<td align="right">0.9884</td>
+<td align="left">Animalia</td>
 <td align="left">Arthropoda</td>
 <td align="left">Malacostraca</td>
 <td align="left"></td>
@@ -542,6 +583,8 @@ row for each unique taxon as follows:
 <td align="right">1102</td>
 <td align="left">Harpacticoida</td>
 <td align="left">order</td>
+<td align="right">1.0000</td>
+<td align="left">Animalia</td>
 <td align="left">Arthropoda</td>
 <td align="left">Hexanauplia</td>
 <td align="left">Harpacticoida</td>
@@ -555,6 +598,8 @@ row for each unique taxon as follows:
 <td align="right">1135</td>
 <td align="left">Amphipoda</td>
 <td align="left">order</td>
+<td align="right">0.9484</td>
+<td align="left">Animalia</td>
 <td align="left">Arthropoda</td>
 <td align="left">Malacostraca</td>
 <td align="left">Amphipoda</td>
@@ -568,6 +613,8 @@ row for each unique taxon as follows:
 <td align="right">1839</td>
 <td align="left">Ascidiacea</td>
 <td align="left">class</td>
+<td align="right">0.9999</td>
+<td align="left">Animalia</td>
 <td align="left">Chordata</td>
 <td align="left">Ascidiacea</td>
 <td align="left"></td>
@@ -581,6 +628,8 @@ row for each unique taxon as follows:
 <td align="right">368670</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
+<td align="right">0.9599</td>
+<td align="left">Plantae</td>
 <td align="left">Rhodophyta</td>
 <td align="left">Florideophyceae</td>
 <td align="left"></td>
@@ -594,6 +643,8 @@ row for each unique taxon as follows:
 <td align="right">1041930</td>
 <td align="left">Terpios gelatinosus</td>
 <td align="left">species</td>
+<td align="right">NA</td>
+<td align="left">Animalia</td>
 <td align="left">Porifera</td>
 <td align="left">Demospongiae</td>
 <td align="left">Suberitida</td>
@@ -625,26 +676,29 @@ research.
 This basic introduction to the **insect** package has outlined the steps
 involved in parsing paired-end NGS data, and filtering, trimming
 primers, de-replication, and taxonomic identification using a pre-built
-classification tree. The next tutorial in the series will deal with
-downloading and curating a primer-specific local sequence database and
-using it to build a classification tree.
+classification tree. The next tutorial will deal with downloading and
+curating a primer-specific local sequence database and using it to build
+a classification tree.
 
-The **insect** package is released under the GPL-3 license, and is free
-to distribute under certain conditions; however it comes with no
-warranty. Please direct bug reports to the [GitHub issues
-page](http://github.com/shaunpwilkinson/insect/issues)
+Please feel free to email the author directly with any feedback or
+questions at shaunpwilkinson AT gmail DOT com. Bug reports can also be
+directed to the [GitHub issues
+page](http://github.com/shaunpwilkinson/insect/issues).
 
 Acknowledgements
 ----------------
 
 This software was developed with funding from a Rutherford Foundation
 Postdoctoral Research Fellowship from the Royal Society of New Zealand.
-Thanks to Molly Timmers for helpful discussion and sharing COI data, and
+Thanks to Molly Timmers for helpful feedback and sharing COI data, and
 to Danyl McLauchlan and Dinindu Senanayake for assistance with high
 performance computing facilities.
 
 References
 ----------
+
+Callahan,B.J. *et al.* (2016) DADA2: High-resolution sample inference
+from illumina amplicon data. *Nature Methods*, **13**, 581–583.
 
 Caporaso,J.G. *et al.* (2010) QIIME allows analysis of high-throughput
 community sequencing data. *Nature Methods*, **7**, 335–336.

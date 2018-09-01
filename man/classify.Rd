@@ -6,7 +6,7 @@
 \usage{
 classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   ranks = c("kingdom", "phylum", "class", "order", "family", "genus",
-  "species"), cores = 1)
+  "species"), metadata = FALSE, cores = 1)
 }
 \arguments{
 \item{x}{a DNA sequence or set of sequences. Can be a
@@ -40,6 +40,10 @@ included in the output table. Must be a valid rank from the
 taxonomy database attributed to the classification tree
 (\code{attr(tree, "taxonomy")}). Set to NULL to exclude taxonomic ranks
 from the output table.}
+
+\item{metadata}{logical indicating whether to include additional columns
+containing the paths, individual node scores and reasons for termination.
+Defaults to FALSE. Included for advanced use and debugging.}
 
 \item{cores}{integer giving the number of CPUs to parallelize the operation
 over (defaults to 1).
@@ -94,8 +98,10 @@ This function requires a pre-computed classification tree
   This is perhaps an overly conservative approach
   but it minimizes the chance of taxon ID errors.
   The output table also includes the higher taxonomic ranks specified in the
-  \code{ranks} argument, and two additional columns called "path"
-  (the path of the sequence through the classification tree)
+  \code{ranks} argument, and if \code{metadata = TRUE} three additional columns
+  are included called "path"
+  (the path of the sequence through the classification tree), "scores" (the
+  scores at each node through the tree, UTF-8-encoded),
   and "reason" outlining why the recursive classification procedure was
   terminated. Reason codes are as follows:
   \itemize{

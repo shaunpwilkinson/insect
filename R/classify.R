@@ -29,6 +29,9 @@
 #'   taxonomy database attributed to the classification tree
 #'   (\code{attr(tree, "taxonomy")}). Set to NULL to exclude taxonomic ranks
 #'   from the output table.
+#' @param metadata logical indicating whether to include additional columns
+#'   containing the paths, individual node scores and reasons for termination.
+#'   Defaults to FALSE. Included for advanced use and debugging.
 #' @param cores integer giving the number of CPUs to parallelize the operation
 #'   over (defaults to 1).
 #'   This argument may alternatively be a 'cluster' object,
@@ -75,8 +78,10 @@
 #'   This is perhaps an overly conservative approach
 #'   but it minimizes the chance of taxon ID errors.
 #'   The output table also includes the higher taxonomic ranks specified in the
-#'   \code{ranks} argument, and two additional columns called "path"
-#'   (the path of the sequence through the classification tree)
+#'   \code{ranks} argument, and if \code{metadata = TRUE} three additional columns
+#'   are included called "path"
+#'   (the path of the sequence through the classification tree), "scores" (the
+#'   scores at each node through the tree, UTF-8-encoded),
 #'   and "reason" outlining why the recursive classification procedure was
 #'   terminated. Reason codes are as follows:
 #'   \itemize{
@@ -113,7 +118,7 @@
 classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      ranks = c("kingdom", "phylum", "class", "order",
                                "family", "genus", "species"),
-                     cores = 1){
+                     metadata = FALSE, cores = 1){
   if(is.null(names(x))) names(x) <- paste0("S", seq_along(x))
   if(mode(x) == "character") x <- char2dna(x, simplify = FALSE)
   if(!is.list(x)){
@@ -168,11 +173,13 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
         out <- data.frame(taxID = xmatch,
                           score = NA_real_,
                           path = NA_character_,
+                          scores = NA_character_,
                           reason = NA_integer_)
         return(out)
       }
     }
     path <- ""
+    scores <- ""
     akw <- 1
     cakw <- 1
     tax <- 1L # root (cant use 0L due to get_lineage call below)
@@ -196,6 +203,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength") + 2
       if(!(threshold_met & minscore_met & minlength_met & maxlength_met)) break
       path <- paste0(path, best_model)
+      scores <- paste0(scores, intToUtf8(as.integer(newakw * 100)))
       akw <- newakw
       cakw <- newcakw
       tree <- tree[[best_model]]
@@ -216,7 +224,9 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     out <- data.frame(taxID = tax,
                       score = score,
                       path = path,
-                      reason = reason)
+                      scores = scores,
+                      reason = reason,
+                      stringsAsFactors = FALSE)
     return(out)
   }
   if(inherits(cores, "cluster")){
@@ -235,6 +245,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       res <- lapply(x, classify1, tree, threshold, decay, ping)
     }
   }
+  #test <<- res
   res <- do.call("rbind", res) ## changed output to dataframe 20180617
   lineages <- get_lineage(res$taxID, db, cores = cores,
                           simplify = FALSE, numbers = FALSE)
@@ -243,7 +254,9 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      taxID = res$taxID,
                      taxon = tmp,
                      rank = names(tmp),
+                     score = res$score,
                      stringsAsFactors = FALSE)
+  if(metadata) lhcols <- cbind(lhcols, res[c("path", "scores", "reason")])
   if(!is.null(ranks)){
     rnkmat <- matrix(NA_character_, nrow = length(x), ncol = length(ranks))
     rnkmat <- as.data.frame(rnkmat, stringsAsFactors = FALSE)
@@ -254,8 +267,8 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     }
     lhcols <- cbind(lhcols, rnkmat)
   }
-  lhcols <- cbind(lhcols, qout, res[c("score", "reason", "path")])
-  lhcols$path <- as.character(lhcols$path)
+  lhcols <- cbind(lhcols, qout)
+  # lhcols$path <- as.character(lhcols$path)
   rownames(lhcols) <- NULL
   return(lhcols)
 }

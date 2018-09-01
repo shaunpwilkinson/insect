@@ -184,7 +184,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   if(!quiet) cat("Making hash key for exact sequence matching\n")
   ancestors <- split(attr(x, "lineage"), f = attr(x, "hashes"))
   anclens <- vapply(ancestors, length, 0L, USE.NAMES = FALSE)
-  ancestors[anclens > 1] <- lapply(ancestors[anclens > 1], insect:::.ancestor)
+  ancestors[anclens > 1] <- lapply(ancestors[anclens > 1], .ancestor)
   tmpnames <- names(ancestors)
   ancestors <- as.integer(gsub(".+; ", "", ancestors))
   names(ancestors) <- tmpnames
