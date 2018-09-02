@@ -197,10 +197,11 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       newakw <- akwgts[best_model]
       newcakw <- newakw * cakw
       threshold_met <- threshold <= if(decay) newcakw else newakw
-      minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 4
+      minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 1
       # 4 is approx asymtote for single bp change as n training seqs -> inf
-      minlength_met <- length(x) >= attr(tree[[best_model]], "minlength") - 2
-      maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength") + 2
+      #was 4, 2, 2
+      minlength_met <- length(x) >= attr(tree[[best_model]], "minlength") - 1
+      maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength") + 1
       if(!(threshold_met & minscore_met & minlength_met & maxlength_met)) break
       path <- paste0(path, best_model)
       scores <- paste0(scores, intToUtf8(as.integer(newakw * 100)))
