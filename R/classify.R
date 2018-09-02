@@ -200,8 +200,8 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 0.1
       # 4 is approx asymtote for single bp change as n training seqs -> inf
       #was 4, 2, 2
-      minlength_met <- length(x) >= attr(tree[[best_model]], "minlength") - 1
-      maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength") + 1
+      minlength_met <- length(x) >= attr(tree[[best_model]], "minlength")# - 1
+      maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength")# + 1
       if(!(threshold_met & minscore_met & minlength_met & maxlength_met)) break
       path <- paste0(path, best_model)
       scores <- paste0(scores, intToUtf8(as.integer(newakw * 100)))
