@@ -29,6 +29,11 @@
 #'   taxonomy database attributed to the classification tree
 #'   (\code{attr(tree, "taxonomy")}). Set to NULL to exclude taxonomic ranks
 #'   from the output table.
+#' @param tabulize logical indicating whether sequence counts should be
+#'   attached to the output table. If TRUE (default), the output table will have one
+#'   row for each unique sequence, and columns will include counts for
+#'   each sample (where samples names precede sequence identifiers in the input
+#'   object; see details below).
 #' @param metadata logical indicating whether to include additional columns
 #'   containing the paths, individual node scores and reasons for termination.
 #'   Defaults to FALSE. Included for advanced use and debugging.
@@ -118,7 +123,7 @@
 classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      ranks = c("kingdom", "phylum", "class", "order",
                                "family", "genus", "species"),
-                     metadata = FALSE, cores = 1){
+                     tabulize = TRUE, metadata = FALSE, cores = 1){
   if(is.null(names(x))) names(x) <- paste0("S", seq_along(x))
   if(mode(x) == "character") x <- char2dna(x, simplify = FALSE)
   if(!is.list(x)){
@@ -138,12 +143,17 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   ## very important to specify ordering!
   hashes <- hash(x)
   duplicates <- duplicated(hashes)
+  catchnames <- names(x)
   x <- x[!duplicates]
   uhashes <- hashes[!duplicates]
-  indices <- split(match(hashes, uhashes), f = origins)
-  qout <- matrix(NA_integer_, nrow = sum(!duplicates), ncol = length(usm))
-  colnames(qout) <- usm
-  for(i in seq_along(usm)) qout[, i] <- tabulate(indices[[i]], nbins = length(x))
+  if(tabulize){
+    indices <- split(match(hashes, uhashes), f = origins)
+    qout <- matrix(NA_integer_, nrow = sum(!duplicates), ncol = length(usm))
+    colnames(qout) <- usm
+    for(i in seq_along(usm)) qout[, i] <- tabulate(indices[[i]], nbins = length(x))
+  }else{
+    pointers <- .point(hashes)
+  }
   if(!inherits(tree, "dendrogram")) stop("Unrecognized tree format\n")
   db <- attr(tree, "taxonomy")
   if(is.null(db)) stop("tree is missing taxonomy database\n")
@@ -268,7 +278,12 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     }
     lhcols <- cbind(lhcols, rnkmat)
   }
-  lhcols <- cbind(lhcols, qout)
+  if(tabulize){
+    lhcols <- cbind(lhcols, qout)
+  }else{
+    lhcols <- lhcols[pointers, ]
+    lhcols$representative <- catchnames
+  }
   # lhcols$path <- as.character(lhcols$path)
   rownames(lhcols) <- NULL
   return(lhcols)

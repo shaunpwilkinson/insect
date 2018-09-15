@@ -6,7 +6,7 @@
 \usage{
 classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   ranks = c("kingdom", "phylum", "class", "order", "family", "genus",
-  "species"), metadata = FALSE, cores = 1)
+  "species"), tabulize = TRUE, metadata = FALSE, cores = 1)
 }
 \arguments{
 \item{x}{a DNA sequence or set of sequences. Can be a
@@ -40,6 +40,12 @@ included in the output table. Must be a valid rank from the
 taxonomy database attributed to the classification tree
 (\code{attr(tree, "taxonomy")}). Set to NULL to exclude taxonomic ranks
 from the output table.}
+
+\item{tabulize}{logical indicating whether sequence counts should be
+attached to the output table. If TRUE (default), the output table will have one
+row for each unique sequence, and columns will include counts for
+each sample (where samples names precede sequence identifiers in the input
+object; see details below).}
 
 \item{metadata}{logical indicating whether to include additional columns
 containing the paths, individual node scores and reasons for termination.
