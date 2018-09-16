@@ -3,7 +3,7 @@
 .partition <- function(x, model = NULL, K = 2, allocation = "cluster",
                       refine = "Viterbi", nstart = 20, iterations = 50,
                       kmers = NULL, seqweights = "Gerstein", cores = 1,
-                      quiet = FALSE, ...){
+                      quiet = FALSE, verbose = FALSE, ...){
   ### x is a DNAbin object
   # model is a starting model to be trained on each side
   # assumes all seqs are unique
@@ -28,19 +28,19 @@
   }else if(nseq == K){
     tmp <- 1:nseq
   }else if(identical(allocation, "cluster") | identical(allocation, "split")){
-    if(!quiet) cat("Clustering sequences into", K, "groups\n")
+    if(!quiet & verbose) cat("Clustering sequences into", K, "groups\n")
     if(is.null(kmers)){
       # if(!quiet) cat("Counting k-mers\n")
       # kmers <- kmer::kcount(x, k = 5)
-      if(!quiet) cat("Counting kmers\n")
+      if(!quiet & verbose) cat("Counting kmers\n")
       dots <- list(...)
       kmers <- kmer::kcount(x, k = if(!is.null(dots$k)) dots$k else 5)
     }
-    if(!quiet) cat("Assigning sequences to groups ")
+    if(!quiet & verbose) cat("Assigning sequences to groups ")
     if(identical(allocation, "split")){
       infocols <- apply(kmers, 2, function(v) length(unique(v))) == 2
       if(sum(infocols) > 30 & K == 2){
-        if(!quiet) cat("using k-mer splitting method\n")
+        if(!quiet & verbose) cat("using k-mer splitting method\n")
         hash1 <- function(v) paste(openssl::md5(as.raw(v == v[1])))
         hashes <- apply(kmers[, infocols], 2, hash1)
         hfac <- factor(hashes)
@@ -52,7 +52,7 @@
       }
     }
     if(identical(allocation, "cluster")){
-      if(!quiet) cat("using k-means algorithm\n")
+      if(!quiet & verbose) cat("using k-means algorithm\n")
       kmers <- kmers/(sapply(x, length) - 4)## k - 1 = 3
       tmp <- tryCatch(kmeans(kmers, centers = K, nstart = nstart)$cluster,
                       error = function(er) sample(rep(1:K, nseq)[1:nseq]),
@@ -67,7 +67,7 @@
   res$init_membership <- tmp
   #res$success <- NA
   res$scores <- numeric(0)   # just so they're in the right order
-  if(!quiet){
+  if(!quiet & verbose){
     if(length(tmp) > 50){
       cat("Initial membership: ", paste0(head(tmp, 50), collapse = ""), ".......\n")
     }else{
@@ -93,23 +93,23 @@
     if(cores == 1){
       stopclustr <- FALSE
     }else{
-      if(!quiet) cat("Initializing cluster with", cores, "cores\n")
+      if(!quiet & verbose) cat("Initializing cluster with", cores, "cores\n")
       cores <- parallel::makeCluster(cores)
       stopclustr <- TRUE
     }
   }
   ### Parent model - better off moving to 'learn' ?
   if(is.null(model)){
-    if(!quiet) cat("Deriving parent model\n")
+    if(!quiet & verbose) cat("Deriving parent model\n")
     ## this should only happen at top level for tree-learning
     xlengths <- sapply(x, length)
     seeds <- which(xlengths == max(xlengths))
     nseeds <- length(seeds)
     seedmat <- matrix(unlist(x[seeds], use.names = FALSE), nrow = nseeds, byrow = TRUE)
     model <- aphid::derivePHMM.default(seedmat, seqweights = seqweights[seeds])
-    if(!quiet) cat("Training parent model\n")
+    if(!quiet & verbose) cat("Training parent model\n")
     model <- aphid::train(model, x, method = refine, seqweights = seqweights,
-                          cores = cores, quiet = quiet, inserts = "inherited",
+                          cores = cores, quiet = !(!quiet & verbose), inserts = "inherited",
                           alignment = sum(model$inserts)/length(model$inserts) < 0.5,
                           ... = ...)
   }
@@ -120,7 +120,7 @@
   md5s <- paste(openssl::md5(as.raw(tmp)))
   fscore <- function(s, model) aphid::forward(model, s, odds = FALSE)$score
   for(i in 1:iterations){
-    if(!quiet) cat("Insect iteration", i, "\n")
+    if(!quiet & verbose) cat("Insect iteration", i, "\n")
     membership <- tmp
     for(j in 1:K) seq_numbers[j] <- sum(membership == j)
     mcn <- min(seq_numbers)
@@ -131,7 +131,7 @@
       seqweightsj <- seqweights[membership == j]
       seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
       seqweightsj <- seqweightsj * mcn/seq_numbers[j]
-      if(!quiet) cat("Training child model", j, "\n")
+      if(!quiet & verbose) cat("Training child model", j, "\n")
       ins <- if(finetune) res[[pnms[j]]]$inserts else model$inserts
       if(is.null(ins)) ins <- TRUE # top level only
       suppressWarnings(
@@ -140,7 +140,8 @@
                                method = refine, seqweights = seqweightsj,
                                inserts = "inherited",
                                alignment = sum(ins)/length(ins) < 0.5,
-                               cores = cores, quiet = quiet, ... = ...)
+                               cores = cores, quiet = !(!quiet & verbose),
+                               ... = ...)
       )
       modelj$weights <- NULL
       modelj$mask <- NULL
@@ -149,7 +150,8 @@
       modelj$insertlengths <- NULL
       modelj$name <- NULL
       res[[pnms[j]]] <- modelj
-      if(!quiet) cat("Calculating sequence probabilities given child model", j, "\n")
+      if(!quiet & verbose) cat("Calculating sequence probabilities given child model",
+                               j, "\n")
       scores[j, ] <- if(inherits(cores, "cluster")){
         parallel::parSapply(cores, x, fscore, model = res[[pnms[j]]])
       }else{
@@ -167,8 +169,8 @@
     }
     tmp <- apply(scores, 2, which.max)
     finetune <- sum(tmp == membership)/nseq > 0.95
-    if(finetune & !quiet) cat("Fine-tune mode active\n")
-    if(!quiet){
+    if(finetune & !quiet & verbose) cat("Fine-tune mode active\n")
+    if(!quiet & verbose){
       if(length(tmp) > 50){
         cat("Membership: ", paste0(head(tmp, 50), collapse = ""), ".......\n")
       }else{
@@ -182,7 +184,7 @@
     if(tmpmd5 %in% md5s){
       break
     }else if(length(unique(tmp)) < K){
-      if(!quiet){
+      if(!quiet & verbose){
         cat("Unsuccessful split into", K, "groups\n")
         cat("Unable to split node\n")
       }

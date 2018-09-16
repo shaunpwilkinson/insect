@@ -32,15 +32,16 @@
 #'   data(whales)
 #'   data(whale_taxonomy)
 #'   ## split the first node
-#'   tree <- learn(whales, db = whale_taxonomy, recursive = FALSE, quiet = FALSE)
+#'   tree <- learn(whales, db = whale_taxonomy, recursive = FALSE)
 #'   ## expand only the first clade
-#'   tree <- expand(tree, whales, clades = "1", quiet = TRUE)
+#'   tree <- expand(tree, whales, clades = "1")
 #'  }
 ################################################################################
 expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
                    nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
                    retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
-                   recursive = TRUE, cores = 1, quiet = TRUE, ...){
+                   recursive = TRUE, cores = 1, quiet = FALSE, verbose = FALSE,
+                   ...){
   ## Establish which parts of the tree to expand
   if(mode(x) == "character") x <- char2dna(x)
   if(!grepl("\\|", names(x)[1])){
@@ -204,7 +205,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
                        "nstart = nstart, iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, retry = retry, resize = resize, ",
                        "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
-                       "cores = cores, quiet = quiet, ... = ...)")
+                       "cores = cores, quiet = quiet, verbose = verbose, ... = ...)")
       eval(parse(text = toeval))
       ss <- FALSE # split success; prevents build note due to lack of visible binding
       eval(parse(text = paste0("ss <- is.list(tree", index, ")")))
@@ -222,7 +223,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
     }
     if(!quiet){
       cat("Recursively splitting terminal tree branches\n")
-      cat("Feedback suppressed, this could take a while...\n")
+      if(verbose) cat("Feedback suppressed, this could take a while...\n")
     }
     trees <- parallel::parLapply(cores, trees, .forkr, x, lineages, refine = refine,
                                  nstart = nstart, iterations = iterations,
@@ -246,7 +247,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
                        "iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, retry = retry, resize = resize, ",
                        "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
-                       "cores = cores, quiet = quiet, ... = ...)")
+                       "cores = cores, quiet = quiet, verbose = verbose, ... = ...)")
       eval(parse(text = toeval))
     }
   }

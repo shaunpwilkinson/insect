@@ -4,7 +4,7 @@
                  iterations = 50, minK = 2, maxK = 2, minscore = 0.9,
                  probs = 0.5, retry = TRUE, resize = TRUE, maxsize = NULL,
                  kmers = NULL, seqweights = "Gerstein", cores = 1,
-                 quiet = FALSE, ...){
+                 quiet = FALSE, verbose = FALSE, ...){
   indices <- attr(node, "sequences")
   nseq <- length(indices)
   lineages <- lineages[indices]
@@ -26,7 +26,7 @@
     }else stop("Invalid seqweights argument")
     ## uncommented following 20180828 due to fail at retry line 128
     if(is.null(kmers)){# generally will be NULL due to large size
-      if(!quiet) cat("\nCounting kmers\n")
+      if(!quiet & verbose) cat("\nCounting kmers\n")
       dots <- list(...)
       kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
     }else{
@@ -50,13 +50,13 @@
       if(cores == 1){
         stopclustr <- FALSE
       }else{
-        if(!quiet) cat("Initializing cluster with", cores, "cores\n")
+        if(!quiet & verbose) cat("Initializing cluster with", cores, "cores\n")
         cores <- parallel::makeCluster(cores)
         stopclustr <- TRUE
       }
     }
     ## Split clade
-    if(!quiet) cat("Attempting to split node", attr(node, "clade"), "\n")
+    if(!quiet & verbose) cat("Attempting to split node", attr(node, "clade"), "\n")
     if(is.null(attr(node, "model"))){
       # should only happen at top level and if a PHMM is not provided
       mod <- NULL
@@ -72,11 +72,11 @@
       # attr(node, "model")$alignment <- NULL ## save on memory
       ins <- mod$inserts
       toosparse <- if(is.null(ins)) TRUE else sum(ins)/length(ins) >= 0.5
-      if(resize & toosparse & !quiet) cat("Skipping resize step\n")
+      if(resize & toosparse & !quiet & verbose) cat("Skipping resize step\n")
       if(resize & attr(node, "clade") != "" & !toosparse){
         ## don't need to retrain top level model
         ## if mod was truncated then no need to resize
-        if(!quiet) cat("Resizing parent model\n")
+        if(!quiet & verbose) cat("Resizing parent model\n")
         alig <- mod$alignment
         if(is.null(alig)) alig <- aphid::align(x[indices], model = mod, cores = cores)
         mod <- aphid::derivePHMM.default(alig, seqweights = seqweights,
@@ -84,7 +84,7 @@
                                          maxsize = maxsize)
         rm(alig)
         gc()
-        if(!quiet) cat("New model size :", mod$size, "\n")
+        if(!quiet & verbose) cat("New model size :", mod$size, "\n")
       }
     }
     split_node <- FALSE
@@ -95,9 +95,9 @@
                             allocation = "cluster", nstart = nstart,
                             iterations = iterations, kmers = kmers,
                             seqweights = seqweights, cores = cores, quiet = quiet,
-                            ... = ...)
+                            verbose = verbose, ... = ...)
       if(is.null(seqsplit)){
-        if(!quiet) cat("Sequence splitting failed, returning unsplit node\n")
+        if(!quiet & verbose) cat("Sequence splitting failed, returning unsplit node\n")
         if(stopclustr) parallel::stopCluster(cores)
         #if(!is.null(attr(node, "model"))) attr(node, "model")$alignment <- NULL
         ## already done in previous block
@@ -112,7 +112,7 @@
       minperfs <- numeric(nclades)
       for(i in 1:nclades){
         minperfs[i] <- quantile(performances[membership == i], probs = probs)
-        if(!quiet){
+        if(!quiet & verbose){
           #if(i == 1) cat("Akaike weights:", performances, "\n")
           cat("Group", i, "size =", sum(membership == i), "\n")
           cat(sum(performances[membership == i] > minscore), "of",
@@ -127,7 +127,7 @@
       if(nclades == 2 & retry & min(minperfs) < 0.999){
         infocols <- apply(kmers, 2, function(v) length(unique(v))) == 2
         if(sum(infocols) > 50){
-          if(!quiet) cat("Comparing result with alternative grouping method\n")
+          if(!quiet & verbose) cat("Comparing result with alternative grouping method\n")
           hash1 <- function(v) paste(openssl::md5(as.raw(v == v[1])))
           hashes <- apply(kmers[, infocols], 2, hash1)
           hfac <- factor(hashes)
@@ -140,7 +140,7 @@
                                    allocation = alloc2, nstart = nstart,
                                    iterations = iterations, kmers = kmers,
                                    seqweights = seqweights, cores = cores,
-                                   quiet = quiet, ... = ...)
+                                   quiet = quiet, verbose = verbose, ... = ...)
             if(!is.null(seqsplit2)){
               membership2 <- seqsplit2$membership
               if(!all(membership2 == membership)){
@@ -152,7 +152,7 @@
                 minperfs2 <- numeric(nclades)
                 for(i in 1:nclades){
                   minperfs2[i] <- quantile(performances2[membership2 == i], probs = probs)
-                  if(!quiet){
+                  if(!quiet & verbose){
                     if(i == 1) cat("Akaike weights:", performances2, "\n")
                     cat("Group", i, "size =", sum(membership == i), "\n")
                     cat(sum(performances[membership == i] > minscore), "of",
@@ -165,7 +165,7 @@
                   }
                 }
                 if(quantile(performances2, probs = probs) > quantile(performances, probs = probs)){
-                  if(!quiet) cat("Improvement found using alternative grouping\n")
+                  if(!quiet & verbose) cat("Improvement found using alternative grouping\n")
                   seqsplit <- seqsplit2
                   membership <- membership2
                   scores <- scores2
@@ -174,22 +174,22 @@
                   performances <- performances2
                   minperfs <- minperfs2
                   alternative <- TRUE
-                }else if(!quiet) cat("No improvement found using alternative grouping\n")
-              }else if(!quiet) cat("Alternative grouping method gave same clusters\n")
-            }else if(!quiet) cat("Alternative grouping gave null result\n")
-          }else if(!quiet) cat("Alternative grouping method duplicated k-means\n")
-        }else if(!quiet) cat("Insufficient informative columns for alternative grouping\n")
+                }else if(!quiet & verbose) cat("No improvement found using alternative grouping\n")
+              }else if(!quiet & verbose) cat("Alternative grouping method gave same clusters\n")
+            }else if(!quiet & verbose) cat("Alternative grouping gave null result\n")
+          }else if(!quiet & verbose) cat("Alternative grouping method duplicated k-means\n")
+        }else if(!quiet & verbose) cat("Insufficient informative columns for alternative grouping\n")
       }
       if(all(minperfs > minscore)){
         split_node <- TRUE
         break
       }else if(nclades == maxK){
-        if(!quiet) cat("Minimum performance criteria not reached, unable to split clade\n")
+        if(!quiet & verbose) cat("Minimum performance criteria not reached, unable to split clade\n")
         split_node <- FALSE
         break
       }else{
         nclades <- nclades + 1
-        if(!quiet){
+        if(!quiet & verbose){
           cat("Minimum performance criteria not reached\n")
           cat("Attempting", nclades, "way split\n")
         }
@@ -201,7 +201,7 @@
     # splitfun <- function(s) strsplit(s, split = ";")[[1]]
     if(split_node){# placeholder for discriminant thresholding
       # change from leaf to inner node
-      if(!quiet) cat("Splitting node", attr(node, "clade"), "\n")
+      if(!quiet & verbose) cat("Splitting node", attr(node, "clade"), "\n")
       tmpattr <- attributes(node)
       node <- vector(mode = "list", length = nclades)
       attributes(node) <- tmpattr

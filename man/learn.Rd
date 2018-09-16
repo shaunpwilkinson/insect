@@ -7,7 +7,7 @@
 learn(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
   retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
-  recursive = TRUE, cores = 1, quiet = TRUE, ...)
+  recursive = TRUE, cores = 1, quiet = FALSE, verbose = FALSE, ...)
 }
 \arguments{
 \item{x}{an object of class\code{"DNAbin"} representing a list of
@@ -105,7 +105,10 @@ number of cores to use is one less than the total number of cores
 available.}
 
 \item{quiet}{logical indicating whether feedback should be printed
-to the console. Note that the output can be verbose.}
+to the console.}
+
+\item{verbose}{logical indicating whether extra feedback should be
+printed to the console, including progress at each split.}
 
 \item{...}{further arguments to be passed on to \code{\link[aphid]{train}}).}
 }

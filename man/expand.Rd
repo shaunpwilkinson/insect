@@ -7,7 +7,7 @@
 expand(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
   retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
-  recursive = TRUE, cores = 1, quiet = TRUE, ...)
+  recursive = TRUE, cores = 1, quiet = FALSE, verbose = FALSE, ...)
 }
 \arguments{
 \item{tree}{an object of class \code{"insect"}.}
@@ -97,7 +97,10 @@ number of cores to use is one less than the total number of cores
 available.}
 
 \item{quiet}{logical indicating whether feedback should be printed
-to the console. Note that the output can be verbose.}
+to the console.}
+
+\item{verbose}{logical indicating whether extra feedback should be
+printed to the console, including progress at each split.}
 
 \item{...}{further arguments to be passed on to \code{\link[aphid]{train}}).}
 }
@@ -124,9 +127,9 @@ The clade indexing system used here is based on character strings,
   data(whales)
   data(whale_taxonomy)
   ## split the first node
-  tree <- learn(whales, db = whale_taxonomy, recursive = FALSE, quiet = FALSE)
+  tree <- learn(whales, db = whale_taxonomy, recursive = FALSE)
   ## expand only the first clade
-  tree <- expand(tree, whales, clades = "1", quiet = TRUE)
+  tree <- expand(tree, whales, clades = "1")
  }
 }
 \seealso{

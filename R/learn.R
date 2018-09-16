@@ -83,7 +83,9 @@
 #'   number of cores to use is one less than the total number of cores
 #'   available.
 #' @param quiet logical indicating whether feedback should be printed
-#'   to the console. Note that the output can be verbose.
+#'   to the console.
+#' @param verbose logical indicating whether extra feedback should be
+#'   printed to the console, including progress at each split.
 #' @param ... further arguments to be passed on to \code{\link[aphid]{train}}).
 #' @return an object of class \code{"insect"}.
 #' @details The "insect" object type is a dendrogram
@@ -146,7 +148,8 @@
 learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
                   nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
                   retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
-                  recursive = TRUE, cores = 1, quiet = TRUE, ...){
+                  recursive = TRUE, cores = 1, quiet = FALSE, verbose = FALSE,
+                  ...){
   if(!quiet) cat("Training classifier\n")
   if(mode(x) == "character") x <- char2dna(x)
   if(!quiet) cat("Converting taxon IDs to full lineage strings\n")
@@ -178,9 +181,9 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   if(is.null(attr(x, "weights"))){
     if(!quiet) cat("Deriving sequence weights\n")
     dots <- list(...)
-    attr(x, "weights") <- aphid::weight(x, k = if(is.null(dots$k)) 5 else dots$k)
+    attr(x, "weights") <- aphid::weight(x, method = "Henikoff",
+                                        k = if(is.null(dots$k)) 5 else dots$k)
   }
-
   if(!quiet) cat("Making hash key for exact sequence matching\n")
   ancestors <- split(attr(x, "lineage"), f = attr(x, "hashes"))
   anclens <- vapply(ancestors, length, 0L, USE.NAMES = FALSE)
@@ -230,7 +233,8 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   tree <- expand(tree, x, clades = "", refine = refine, iterations = iterations,
                  nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
                  probs = probs, retry = retry, resize = resize, maxsize = maxsize,
-                 recursive = recursive, cores = cores, quiet = quiet, ... = ...)
+                 recursive = recursive, cores = cores, quiet = quiet,
+                 verbose = verbose, ... = ...)
   return(tree)
 }
 ################################################################################
