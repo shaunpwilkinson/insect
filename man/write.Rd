@@ -6,9 +6,9 @@
 \alias{writeFASTA}
 \title{Write sequences to text in FASTA or FASTQ format.}
 \usage{
-writeFASTQ(x, file = "", ...)
+writeFASTQ(x, file = "", compress = FALSE)
 
-writeFASTA(x, file = "", ...)
+writeFASTA(x, file = "", compress = FALSE)
 }
 \arguments{
 \item{x}{a list of sequences in \code{DNAbin} or \code{AAbin} format, or a
@@ -23,7 +23,7 @@ See \code{\link{readFASTQ}} for more details.}
 If file = "" (default setting) the text file is written to the
 console.}
 
-\item{...}{further options to be passed to \code{cat} (not including \code{"sep"}).}
+\item{compress}{logical indicating whether the output file should be gzipped.}
 }
 \value{
 NULL (invisibly).

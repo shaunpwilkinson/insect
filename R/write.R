@@ -14,7 +14,7 @@
 #' @param file character string giving a valid file path to output the text to.
 #'   If file = "" (default setting) the text file is written to the
 #'   console.
-#' @param ... further options to be passed to \code{cat} (not including \code{"sep"}).
+#' @param compress logical indicating whether the output file should be gzipped.
 #' @return NULL (invisibly).
 #' @author Shaun Wilkinson
 #' @references
@@ -45,24 +45,28 @@
 #'  }
 #' @name write
 ################################################################################
-writeFASTQ <- function(x, file = "", ...){
-  if(!.isDNA(x)) x <- char2dna(x)
+writeFASTQ <- function(x, file = "", compress = FALSE){
+  if(.isDNA(x)) x <- dna2char(x)
+  if(is.null(attr(x, "quality"))) stop("Sequences are missing quality attributes\n")
   reslen <- length(x) * 4
   res <- character(reslen)
   res[seq(1, reslen, by = 4)] <- paste0("@", names(x))
-  res[seq(2, reslen, by = 4)]  <- dna2char(x)
+  res[seq(2, reslen, by = 4)]  <- x
   res[seq(3, reslen, by = 4)]  <- rep("+", length(x))
-  res[seq(4, reslen, by = 4)]  <- sapply(lapply(x, attr, "quality"), .qual2char)
-  cat(res, file = file, sep = "\n", ... = ...)
+  res[seq(4, reslen, by = 4)]  <- attr(x, "quality")
+  f <- if(compress) gzfile(file, "w") else file(file, "w")
+  writeLines(res, f)
+  close(f)
+  invisible(NULL)
+  # cat(res, file = file, sep = "\n", ... = ...)
 }
 ################################################################################
 #' @rdname write
 ################################################################################
-writeFASTA <- function(x, file = "", ...){
+writeFASTA <- function(x, file = "", compress = FALSE){
   isDNA <- .isDNA(x)
   isAA <- .isAA(x)
-  if(!is.null(dim(x))){
-    # convert from matrix to list while retaining gaps
+  if(!is.null(dim(x))){ # convert from matrix to list while retaining gaps
     x <- as.list(as.data.frame(t(unclass(x))))
   }
   if(isDNA | isAA){
@@ -80,6 +84,10 @@ writeFASTA <- function(x, file = "", ...){
   res <- character(reslen)
   res[seq(1, reslen, by = 2)] <- paste0(">", names(tmp))
   res[seq(2, reslen, by = 2)] <- tmp
-  cat(res, file = file, sep = "\n", ... = ...)
+  f <- if(compress) gzfile(file, "w") else file(file, "w")
+  writeLines(res, f)
+  close(f)
+  invisible(NULL)
+  #cat(res, file = file, sep = "\n", ... = ...)
 }
 ################################################################################
