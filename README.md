@@ -11,13 +11,29 @@
 
 ### Informatic sequence classification trees
 
-`insect` is an R package for DNA meta-barcoding analysis. It provides a 
-bioinformatics pipeline that automates the process from HTS sequence 
-de-multiplexing and quality filtering to probabilistic taxonomic 
-assignment using informatic sequence classification trees. 
-It also contains functions for searching and downloading sequences 
-from GenBank, a "virtual PCR" tool, a new algorithm for classification tree learning, 
-and a method for classifying DNA barcode sequences using pre-computed trees.
+`insect` is an R package for taxonomic identification of amplicon 
+sequence variants generated during DNA meta-barcoding analysis. 
+The learning and classification algorithms implemented in the 
+package are based on full probabilistic models (profile hidden Markov models) 
+and offer highly accurate taxon IDs, albeit at a relatively high computational cost.
+
+The package also contains functions for searching and downloading reference 
+sequences and taxonomic information from NCBI, 
+a "virtual PCR" tool for sequence trimming, 
+a function for "purging" erroneously labeled reference sequences, 
+and several other handy tools.  
+
+`insect` is designed to be used in conjunction with the 
+[dada2](https://benjjneb.github.io/dada2/index.html) pipeline or any other
+de-noising tool that produces a list of amplicon sequence variants (ASVs). 
+While unfiltered sequences can also be processed with high accuracy, 
+the **insect** classification algorithm is relatively slow, 
+since it uses a computationally intensive dynamic
+programming algorithm to find the likelihood values
+of each sequence given the models at each node of the classification tree. 
+Hence an appropriately filtered input dataset will generally be 
+much faster to process.
+
 
 
 ### Installation
@@ -37,7 +53,7 @@ library("insect")
 ```
 
 
-### Help
+### Classifying sequences
 
 An overview of the package and its functions can be found by running
 

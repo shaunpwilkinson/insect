@@ -39,6 +39,8 @@
 ################################################################################
 encodePHMM <- function(x){
   if(mode(x) == "raw") return(x)
+  AA <- nrow(x$E) == 20
+  if(!AA & nrow(x$E) != 4) stop("Invalid model for DNA or AA sequences \n")
   encode1 <- function(xx){ ## a number between 0.000001 and 100
     ## encodes as two bytes to (almost) 4 signif figs
     ## first 13 for the digits (2^13 = 8192) last 3 bits for exponent
@@ -53,13 +55,14 @@ encodePHMM <- function(x){
   logibits <- raw(32)
   if(any(is.finite(x$A[3, ]))) logibits[32] <- as.raw(1) # DI trans enabled?
   if(any(is.finite(x$A[7, ]))) logibits[31] <- as.raw(1) # ID trans enabled?
+  if(AA) logibits[30] <- as.raw(1)
   logibytes <- packBits(logibits)
   sizebytes <- packBits(intToBits(x$size)) # 4 bytes for model size = 4bil max size
   A <- x$A[-(c(2, 3, 6, 7, 9)), ]
   A <- A[is.finite(A)] * -1 # now a vector
   A[A < 1e-06] <- 1e-06 ## minimum value (max prob remember to fix final DM trans to 1)
   Abytes <- as.vector(sapply(A, encode1))
-  E <- x$E[1:3, ] * -1 # drop T row as can be calculated
+  E <- if(AA) x$E[1:19, ] * -1 else x$E[1:3, ] * -1 # drop T row as can be calculated
   E[E < 1e-06] <- 1e-06
   Ebytes <- as.vector(sapply(E, encode1))
   qa <- x$qa[-c(3, 7)] * -1 # can't drop any
@@ -82,6 +85,10 @@ decodePHMM <- function(z){
     digi <- round(digi/0.9102122, 0) + 1000 # integer between 1000 and 9999
     return(digi * 10^(expo - 3)) # the 3 reduces from 1000 to 1
   }
+  logibits <- rawToBits(z[1:4])
+  AA <- as.logical(logibits[30])
+  ID <- as.logical(logibits[31])
+  DI <- as.logical(logibits[32])
   zsize <-  sum(as.integer(z[5:8]) * c(1, 256, 65536, 16777216))
   alength <- (((zsize + 1) * 4) - 3) * 2
   ## 1 extra col at front, 4 rows excl DI, ID etc, 3 -Infs (DD start, DD MD end), 2 bytes per entry
@@ -110,14 +117,16 @@ decodePHMM <- function(z){
   dimnames(A) <- list(type = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II"),
                       module = paste(0:zsize))
   estart <- aend + 1
-  eend <- length(z) - 22 #(4 x 2 for qe, 7 x 2 for qa)
+  eend <- length(z) - if(AA) 54 else 22 #(4 x 2 for qe, 7 x 2 for qa)
   E <- z[estart:eend]
   E <- apply(matrix(E, nrow = 2), 2, decode1) * -1
-  E <- matrix(E, nrow = 3)
-  Trow <- apply(exp(E), 2, function(v) 1 - v[1] - v[2] - v[3])
+  E <- matrix(E, nrow = if(AA) 19 else 3)
+  Trow <- 1 - apply(exp(E), 2, sum)
+  #Trow <- apply(exp(E), 2, function(v) 1 - v[1] - v[2] - v[3])
   Trow[Trow < 1e-06] <- 1e-06
   E <- rbind(E, log(Trow))
-  dimnames(E) <- list(residue = c("A", "C", "G", "T"), position <- paste(1:zsize))
+  colnames(E) <- paste(1:zsize)
+  rownames(E) <- if(AA) LETTERS[-c(2, 10, 15, 21, 24, 26)] else c("A", "C", "G", "T")
   qastart <- eend + 1
   qaend <- qastart + 13 #(7 * 2 - 1)
   tmp <- z[qastart:qaend]
@@ -128,7 +137,7 @@ decodePHMM <- function(z){
   qeend <- length(z)
   qe <- z[qestart:qeend]
   qe <- apply(matrix(qe, nrow = 2), 2, decode1) * -1
-  names(qe) <- c("A", "C", "G", "T")
+  names(qe) <- if(AA) LETTERS[-c(2, 10, 15, 21, 24, 26)] else c("A", "C", "G", "T")
   res <- list(size = zsize, A = A, E = E, qa = qa, qe = qe)
   class(res) <- "PHMM"
   return(res)

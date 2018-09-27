@@ -9,8 +9,9 @@ classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   "species"), tabulize = TRUE, metadata = FALSE, cores = 1)
 }
 \arguments{
-\item{x}{a DNA sequence or set of sequences. Can be a
-"DNAbin" object or a named vector of upper-case character strings.}
+\item{x}{a sequence or set of sequences. Can be a
+"DNAbin" or "AAbin" object or a named vector of
+upper-case DNA character strings.}
 
 \item{tree}{an object of class \code{"insect"}
 (see \code{\link{learn}} for details).}

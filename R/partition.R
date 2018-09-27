@@ -14,8 +14,10 @@
   names(x) <- paste0("S", 1:nseq) # just ensures all names are unique
   if(is.null(seqweights)){
     seqweights <- rep(1, nseq)
+  }else if(identical(seqweights, "Henikoff")){
+    seqweights <- aphid::weight(x, method = "Henikoff", k = 5)
   }else if(identical(seqweights, "Gerstein")){
-    seqweights <- aphid::weight(x, method = "Gerstein")
+    seqweights <- aphid::weight(x, method = "Gerstein", k = 5)
   }else if(length(seqweights) != nseq){
     stop("Invalid sequence weights passed to '.partition'")
   }

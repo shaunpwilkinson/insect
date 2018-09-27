@@ -3,7 +3,7 @@
 .fork <- function(node, x, lineages, refine = "Viterbi", nstart = 20,
                  iterations = 50, minK = 2, maxK = 2, minscore = 0.9,
                  probs = 0.5, retry = TRUE, resize = TRUE, maxsize = NULL,
-                 kmers = NULL, seqweights = "Gerstein", cores = 1,
+                 kmers = NULL, seqweights = "Henikoff", cores = 1,
                  quiet = FALSE, verbose = FALSE, ...){
   indices <- attr(node, "sequences")
   nseq <- length(indices)
@@ -18,8 +18,10 @@
     if(nseq < maxK) maxK <- nseq
     if(is.null(seqweights)){
       seqweights <- rep(1, nseq)
+    }else if(identical(seqweights, "Henikoff")){
+      seqweights <- aphid::weight(x[indices], method = "Henikoff", k = 5)
     }else if(identical(seqweights, "Gerstein")){
-      seqweights <- aphid::weight(x[indices], method = "Gerstein")
+      seqweights <- aphid::weight(x[indices], method = "Gerstein", k = 5)
     }else if(length(seqweights) == length(x)){
       seqweights <- seqweights[indices]
       seqweights <- seqweights/mean(seqweights) ##scale weights to average 1

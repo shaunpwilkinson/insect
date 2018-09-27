@@ -3,8 +3,9 @@
 #' \code{"classify"} assigns taxon IDs to DNA sequences using an
 #'   informatic sequence classification tree.
 #'
-#' @param x a DNA sequence or set of sequences. Can be a
-#'   "DNAbin" object or a named vector of upper-case character strings.
+#' @param x a sequence or set of sequences. Can be a
+#'   "DNAbin" or "AAbin" object or a named vector of
+#'   upper-case DNA character strings.
 #' @param tree an object of class \code{"insect"}
 #'   (see \code{\link{learn}} for details).
 #' @param threshold numeric between 0 and 1 giving the minimum
@@ -161,7 +162,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   if(ping){
     if(is.null(attr(tree, "key"))){
       warning(paste0("ping is TRUE but tree has no hash key. ",
-                     "Exact matching not possible\n"))
+                     "Exact string matching not possible\n"))
     }
   }
   # decode second and third tier models for increased speed
