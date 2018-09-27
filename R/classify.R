@@ -31,7 +31,7 @@
 #'   (\code{attr(tree, "taxonomy")}). Set to NULL to exclude taxonomic ranks
 #'   from the output table.
 #' @param tabulize logical indicating whether sequence counts should be
-#'   attached to the output table. If TRUE (default), the output table will have one
+#'   attached to the output table. If TRUE, the output table will have one
 #'   row for each unique sequence, and columns will include counts for
 #'   each sample (where samples names precede sequence identifiers in the input
 #'   object; see details below).
@@ -124,7 +124,7 @@
 classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      ranks = c("kingdom", "phylum", "class", "order",
                                "family", "genus", "species"),
-                     tabulize = TRUE, metadata = FALSE, cores = 1){
+                     tabulize = FALSE, metadata = FALSE, cores = 1){
   if(is.null(names(x))) names(x) <- paste0("S", seq_along(x))
   if(mode(x) == "character") x <- char2dna(x, simplify = FALSE)
   if(!is.list(x)){
