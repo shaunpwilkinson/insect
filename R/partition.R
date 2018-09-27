@@ -36,7 +36,9 @@
       # kmers <- kmer::kcount(x, k = 5)
       if(!quiet & verbose) cat("Counting kmers\n")
       dots <- list(...)
-      kmers <- kmer::kcount(x, k = if(!is.null(dots$k)) dots$k else 5)
+      suppressMessages(
+        kmers <- kmer::kcount(x, k = if(!is.null(dots$k)) dots$k else 5)
+      )
     }
     if(!quiet & verbose) cat("Assigning sequences to groups ")
     if(identical(allocation, "split")){

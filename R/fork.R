@@ -30,7 +30,9 @@
     if(is.null(kmers)){# generally will be NULL due to large size
       if(!quiet & verbose) cat("\nCounting kmers\n")
       dots <- list(...)
-      kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
+      suppressMessages(
+        kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
+      )
     }else{
       if(nrow(kmers) == length(x)) kmers <- kmers[indices, ]
     }
