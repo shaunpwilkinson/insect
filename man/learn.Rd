@@ -21,7 +21,7 @@ For example: "AF296347|30962", "AF296346|8022", "AF296345|8017", etc.
 See \code{\link{searchGB}} for more details on creating the reference
 sequence database.}
 
-\item{db}{a valid taxonomy database (as a data.frame object).
+\item{db}{a heirarchical taxonomy database in the form of a data.frame.
 The object should have
 four columns, labeled "taxID", "parent_taxID", "rank" and "name".
 The first two should be numeric, and all ID numbers in the

@@ -6,7 +6,7 @@
 \usage{
 classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   ranks = c("kingdom", "phylum", "class", "order", "family", "genus",
-  "species"), tabulize = TRUE, metadata = FALSE, cores = 1)
+  "species"), tabulize = FALSE, metadata = FALSE, cores = 1)
 }
 \arguments{
 \item{x}{a sequence or set of sequences. Can be a
@@ -43,7 +43,7 @@ taxonomy database attributed to the classification tree
 from the output table.}
 
 \item{tabulize}{logical indicating whether sequence counts should be
-attached to the output table. If TRUE (default), the output table will have one
+attached to the output table. If TRUE, the output table will have one
 row for each unique sequence, and columns will include counts for
 each sample (where samples names precede sequence identifiers in the input
 object; see details below).}

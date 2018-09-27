@@ -181,8 +181,8 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   if(is.null(attr(x, "weights"))){
     if(!quiet) cat("Deriving sequence weights\n")
     dots <- list(...)
-    attr(x, "weights") <- aphid::weight(x, method = "Henikoff",
-                                        k = if(is.null(dots$k)) 5 else dots$k)
+    attr(x, "weights") <- suppressMessages(aphid::weight(x, method = "Henikoff",
+                                        k = if(is.null(dots$k)) 5 else dots$k))
   }
   if(!quiet) cat("Making hash key for exact sequence matching\n")
   ancestors <- split(attr(x, "lineage"), f = attr(x, "hashes"))
