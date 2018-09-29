@@ -51,6 +51,7 @@
         infocol <- match(levels(hfac)[which.max(tabulate(hfac))], hashes)
         tmp <- kmers[, infocols][, infocol]
         tmp <- unname(tmp == tmp[1]) + 1L ## converts from logical to integer
+        rm(kmers)### free up memory
       }else{
         allocation <- "cluster"
       }
@@ -61,7 +62,7 @@
       tmp <- tryCatch(kmeans(kmers, centers = K, nstart = nstart)$cluster,
                       error = function(er) sample(rep(1:K, nseq)[1:nseq]),
                       warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))
-      kmers <- NULL ### free up memory
+      rm(kmers)### free up memory
     }
   }else{
     if(length(allocation) != nseq) stop("Invalid argument given for 'allocation'")

@@ -235,6 +235,9 @@
     # }
     # attr(node, "model")$alignment <- NULL
   }
+  if(exists("seqsplit")) rm(seqsplit)
+  if(exists("seqsplit2")) rm(seqsplit2)
+  gc()
   return(node)
 }
 ################################################################################
