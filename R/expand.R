@@ -147,20 +147,18 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   ## otherwise uses excessive memory (since this matrix can be > 1GB)
   # kmers <- attr(tree, "kmers")
   #if(is.null(kmers)) kmers <- kmer::mbed(x)
-
-
   # if(ncores == 1){
   #   if(!quiet) cat("Counting k-mers\n")
   #   dots <- list(...)
   #   kmers <- kmer::kcount(x, k = if(is.null(dots$k)) 5 else dots$k)
   #   kmers <- kmers/(sapply(x, length) - 4) #k - 1 = 4
   # }else kmers <- NULL
-
   kmers <- NULL
-
   # attr(tree, "kmers") <- NULL ## replaced later
   ## prev line commented to prevent k-mer stripping
   ### recursively split nodes
+  switchpoint <- max(length(x)/ncores, 30L) ## switch from basal to terminal node recursion method
+  #switchpoint <- 60
   if(ncores > 1 & recursive){
     #if(length(clades) < ncores){
     lockleaves <- function(node, exceptions){
@@ -197,7 +195,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
       rm(tmp)
       nmembers <- nmembers[eligible]
       # if(!any(eligible) | length(nmembers) >= 2 * ncores) break
-      if(!any(eligible) | all(nmembers < 50)) break
+      if(!any(eligible) | all(nmembers < switchpoint)) break
       whichclade <- names(nmembers)[which.max(nmembers)]
       index <- gsub("([[:digit:]])", "[[\\1]]", whichclade)
       toeval <- paste0("tree", index, "<- .fork(tree",

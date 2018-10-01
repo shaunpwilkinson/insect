@@ -164,15 +164,6 @@
       }else{
         sapply(x, fscore, model = res[[pnms[j]]])
       }
-      # res[[pnms[j]]] <- aphid::train(model, x[membership == j], #model
-      #                         method = refine, seqweights = seqweightsj,
-      #                         inserts = if(refine == "Viterbi") "inherited" else "map",
-      #                         ... = ...)
-      # if(!quiet) cat("Calculating sequence probabilities given child model", j, "\n")
-      ###TODO paralellize:
-      # for(l in 1:nseq){
-      #   scores[j, l] <- aphid::forward(res[[pnms[j]]], x[[l]], odds = FALSE)$score
-      # }
     }
     tmp <- apply(scores, 2, which.max)
     finetune <- sum(tmp == membership)/nseq > 0.95
