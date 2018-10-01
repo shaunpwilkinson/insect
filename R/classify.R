@@ -125,6 +125,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      ranks = c("kingdom", "phylum", "class", "order",
                                "family", "genus", "species"),
                      tabulize = FALSE, metadata = FALSE, cores = 1){
+  # if(is.null(attr(tree, "nullscore"))) attr(tree, "nullscore") <- -1E08 ###
   if(is.null(names(x))) names(x) <- paste0("S", seq_along(x))
   if(mode(x) == "character") x <- char2dna(x, simplify = FALSE)
   if(!is.list(x)){
@@ -197,28 +198,34 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     while(is.list(tree)){
       no_mods <- length(tree)
       sc <- numeric(no_mods) # scores (log probabilities)
-      for(i in 1:no_mods){
+      for(i in seq_len(no_mods)){
         modi <- decodePHMM(attr(tree[[i]], "model"))
         sc[i] <- aphid::forward.PHMM(modi, x, odds = FALSE)$score
-        # takes a similar amount of time
       }
+      # sc[no_mods + 1L] <- attr(tree, "nullscore")
       total_score <- aphid::logsum(sc)
       akwgts <- exp(sc - total_score)
       best_model <- which.max(akwgts)
       newakw <- akwgts[best_model]
       newcakw <- newakw * cakw
       threshold_met <- threshold <= if(decay) newcakw else newakw
-      minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 0.1
+      # if(best_model == no_mods + 1L) threshold_met <- FALSE ### null model selected
       # 4 is approx asymtote for single bp change as n training seqs -> inf
-      #was 4, 2, 2
-      minlength_met <- length(x) >= attr(tree[[best_model]], "minlength")# - 1
-      maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength")# + 1
+      if(threshold_met){
+        minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 0.01
+        minlength_met <- length(x) >= attr(tree[[best_model]], "minlength")# - 1
+        maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength")# + 1
+      }else{
+        minscore_met <- minlength_met <- maxlength_met <- FALSE
+      }
       if(!(threshold_met & minscore_met & minlength_met & maxlength_met)) break
       path <- paste0(path, best_model)
       scores <- paste0(scores, intToUtf8(as.integer(newakw * 100)))
       akw <- newakw
       cakw <- newcakw
       tree <- tree[[best_model]]
+      # attr(tree, "nullscore") <- aphid::logsum(sc[seq_len(no_mods)][-best_model])
+      #attr(tree, "nullscore") <- -1E08
       tax <- attr(tree, "taxID")
     }
     score <- round(if(decay) cakw else akw, 4)
@@ -257,7 +264,6 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       res <- lapply(x, classify1, tree, threshold, decay, ping)
     }
   }
-  #test <<- res
   res <- do.call("rbind", res) ## changed output to dataframe 20180617
   lineages <- get_lineage(res$taxID, db, cores = cores,
                           simplify = FALSE, numbers = FALSE)
@@ -285,7 +291,6 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     lhcols <- lhcols[pointers, ]
     lhcols$representative <- catchnames
   }
-  # lhcols$path <- as.character(lhcols$path)
   rownames(lhcols) <- NULL
   return(lhcols)
 }

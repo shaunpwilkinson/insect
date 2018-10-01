@@ -155,10 +155,12 @@
       modelj$insertlengths <- NULL
       modelj$name <- NULL
       res[[pnms[j]]] <- modelj
+      modelj$alignment <- NULL
       if(!quiet & verbose) cat("Calculating sequence probabilities given child model",
                                j, "\n")
+      #cat(inherits(cores, "cluster"), "\n")
       scores[j, ] <- if(inherits(cores, "cluster")){
-        parallel::parSapply(cores, x, fscore, model = res[[pnms[j]]])
+        parallel::parSapply(cores, x, fscore, model = modelj)
       }else{
         sapply(x, fscore, model = res[[pnms[j]]])
       }
