@@ -129,20 +129,20 @@
     membership <- tmp
     for(j in 1:K) seq_numbers[j] <- sum(membership == j)
     mcn <- min(seq_numbers)
-    #if(mcn < 4) mcn <- 4
+    if(mcn < 10) mcn <- 10
     for(j in 1:K){
       # if(!quiet) cat("Calculating sequence weights given child model", j, "\n")
       # scale so that weights reflect smallest clade size
       seqweightsj <- seqweights[membership == j]
       seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
-      seqweightsj <- seqweightsj * mcn/seq_numbers[j]
+      ############seqweightsj <- seqweightsj * mcn/seq_numbers[j] ########
       if(!quiet & verbose) cat("Training child model", j, "\n")
       ins <- if(finetune) res[[pnms[j]]]$inserts else model$inserts
       if(is.null(ins)) ins <- TRUE # top level only
       suppressWarnings(
         modelj <- aphid::train(if(finetune) res[[pnms[j]]] else model,
                                x[membership == j], #model
-                               method = refine, seqweights = seqweightsj,
+                               method = refine, seqweights = seqweightsj,# pseudocounts = 0.1*length(seqweightsj),##############
                                inserts = "inherited",
                                alignment = sum(ins)/length(ins) < 0.5,
                                cores = cores, quiet = !(!quiet & verbose),

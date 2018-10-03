@@ -157,7 +157,7 @@
                 for(i in 1:nclades){
                   minperfs2[i] <- quantile(performances2[membership2 == i], probs = probs)
                   if(!quiet & verbose){
-                    if(i == 1) cat("Akaike weights:", performances2, "\n")
+                    #if(i == 1) cat("Akaike weights:", performances2, "\n")
                     cat("Group", i, "size =", sum(membership == i), "\n")
                     cat(sum(performances[membership == i] > minscore), "of",
                         sum(membership == i), "correctly predicted with Akaike weight >",

@@ -125,7 +125,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      ranks = c("kingdom", "phylum", "class", "order",
                                "family", "genus", "species"),
                      tabulize = FALSE, metadata = FALSE, cores = 1){
-  # if(is.null(attr(tree, "nullscore"))) attr(tree, "nullscore") <- -1E08 ###
+  if(is.null(attr(tree, "nullscore"))) attr(tree, "nullscore") <- -1E08 ###
   if(is.null(names(x))) names(x) <- paste0("S", seq_along(x))
   if(mode(x) == "character") x <- char2dna(x, simplify = FALSE)
   if(!is.list(x)){
@@ -197,19 +197,20 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     tax <- 1L # root (cant use 0L due to get_lineage call below)
     while(is.list(tree)){
       no_mods <- length(tree)
-      sc <- numeric(no_mods) # scores (log probabilities)
+      sc <- numeric(no_mods)##### + 1L)##### # scores (log probabilities)
       for(i in seq_len(no_mods)){
         modi <- decodePHMM(attr(tree[[i]], "model"))
         sc[i] <- aphid::forward.PHMM(modi, x, odds = FALSE)$score
       }
-      # sc[no_mods + 1L] <- attr(tree, "nullscore")
+      #####sc[no_mods + 1L] <- attr(tree, "nullscore") ######
+      ##### cat(sc, "\n") ###############
       total_score <- aphid::logsum(sc)
       akwgts <- exp(sc - total_score)
       best_model <- which.max(akwgts)
       newakw <- akwgts[best_model]
       newcakw <- newakw * cakw
       threshold_met <- threshold <= if(decay) newcakw else newakw
-      # if(best_model == no_mods + 1L) threshold_met <- FALSE ### null model selected
+      #####if(best_model == no_mods + 1L) threshold_met <- FALSE ###### null model selected
       # 4 is approx asymtote for single bp change as n training seqs -> inf
       if(threshold_met){
         minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 0.01
@@ -224,8 +225,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       akw <- newakw
       cakw <- newcakw
       tree <- tree[[best_model]]
-      # attr(tree, "nullscore") <- aphid::logsum(sc[seq_len(no_mods)][-best_model])
-      #attr(tree, "nullscore") <- -1E08
+      #####attr(tree, "nullscore") <- aphid::logsum(sc[seq_len(no_mods)][-best_model]) #####
       tax <- attr(tree, "taxID")
     }
     score <- round(if(decay) cakw else akw, 4)
