@@ -145,16 +145,21 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   }
   ## calculate k-mers once but only if run on single core
   ## otherwise uses excessive memory (since this matrix can be > 1GB)
-  # kmers <- attr(tree, "kmers")
-  #if(is.null(kmers)) kmers <- kmer::mbed(x)
+  dots <- list(...)
+  kmers <- attr(tree, "kmers")
+  if(is.null(kmers)) {
+    kmers <- .encodek(kmer::kcount(x, k = if(is.null(dots$k)) 5 else dots$k))
+  }else{
+    stopifnot(nrow(kmers) == length(x))
+  }
   # if(ncores == 1){
   #   if(!quiet) cat("Counting k-mers\n")
   #   dots <- list(...)
   #   kmers <- kmer::kcount(x, k = if(is.null(dots$k)) 5 else dots$k)
   #   kmers <- kmers/(sapply(x, length) - 4) #k - 1 = 4
   # }else kmers <- NULL
-  kmers <- NULL
-  # attr(tree, "kmers") <- NULL ## replaced later
+  ############### kmers <- NULL ###################### need this if using partition to count kmers
+  attr(tree, "kmers") <- NULL ## replaced later
   ## prev line commented to prevent k-mer stripping
   ### recursively split nodes
   switchpoint <- max(round(length(x)/ncores), 50L) ## switch from basal to terminal node recursion method
@@ -251,7 +256,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   }
   if(stopclustr) parallel::stopCluster(cores)
   ### remove kmers since can be memory hungry, prevent next operations
-  rm(kmers)
+  ############### rm(kmers) ######################
   gc()
   ### fix midpoints, members, heights and leaf integers
   ### note changes here also apply to 'learn' function
@@ -288,6 +293,8 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   # attributes(x) <- tmpxattr
   if(!quiet) cat("Resetting node heights\n")
   tree <- phylogram::reposition(tree)
+  attr(tree, "kmers") <- kmers
+  rm(kmers)
   if(!quiet) cat("Done\n")
   class(tree) <- c("insect", "dendrogram")
   return(tree)

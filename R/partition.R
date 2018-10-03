@@ -8,6 +8,7 @@
   # model is a starting model to be trained on each side
   # assumes all seqs are unique
   # allocationis can be integer vector containing the set {1:K} same length as nseq
+  dots <- list(...)
   res <- list()
   nseq <- length(x)
   if(K > nseq) K <- nseq
@@ -35,30 +36,31 @@
       # if(!quiet) cat("Counting k-mers\n")
       # kmers <- kmer::kcount(x, k = 5)
       if(!quiet & verbose) cat("Counting kmers\n")
-      dots <- list(...)
       suppressMessages(
-        kmers <- kmer::kcount(x, k = if(!is.null(dots$k)) dots$k else 5)
+        kmers <- kmer::kcount(x, k = if(!is.null(dots$k)) dots$k else 5) ##############
       )
     }
     if(!quiet & verbose) cat("Assigning sequences to groups ")
     if(identical(allocation, "split")){
-      infocols <- apply(kmers, 2, function(v) length(unique(v))) == 2
+      kcounts <- kmer::kcount(x, k = if(!is.null(dots$k)) dots$k else 5)
+      infocols <- apply(kcounts, 2, function(v) length(unique(v))) == 2
       if(sum(infocols) > 30 & K == 2){
         if(!quiet & verbose) cat("using k-mer splitting method\n")
         hash1 <- function(v) paste(openssl::md5(as.raw(v == v[1])))
-        hashes <- apply(kmers[, infocols], 2, hash1)
+        hashes <- apply(kcounts[, infocols], 2, hash1)
         hfac <- factor(hashes)
         infocol <- match(levels(hfac)[which.max(tabulate(hfac))], hashes)
-        tmp <- kmers[, infocols][, infocol]
+        tmp <- kcounts[, infocols][, infocol]
         tmp <- unname(tmp == tmp[1]) + 1L ## converts from logical to integer
-        rm(kmers)### free up memory
+        rm(kcounts)### free up memory
       }else{
         allocation <- "cluster"
       }
     }
     if(identical(allocation, "cluster")){
       if(!quiet & verbose) cat("using k-means algorithm\n")
-      kmers <- kmers/(sapply(x, length) - 4)## k - 1 = 3
+      ##########kmers <- kmers/(sapply(x, length) - 4)## k - 1 = 3 ###############
+      kmers <- .decodek(kmers)
       tmp <- tryCatch(kmeans(kmers, centers = K, nstart = nstart)$cluster,
                       error = function(er) sample(rep(1:K, nseq)[1:nseq]),
                       warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))

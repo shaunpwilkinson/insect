@@ -41,17 +41,7 @@ encodePHMM <- function(x){
   if(mode(x) == "raw") return(x)
   AA <- nrow(x$E) == 20
   if(!AA & nrow(x$E) != 4) stop("Invalid model for DNA or AA sequences \n")
-  encode1 <- function(xx){ ## a number between 0.000001 and 100
-    ## encodes as two bytes to (almost) 4 signif figs
-    ## first 13 for the digits (2^13 = 8192) last 3 bits for exponent
-    #(1e-6 -> 0, 1e+1 -> 7)
-    if(!is.finite(xx)) return(as.raw(c(0, 0)))
-    stopifnot(xx >= 1e-06 & xx < 100)
-    expo <- floor(log10(xx))
-    digi <- round((xx/10^(expo - 3) - 1000) * 0.9102122, 0)
-    ## scale factor 8191/8999 = 0.9102122, 3 to get from 1 to 1000
-    return(packBits(c(intToBits(digi)[1:13], intToBits(expo + 6)[1:3])))
-  }
+
   logibits <- raw(32)
   if(any(is.finite(x$A[3, ]))) logibits[32] <- as.raw(1) # DI trans enabled?
   if(any(is.finite(x$A[7, ]))) logibits[31] <- as.raw(1) # ID trans enabled?
@@ -61,14 +51,14 @@ encodePHMM <- function(x){
   A <- x$A[-(c(2, 3, 6, 7, 9)), ]
   A <- A[is.finite(A)] * -1 # now a vector
   A[A < 1e-06] <- 1e-06 ## minimum value (max prob remember to fix final DM trans to 1)
-  Abytes <- as.vector(sapply(A, encode1))
+  Abytes <- as.vector(sapply(A, .encode1))
   E <- if(AA) x$E[1:19, ] * -1 else x$E[1:3, ] * -1 # drop T row as can be calculated
   E[E < 1e-06] <- 1e-06
-  Ebytes <- as.vector(sapply(E, encode1))
+  Ebytes <- as.vector(sapply(E, .encode1))
   qa <- x$qa[-c(3, 7)] * -1 # can't drop any
-  qabytes <- as.vector(sapply(qa, encode1))
+  qabytes <- as.vector(sapply(qa, .encode1))
   qe <- x$qe * -1
-  qebytes <- as.vector(sapply(qe, encode1))
+  qebytes <- as.vector(sapply(qe, .encode1))
   z <- c(logibytes, sizebytes, Abytes, Ebytes, qabytes, qebytes)
   return(z)
 }
@@ -77,14 +67,6 @@ encodePHMM <- function(x){
 ################################################################################
 decodePHMM <- function(z){
   if(mode(z) != "raw") return(z)
-  decode1 <- function(zz){ ## zz is a 2-byte raw vec
-    res <- rawToBits(zz)
-    expo <- as.integer(packBits(c(res[14:16], raw(5)))) - 6
-    digi <- as.integer(packBits(c(res[1:13], raw(3)))) # 2 ints between 0 and 8191
-    digi <- sum(digi* c(1, 256))
-    digi <- round(digi/0.9102122, 0) + 1000 # integer between 1000 and 9999
-    return(digi * 10^(expo - 3)) # the 3 reduces from 1000 to 1
-  }
   logibits <- rawToBits(z[1:4])
   AA <- as.logical(logibits[30])
   ID <- as.logical(logibits[31])
@@ -95,7 +77,7 @@ decodePHMM <- function(z){
   astart <- 9
   aend <- alength + 9 - 1
   A <- z[astart:aend]
-  A <- apply(matrix(A, nrow = 2), 2, decode1) * -1
+  A <- apply(matrix(A, nrow = 2), 2, .decode1) * -1
   A <- c(-Inf, A) ## append first DD transition
   lcis <- seq(length(A) - 1, length(A)) # last column indices
   lastcol <- c(-Inf, -Inf, A[lcis]) # final DD, MD, MM and IM transitions
@@ -119,7 +101,7 @@ decodePHMM <- function(z){
   estart <- aend + 1
   eend <- length(z) - if(AA) 54 else 22 #(4 x 2 for qe, 7 x 2 for qa)
   E <- z[estart:eend]
-  E <- apply(matrix(E, nrow = 2), 2, decode1) * -1
+  E <- apply(matrix(E, nrow = 2), 2, .decode1) * -1
   E <- matrix(E, nrow = if(AA) 19 else 3)
   Trow <- 1 - apply(exp(E), 2, sum)
   #Trow <- apply(exp(E), 2, function(v) 1 - v[1] - v[2] - v[3])
@@ -130,13 +112,13 @@ decodePHMM <- function(z){
   qastart <- eend + 1
   qaend <- qastart + 13 #(7 * 2 - 1)
   tmp <- z[qastart:qaend]
-  tmp <- apply(matrix(tmp, nrow = 2), 2, decode1) * -1
+  tmp <- apply(matrix(tmp, nrow = 2), 2, .decode1) * -1
   qa <- structure(rep(-Inf, 9), names = c("DD", "DM", "DI", "MD", "MM", "MI", "ID", "IM", "II"))
   qa[c(1, 2, 4, 5, 6, 8, 9)] <- tmp
   qestart <- qaend + 1
   qeend <- length(z)
   qe <- z[qestart:qeend]
-  qe <- apply(matrix(qe, nrow = 2), 2, decode1) * -1
+  qe <- apply(matrix(qe, nrow = 2), 2, .decode1) * -1
   names(qe) <- if(AA) LETTERS[-c(2, 10, 15, 21, 24, 26)] else c("A", "C", "G", "T")
   res <- list(size = zsize, A = A, E = E, qa = qa, qe = qe)
   class(res) <- "PHMM"

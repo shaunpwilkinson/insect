@@ -27,18 +27,19 @@
       seqweights <- seqweights/mean(seqweights) ##scale weights to average 1
     }else stop("Invalid seqweights argument")
     ## uncommented following 20180828 due to fail at retry line 128
-    if(is.null(kmers)){# generally will be NULL due to large size
+    dots <- list(...)
+    if(is.null(kmers)){# generally will be NULL due to large size?
       if(!quiet & verbose) cat("\nCounting kmers\n")
-      dots <- list(...)
       suppressMessages(
-        kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
+        #kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
+        kmers <- .encodek(kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5))
       )
     }else{
-      if(nrow(kmers) == length(x)) kmers <- kmers[indices, ]
+      if(nrow(kmers) == length(x)) kmers <- kmers[indices, , drop = FALSE]
     }
 
     if(!is.null(kmers)) {
-      if(nrow(kmers) == length(x)) kmers <- kmers[indices, ]
+      if(nrow(kmers) == length(x)) kmers <- kmers[indices, , drop = FALSE]
       stopifnot(nrow(kmers) == length(indices))
     }
 
@@ -128,7 +129,8 @@
           cat("Minimum Akaike weight:", min(performances[membership == i]), "\n")
         }
       }
-      if(nclades == 2 & retry & min(minperfs) < 0.999){
+      if(nclades == 2 & retry & min(minperfs) < 0.99){
+        kmers <- .decodek(kmers)
         infocols <- apply(kmers, 2, function(v) length(unique(v))) == 2
         if(sum(infocols) > 50){
           if(!quiet & verbose) cat("Comparing result with alternative grouping method\n")
@@ -142,7 +144,7 @@
           if(!all(alloc2 == membership) & !all(alloc2 == seqsplit$init_membership)){
             seqsplit2 <- .partition(x[indices], model = mod, refine = refine, K = 2,
                                    allocation = alloc2, nstart = nstart,
-                                   iterations = iterations, kmers = kmers,
+                                   iterations = iterations, kmers = NULL,
                                    seqweights = seqweights, cores = cores,
                                    quiet = quiet, verbose = verbose, ... = ...)
             if(!is.null(seqsplit2)){
@@ -205,7 +207,7 @@
     # splitfun <- function(s) strsplit(s, split = ";")[[1]]
     if(split_node){# placeholder for discriminant thresholding
       # change from leaf to inner node
-      if(!quiet & verbose) cat("Splitting node", attr(node, "clade"), "\n")
+      if(!quiet & verbose) cat("Splitting node", attr(node, "clade"), "\n\n")
       tmpattr <- attributes(node)
       node <- vector(mode = "list", length = nclades)
       attributes(node) <- tmpattr

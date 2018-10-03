@@ -178,9 +178,10 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- hash(x)
   if(is.null(attr(x, "duplicates"))) attr(x, "duplicates") <- duplicated(attr(x, "hashes"))
   if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
+  dots <- list(...)
   if(is.null(attr(x, "weights"))){
     if(!quiet) cat("Deriving sequence weights\n")
-    dots <- list(...)
+
     attr(x, "weights") <- suppressMessages(aphid::weight(x, method = "Henikoff",
                                         k = if(is.null(dots$k)) 5 else dots$k))
   }
@@ -192,7 +193,9 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   ancestors <- as.integer(gsub(".+; ", "", ancestors))
   names(ancestors) <- tmpnames
   attr(tree, "key") <- ancestors # for exact matching
-
+  if(!quiet) cat("Embedding sequences\n")
+  attr(tree, "kmers") <- .encodek(kmer::kcount(x[!attr(x, "duplicates")],
+                                               k = if(is.null(dots$k)) 5 else dots$k))
   if(is.null(model)){
     if(!quiet) cat("Dereplicating sequences\n")
     xu <- x[!attr(x, "duplicates")]

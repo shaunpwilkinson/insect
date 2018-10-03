@@ -178,6 +178,61 @@
 }
 
 #' @noRd
+.encode1 <- function(xx){ ## a number between 0.000001 and 100
+  ## encodes as two bytes to (almost) 4 signif figs
+  ## first 13 for the digits (2^13 = 8192) last 3 bits for exponent
+  #(1e-6 -> 0, 1e+1 -> 7)
+  if(!is.finite(xx)) return(as.raw(c(0, 0)))
+  stopifnot(xx >= 1e-06 & xx < 100)
+  expo <- floor(log10(xx))
+  digi <- round((xx/10^(expo - 3) - 1000) * 0.9102122, 0)
+  ## scale factor 8191/8999 = 0.9102122, 3 to get from 1 to 1000
+  return(packBits(c(intToBits(digi)[1:13], intToBits(expo + 6)[1:3])))
+}
+
+#' @noRd
+#'
+.decode1 <- function(zz){ ## zz is a 2-byte raw vec
+  res <- rawToBits(zz)
+  expo <- as.integer(packBits(c(res[14:16], raw(5)))) - 6
+  digi <- as.integer(packBits(c(res[1:13], raw(3)))) # 2 ints between 0 and 8191
+  digi <- sum(digi* c(1, 256))
+  digi <- round(digi/0.9102122, 0) + 1000 # integer between 1000 and 9999
+  return(digi * 10^(expo - 3)) # the 3 reduces from 1000 to 1
+}
+
+#' @noRd
+.encodek <- function(xx){  ## kmer presence/absence matrix
+  if(mode(xx) == "raw") return(xx)
+  dims <- dim(xx)
+  xx <- as.integer(xx != 0)
+  dim(xx) <- dims
+  rem <- ncol(xx) %% 8 #remainder
+  if(rem > 0){
+    newcol <- matrix(0L, nrow = nrow(xx), ncol = 8 - rem)
+    xx <- cbind(xx, newcol)
+  }
+  res <- packBits(t(xx))
+
+  dims[2] <- dims[2]/8
+  dim(res) <- dims[c(2, 1)]
+  res <- t(res)
+  return(res)
+}
+
+#' @noRd
+.decodek <- function(zz){ ## kmer presence/absence matrix
+  if(mode(zz) != "raw") return(zz)
+  dims <- dim(zz)
+  dims[2] <- dims[2] * 8
+  res <- rawToBits(t(zz))
+  res <- as.integer(res)
+  dim(res) <- dims[c(2, 1)]
+  res <- t(res)
+  return(res)
+}
+
+#' @noRd
 # Check if object is DNA
 .isDNA <- function(x){
   if(inherits(x, "DNAbin")){
