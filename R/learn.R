@@ -170,32 +170,37 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "taxonomy") <- prune_taxonomy(db, taxIDs = taxIDs, keep = TRUE)
   attr(tree, "clade") <- ""
   attr(tree, "sequences") <- seq_along(x)
+  attr(tree, "seqnames") <- names(x) # cant just name sequences attr due to derep-rerep
   attr(tree, "lineage") <- .ancestor(attr(x, "lineage"))
   attr(tree, "minscore") <- -1E06 # nominal
-  xlengths <- sapply(x, length)
+  xlengths <- vapply(x, length, 0L, USE.NAMES = FALSE)
   attr(tree, "minlength") <- min(xlengths)
   attr(tree, "maxlength") <- max(xlengths)
   if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- hash(x)
   if(is.null(attr(x, "duplicates"))) attr(x, "duplicates") <- duplicated(attr(x, "hashes"))
   if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
+  attr(tree, "pointers") <- attr(x, "pointers") #new
   dots <- list(...)
+  ksize <- if(is.null(dots$k)) 4 else dots$k
+  attr(tree, "k") <- ksize
   if(is.null(attr(x, "weights"))){
     if(!quiet) cat("Deriving sequence weights\n")
-
-    attr(x, "weights") <- suppressMessages(aphid::weight(x, method = "Henikoff",
-                                        k = if(is.null(dots$k)) 5 else dots$k))
+    suppressMessages(attr(x, "weights") <- aphid::weight(x, method = "Henikoff", k = ksize))
   }
   if(!quiet) cat("Making hash key for exact sequence matching\n")
-  ancestors <- split(attr(x, "lineage"), f = attr(x, "hashes"))
+  ancestors <- split(attr(x, "lineage"), f = factor(attr(x, "hashes"), levels = unique(attr(x, "hashes"))))
   anclens <- vapply(ancestors, length, 0L, USE.NAMES = FALSE)
   ancestors[anclens > 1] <- lapply(ancestors[anclens > 1], .ancestor)
   tmpnames <- names(ancestors)
   ancestors <- as.integer(gsub(".+; ", "", ancestors))
   names(ancestors) <- tmpnames
-  attr(tree, "key") <- ancestors # for exact matching
-  if(!quiet) cat("Embedding sequences\n")
-  attr(tree, "kmers") <- .encodek(kmer::kcount(x[!attr(x, "duplicates")],
-                                               k = if(is.null(dots$k)) 5 else dots$k))
+  attr(tree, "key") <- ancestors # for exact matching - order matches kmer matrix row wise
+  attr(tree, "seqlengths") <- xlengths[!attr(x, "duplicates")] #new
+  ## same length as hash key, nrow(kmers)
+  if(!quiet) cat("Counting ", ksize, "-mers\n", sep = "")
+  attr(tree, "kmers") <- .encodekc(kmer::kcount(x[!attr(x, "duplicates")], k = ksize))
+  # attr(tree, "kmers") <- kmer::kcount(x[!attr(x, "duplicates")],
+  #                                              k = if(is.null(dots$k)) 5 else dots$k)
   if(is.null(model)){
     if(!quiet) cat("Dereplicating sequences\n")
     xu <- x[!attr(x, "duplicates")]

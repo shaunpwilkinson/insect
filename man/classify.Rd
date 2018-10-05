@@ -27,14 +27,24 @@ the Akaike weight of the selected model at the parent node) or whether
 each Akaike weight should be calculated independently of that of the
 parent node. Defaults to TRUE (the former).}
 
-\item{ping}{logical indicating whether an exact-match search should
-be carried out before applying the classification algorithm.
-If TRUE (the default) and the query sequence is identical to
+\item{ping}{logical or numeric (between 0 and 1) indicating whether
+a nearest neighbor search should
+be carried out, and if so,
+what the minimum distance to the nearest neighbor
+should be for the the recursive classification algorithm to be skipped.
+If TRUE and the query sequence is identical to
 at least one of the training sequences used to learn the tree,
 the common ancestor of the matching training sequences is returned
 with an score of NA.
-The output lineage string will generally specify the taxonomic ID to species level
-but may be to genus/family, etc for low resolution genetic markers.}
+If a value between 0 and 1 is provided, the common ancestor of the
+training sequences with similarity greater than or equal to 'ping'
+is returned, again with a score of NA.
+If \code{ping} is set to 0 or FALSE, the recursive classification
+algorithm is applied to all sequences, regardless of proximity to
+those in the training set.
+For high values (e.g. \code{ping >= 0.99}) the output will generally
+specify the taxonomic ID to species level,
+but is often to genus/family/etc level for low resolution genetic markers.}
 
 \item{ranks}{character vector giving the taxonomic ranks to be
 included in the output table. Must be a valid rank from the
@@ -102,22 +112,24 @@ This function requires a pre-computed classification tree
   Note that the default behavior is for the Akaike weight to ‘decay’
   as it moves down the tree, by computing the cumulative product of
   all preceding Akaike weight values.
-  This is perhaps an overly conservative approach
-  but it minimizes the chance of taxon ID errors.
+  This minimizes the chance of type I taxon ID errors (overclassifications and misclassifications).
   The output table also includes the higher taxonomic ranks specified in the
-  \code{ranks} argument, and if \code{metadata = TRUE} three additional columns
+  \code{ranks} argument, and if \code{metadata = TRUE} additional columns
   are included called "path"
   (the path of the sequence through the classification tree), "scores" (the
   scores at each node through the tree, UTF-8-encoded),
   and "reason" outlining why the recursive classification procedure was
-  terminated. Reason codes are as follows:
+  terminated:
   \itemize{
     \item 0 reached leaf node
     \item 1 failed to meet minimum score threshold at inner node
     \item 2 failed to meet minimum score of training sequences at inner node
     \item 3 sequence length shorter than minimum length of training sequences at inner node
     \item 4 sequence length exceeded maximum length of training sequences at inner node
-  }.
+    \item 5 nearest neighbor in training set does not belong to selected node (new in v1.2)
+  }
+  Additional columns detailing the nearest neighbor search include "NNtaxID", "NNtaxon",
+  "NNrank", and "NNdistance".
 }
 \examples{
 \donttest{

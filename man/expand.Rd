@@ -127,6 +127,7 @@ The clade indexing system used here is based on character strings,
   data(whales)
   data(whale_taxonomy)
   ## split the first node
+  set.seed(123)
   tree <- learn(whales, db = whale_taxonomy, recursive = FALSE)
   ## expand only the first clade
   tree <- expand(tree, whales, clades = "1")

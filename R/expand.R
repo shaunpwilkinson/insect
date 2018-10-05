@@ -32,6 +32,7 @@
 #'   data(whales)
 #'   data(whale_taxonomy)
 #'   ## split the first node
+#'   set.seed(123)
 #'   tree <- learn(whales, db = whale_taxonomy, recursive = FALSE)
 #'   ## expand only the first clade
 #'   tree <- expand(tree, whales, clades = "1")
@@ -53,7 +54,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   lineages <- vapply(lineages, paste0, "", collapse = "; ")
   # attr(x, "lineage") <- lineages
   clades <- gsub("0", "", clades)
-  if(!(identical(attr(tree, "sequences"), seq_along(x)))){
+  if(!(identical(unname(attr(tree, "sequences")), seq_along(x)))){
     stop("tree is incompatible with sequences\n")
   }
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
@@ -148,7 +149,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   dots <- list(...)
   kmers <- attr(tree, "kmers")
   if(is.null(kmers)) {
-    kmers <- .encodek(kmer::kcount(x, k = if(is.null(dots$k)) 5 else dots$k))
+    kmers <- .encodekc(kmer::kcount(x, k = if(is.null(dots$k)) 4 else dots$k))
   }else{
     stopifnot(nrow(kmers) == length(x))
   }

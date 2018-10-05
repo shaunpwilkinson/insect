@@ -32,7 +32,7 @@
       if(!quiet & verbose) cat("\nCounting kmers\n")
       suppressMessages(
         #kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
-        kmers <- .encodek(kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5))
+        kmers <- .encodekc(kmer::kcount(x[indices], k = if(is.null(dots$k)) 4 else dots$k))
       )
     }else{
       if(nrow(kmers) == length(x)) kmers <- kmers[indices, , drop = FALSE]
@@ -130,7 +130,7 @@
         }
       }
       if(nclades == 2 & retry & min(minperfs) < 0.99){
-        kmers <- .decodek(kmers)
+        kmers <- .decodekc(kmers)
         infocols <- apply(kmers, 2, function(v) length(unique(v))) == 2
         if(sum(infocols) > 50){
           if(!quiet & verbose) cat("Comparing result with alternative grouping method\n")

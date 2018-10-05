@@ -35,9 +35,9 @@
     if(is.null(kmers)){
       # if(!quiet) cat("Counting k-mers\n")
       # kmers <- kmer::kcount(x, k = 5)
-      if(!quiet & verbose) cat("Counting kmers\n")
+      if(!quiet & verbose) cat("Counting", if(is.null(dots$k)) 4 else dots$k, "-mers\n")
       suppressMessages(
-        kmers <- kmer::kcount(x, k = if(!is.null(dots$k)) dots$k else 5) ##############
+        kmers <- kmer::kcount(x, k = if(is.null(dots$k)) 4 else dots$k)
       )
     }
     if(!quiet & verbose) cat("Assigning sequences to groups ")
@@ -60,7 +60,7 @@
     if(identical(allocation, "cluster")){
       if(!quiet & verbose) cat("using k-means algorithm\n")
       ##########kmers <- kmers/(sapply(x, length) - 4)## k - 1 = 3 ###############
-      kmers <- .decodek(kmers)
+      kmers <- .decodekc(kmers)
       tmp <- tryCatch(kmeans(kmers, centers = K, nstart = nstart)$cluster,
                       error = function(er) sample(rep(1:K, nseq)[1:nseq]),
                       warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))
@@ -137,7 +137,7 @@
       # scale so that weights reflect smallest clade size
       seqweightsj <- seqweights[membership == j]
       seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
-      ############seqweightsj <- seqweightsj * mcn/seq_numbers[j] ########
+      seqweightsj <- seqweightsj * mcn/seq_numbers[j] ########
       if(!quiet & verbose) cat("Training child model", j, "\n")
       ins <- if(finetune) res[[pnms[j]]]$inserts else model$inserts
       if(is.null(ins)) ins <- TRUE # top level only

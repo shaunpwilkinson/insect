@@ -18,6 +18,7 @@ Imports:
     kmer (>= 1.0.1),
     openssl, 
     phylogram (>= 2.0.0),
+    RANN,
     stats,
     utils,
     xml2

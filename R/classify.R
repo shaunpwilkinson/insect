@@ -17,14 +17,24 @@
 #'   the Akaike weight of the selected model at the parent node) or whether
 #'   each Akaike weight should be calculated independently of that of the
 #'   parent node. Defaults to TRUE (the former).
-#' @param ping logical indicating whether an exact-match search should
-#'   be carried out before applying the classification algorithm.
-#'   If TRUE (the default) and the query sequence is identical to
+#' @param ping logical or numeric (between 0 and 1) indicating whether
+#'   a nearest neighbor search should
+#'   be carried out, and if so,
+#'   what the minimum distance to the nearest neighbor
+#'   should be for the the recursive classification algorithm to be skipped.
+#'   If TRUE and the query sequence is identical to
 #'   at least one of the training sequences used to learn the tree,
 #'   the common ancestor of the matching training sequences is returned
 #'   with an score of NA.
-#'   The output lineage string will generally specify the taxonomic ID to species level
-#'   but may be to genus/family, etc for low resolution genetic markers.
+#'   If a value between 0 and 1 is provided, the common ancestor of the
+#'   training sequences with similarity greater than or equal to 'ping'
+#'   is returned, again with a score of NA.
+#'   If \code{ping} is set to 0 or FALSE, the recursive classification
+#'   algorithm is applied to all sequences, regardless of proximity to
+#'   those in the training set.
+#'   For high values (e.g. \code{ping >= 0.99}) the output will generally
+#'   specify the taxonomic ID to species level,
+#'   but is often to genus/family/etc level for low resolution genetic markers.
 #' @param ranks character vector giving the taxonomic ranks to be
 #'   included in the output table. Must be a valid rank from the
 #'   taxonomy database attributed to the classification tree
@@ -81,22 +91,24 @@
 #'   Note that the default behavior is for the Akaike weight to ‘decay’
 #'   as it moves down the tree, by computing the cumulative product of
 #'   all preceding Akaike weight values.
-#'   This is perhaps an overly conservative approach
-#'   but it minimizes the chance of taxon ID errors.
+#'   This minimizes the chance of type I taxon ID errors (overclassifications and misclassifications).
 #'   The output table also includes the higher taxonomic ranks specified in the
-#'   \code{ranks} argument, and if \code{metadata = TRUE} three additional columns
+#'   \code{ranks} argument, and if \code{metadata = TRUE} additional columns
 #'   are included called "path"
 #'   (the path of the sequence through the classification tree), "scores" (the
 #'   scores at each node through the tree, UTF-8-encoded),
 #'   and "reason" outlining why the recursive classification procedure was
-#'   terminated. Reason codes are as follows:
+#'   terminated:
 #'   \itemize{
 #'     \item 0 reached leaf node
 #'     \item 1 failed to meet minimum score threshold at inner node
 #'     \item 2 failed to meet minimum score of training sequences at inner node
 #'     \item 3 sequence length shorter than minimum length of training sequences at inner node
 #'     \item 4 sequence length exceeded maximum length of training sequences at inner node
-#'   }.
+#'     \item 5 nearest neighbor in training set does not belong to selected node (new in v1.2)
+#'   }
+#'   Additional columns detailing the nearest neighbor search include "NNtaxID", "NNtaxon",
+#'   "NNrank", and "NNdistance".
 #' @author Shaun Wilkinson
 #' @references
 #'   Durbin R, Eddy SR, Krogh A, Mitchison G (1998) Biological
@@ -160,12 +172,98 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   db <- attr(tree, "taxonomy")
   if(is.null(db)) stop("tree is missing taxonomy database\n")
   attr(tree, "taxonomy") <- NULL # reduce memory usage for multithreading
-  if(ping){
-    if(is.null(attr(tree, "key"))){
-      warning(paste0("ping is TRUE but tree has no hash key. ",
-                     "Exact string matching not possible\n"))
+  key <- attr(tree, "key")
+  attr(tree, "key") <- NULL
+  ###### kmers too, and hash key etc
+
+  if(is.null(attr(tree, "kmers"))){ ## for backward compatibility
+    warning("Tree is missing kmer count matrix, cant complete nearest-neighbor search\n")
+    if(ping > 0 & ping < 1){
+      ping <- 0
+    }else if(ping == 1){
+      if(is.null(key)){
+        warning("Tree is missing hash key, setting 'ping' to FALSE")
+      }else{
+        xhash <- hash(x)
+        xmatch <- unname(key[xhash])
+        for(i in seq_along(x)){
+          if(is.na(xmatch[i])){
+            attr(x[[i]], "NN") <- NA_integer_ # sequence index
+            attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
+          }else{
+            attr(x[[i]], "NN") <- unname(key[xmatch[i]])# taxid
+            attr(x[[i]], "NNhit") <- TRUE # -> skip full classification procedure
+          }
+        }
+      }
+    }else if(ping < 1){
+      if(ping > 0) stop("Can't neighbor-search without kmer count matrix\n")
+      for(i in seq_along(x)){
+        attr(x[[i]], "NN") <- NA_integer_ # sequence index
+        attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
+      }
+    }else stop("Invalid 'ping' argument\n")
+  }else{
+    ksize <- attr(tree, "k")
+    zk <- .decodekc(attr(tree, "kmers"))
+    zk <- zk/(attr(tree, "seqlengths") - ksize + 1)
+    attr(tree, "kmers") <- NULL
+    xk <- round(kmer::kcount(x, k = ksize))
+    xk <- xk/(vapply(x, length, 0L) - ksize + 1)
+    neighbors <- RANN::nn2(zk, query = xk, k = min(50, length(x)))
+    denom <- if(inherits(x, "DNAbin")){
+      ksize * 0.006
+    }else{
+      0.03 ## need to empirically test AA kmers
+    }
+    neighbors$nn.dists <- (neighbors$nn.dists^2)/0.025 ## linearize with JC69, K80 etc - TODO ksize
+    nnidxs <- match(neighbors$nn.idx[, 1], attr(tree, "pointers")) # nearest neighbor indices in full set
+    if((ping > 0 & ping < 1) | (ping == 1 & is.null(key))){
+      td <- 1 - ping #threshold distance
+      for(i in seq_along(x)){
+        if(neighbors$nn.dists[i, 1] <= td){
+          idxs <- neighbors$nn.idx[i, neighbors$nn.dists[i,] <= td]
+          #taxs <- as.integer(gsub(".+\\|", "", seqnames[idxs]))
+          taxs <- unname(key[idxs]) ## length(key) = nrow(kmers)
+          if(length(taxs) == 1L){
+            attr(x[[i]], "NN") <- taxs # taxid
+            attr(x[[i]], "NNhit") <- TRUE # -> skip full classification procedure
+          }else{
+            lins <- get_lineage(taxs, db, numbers = TRUE)
+            lins <- vapply(lins, paste0, "", collapse = "; ")
+            anc <- .ancestor(lins)
+            attr(x[[i]], "NN") <- as.integer(gsub(".+; ", "", anc)) # taxid
+            attr(x[[i]], "NNhit") <- TRUE # -> skip full classification procedure
+          }
+        }else{
+          attr(x[[i]], "NN") <-  nnidxs[i] #nnidxs[i] # sequence index
+          attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
+        }
+      }
+    }else if(ping == 1){ # faster hash matching
+      xhash <- unname(hash(x))
+      xmatch <- unname(key[xhash])
+      for(i in seq_along(x)){
+        if(is.na(xmatch[i])){
+          ######cat(neighbors$nn.dists[i, 1], "\n")
+          attr(x[[i]], "NN") <-  nnidxs[i] # sequence index
+          attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
+        }else{
+          attr(x[[i]], "NN") <- xmatch[i]# taxid
+          attr(x[[i]], "NNhit") <- TRUE # -> skip full classification procedure
+        }
+      }
+      ## hash key
+    }else{
+      for(i in seq_along(x)){
+        attr(x[[i]], "NN") <- nnidxs[i] #  nnidxs[i]# sequence index
+        attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
+      }
     }
   }
+
+
+
   # decode second and third tier models for increased speed
   for(i in seq_along(tree)){
     attr(tree[[i]], "model") <- decodePHMM(attr(tree[[i]], "model"))
@@ -176,25 +274,24 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     }
   }
   classify1 <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE){
-    ## takes a single named raw vector
+    ## takes a single named raw vector with NN and NNhit attrs
     ## outputs a 1-row dataframe
-    xhash <- hash(x)
-    if(ping){
-      xmatch <- attr(tree, "key")[xhash][1]
-      if(!is.na(xmatch)){
-        out <- data.frame(taxID = xmatch,
-                          score = NA_real_,
-                          path = NA_character_,
-                          scores = NA_character_,
-                          reason = NA_integer_)
-        return(out)
-      }
+    # xhash <- hash(x)
+    if(attr(x, "NNhit")){
+      out <- data.frame(taxID = attr(x, "NN"),
+                        score = NA_real_,
+                        path = NA_character_,
+                        scores = NA_character_,
+                        reason = NA_integer_,
+                        stringsAsFactors = FALSE)
+      return(out)
     }
     path <- ""
     scores <- ""
     akw <- 1
     cakw <- 1
     tax <- 1L # root (cant use 0L due to get_lineage call below)
+    threshold_met <- minscore_met <- minlength_met <- maxlength_met <- neighbor_check <- TRUE
     while(is.list(tree)){
       no_mods <- length(tree)
       sc <- numeric(no_mods)##### + 1L)##### # scores (log probabilities)
@@ -216,10 +313,18 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
         minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 0.01
         minlength_met <- length(x) >= attr(tree[[best_model]], "minlength")# - 1
         maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength")# + 1
+        neighbor_check <- if(is.na(attr(x, "NN"))){
+          ######### cat("ncfailed\n")
+          TRUE
+        }else{
+          ###########TRUE
+          ########cat(attr(x, "NN") %in% attr(tree[[best_model]], "sequences"), "\n")
+          attr(x, "NN") %in% attr(tree[[best_model]], "sequences")
+        }
       }else{
-        minscore_met <- minlength_met <- maxlength_met <- FALSE
+        minscore_met <- minlength_met <- maxlength_met <- neighbor_check <- FALSE
       }
-      if(!(threshold_met & minscore_met & minlength_met & maxlength_met)) break
+      if(!(threshold_met & minscore_met & minlength_met & maxlength_met & neighbor_check)) break
       path <- paste0(path, best_model)
       scores <- paste0(scores, intToUtf8(as.integer(newakw * 100)))
       akw <- newakw
@@ -237,6 +342,8 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       3L
     }else if(!maxlength_met){
       4L
+    }else if (!neighbor_check){
+      5L
     }else{
       0L
     }
@@ -248,6 +355,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                       stringsAsFactors = FALSE)
     return(out)
   }
+  gc()
   if(inherits(cores, "cluster")){
     res <- parallel::parLapply(cores, x, classify1, tree, threshold, decay, ping)
   }else if(cores == 1){
@@ -274,7 +382,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      rank = names(tmp),
                      score = res$score,
                      stringsAsFactors = FALSE)
-  if(metadata) lhcols <- cbind(lhcols, res[c("path", "scores", "reason")])
+
   if(!is.null(ranks)){
     rnkmat <- matrix(NA_character_, nrow = length(x), ncol = length(ranks))
     rnkmat <- as.data.frame(rnkmat, stringsAsFactors = FALSE)
@@ -284,6 +392,17 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       rnkmat[ranks[i]] <- vapply(lineages, fun, "", ranks[i])
     }
     lhcols <- cbind(lhcols, rnkmat)
+  }
+  if(metadata){
+    lhcols <- cbind(lhcols, res[c("path", "scores", "reason")])
+    if(exists("neighbors")){
+      taxids <- unname(key[neighbors$nn.idx[, 1]])
+      dbinds <- match(taxids, db$taxID)
+      if(any(is.na(dbinds))) stop("Error 1\n")
+      nns <- cbind(taxids, db$name[dbinds], db$rank[dbinds], round(neighbors$nn.dists[, 1], 4))
+      colnames(nns) <- c("NNtaxID", "NNtaxon", "NNrank","NNdistance")
+      lhcols <- cbind(lhcols, nns)
+    }
   }
   if(tabulize){
     lhcols <- cbind(lhcols, qout)
