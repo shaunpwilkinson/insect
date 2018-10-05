@@ -171,7 +171,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "clade") <- ""
   attr(tree, "sequences") <- seq_along(x)
   attr(tree, "seqnames") <- names(x) # cant just name sequences attr due to derep-rerep
-  attr(tree, "lineage") <- .ancestor(attr(x, "lineage"))
+  attr(tree, "lineage") <- .ancestor(attr(x, "lineage")) # eventually removed during expansion
   attr(tree, "minscore") <- -1E06 # nominal
   xlengths <- vapply(x, length, 0L, USE.NAMES = FALSE)
   attr(tree, "minlength") <- min(xlengths)
@@ -182,7 +182,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "pointers") <- attr(x, "pointers") #new
   dots <- list(...)
   ksize <- if(is.null(dots$k)) 4 else dots$k
-  attr(tree, "k") <- ksize
+  attr(tree, "k") <- ksize #new
   if(is.null(attr(x, "weights"))){
     if(!quiet) cat("Deriving sequence weights\n")
     suppressMessages(attr(x, "weights") <- aphid::weight(x, method = "Henikoff", k = ksize))
@@ -198,7 +198,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "seqlengths") <- xlengths[!attr(x, "duplicates")] #new
   ## same length as hash key, nrow(kmers)
   if(!quiet) cat("Counting ", ksize, "-mers\n", sep = "")
-  attr(tree, "kmers") <- .encodekc(kmer::kcount(x[!attr(x, "duplicates")], k = ksize))
+  attr(tree, "kmers") <- .encodekc(kmer::kcount(x[!attr(x, "duplicates")], k = ksize)) #new
   # attr(tree, "kmers") <- kmer::kcount(x[!attr(x, "duplicates")],
   #                                              k = if(is.null(dots$k)) 5 else dots$k)
   if(is.null(model)){
