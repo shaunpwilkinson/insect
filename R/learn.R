@@ -170,7 +170,8 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "taxonomy") <- prune_taxonomy(db, taxIDs = taxIDs, keep = TRUE)
   attr(tree, "clade") <- ""
   attr(tree, "sequences") <- seq_along(x)
-  attr(tree, "seqnames") <- names(x) # cant just name sequences attr due to derep-rerep
+  #attr(tree, "seqnames") <- names(x) # cant just name sequences attr due to derep-rerep
+  attr(tree, "trainingset") <- dereplicate(x)
   attr(tree, "lineage") <- .ancestor(attr(x, "lineage")) # eventually removed during expansion
   attr(tree, "minscore") <- -1E06 # nominal
   xlengths <- vapply(x, length, 0L, USE.NAMES = FALSE)

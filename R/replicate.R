@@ -24,13 +24,16 @@
 #' @name replicate
 ################################################################################
 dereplicate <- function(x, cores = 1){
+  classx <- class(x)
+  orignames <- names(x)
   hashes <- hash(x)
   pointers <- .point(hashes)
-  orignames <- names(x)
   x <- x[!duplicated(pointers)]
-  if(.isDNA(x)) for(i in seq_along(x)) attr(x[[i]], "quality") <- NULL
+  #if(.isDNA(x)) for(i in seq_along(x)) attr(x[[i]], "quality") <- NULL
+  attributes(x) <- NULL
   attr(x, "rerep.names") <- orignames
   attr(x, "rerep.pointers") <- pointers
+  class(x) <- classx
   return(x)
 }
 ################################################################################
@@ -43,6 +46,8 @@ rereplicate <- function(x){
   orignames <- attr(x, "rerep.names")
   x <- x[attr(x, "rerep.pointers")]
   names(x) <- orignames
+  attr(x, "rerep.names") <- NULL
+  attr(x, "rerep.pointers") <- NULL
   return(x)
 }
 ################################################################################

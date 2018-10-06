@@ -137,7 +137,8 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      ranks = c("kingdom", "phylum", "class", "order",
                                "family", "genus", "species"),
                      tabulize = FALSE, metadata = FALSE, cores = 1){
-  if(is.null(attr(tree, "nullscore"))) attr(tree, "nullscore") <- -1E08 ###
+  #if(is.null(attr(tree, "nullscore"))) attr(tree, "nullscore") <- -1E08 ###
+  if(!is.null(attr(tree, "training_data"))) attr(tree, "training_data") <- NULL
   if(is.null(names(x))) names(x) <- paste0("S", seq_along(x))
   if(mode(x) == "character") x <- char2dna(x, simplify = FALSE)
   if(!is.list(x)){

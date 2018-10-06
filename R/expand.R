@@ -163,8 +163,8 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   attr(tree, "kmers") <- NULL ## replaced later
   ## prev line commented to prevent k-mer stripping
   ### recursively split nodes
-  switchpoint <- max(round(length(x)/ncores), 50L) ## switch from basal to terminal node recursion method
-  #switchpoint <- 60
+  switchpoint <- max(round((length(x) * 0.8)/ncores), 50L)
+  ## switch from basal to terminal node recursion method
   if(ncores > 1 & recursive){
     #if(length(clades) < ncores){
     lockleaves <- function(node, exceptions){
@@ -193,7 +193,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
       if(is.list(node)) node[] <- lapply(node, fm1)
       return(node)
     }
-    if(!quiet) cat("Recursively splitting basal tree branches\n")
+    if(!quiet) cat("Recursively splitting basal tree nodes\n")
     repeat{
       nmembers <- integer(0)
       eligible <- logical(0)
@@ -226,7 +226,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
       eval(parse(text = paste0("trees[[", i, "]] <- tree", indices[i])))
     }
     if(!quiet){
-      cat("Recursively splitting terminal tree branches\n")
+      cat("Recursively splitting terminal tree nodes\n")
       if(verbose) cat("Feedback suppressed, this could take a while...\n")
     }
     trees <- parallel::parLapply(cores, trees, .forkr, x, lineages, refine = refine,
