@@ -207,11 +207,11 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   }else{
     ksize <- attr(tree, "k")
     zk <- .decodekc(attr(tree, "kmers"))
-    zk <- zk/(attr(tree, "seqlengths") - ksize + 1)
+    zk <- zk/(attr(tree, "seqlengths") - ksize + 1L)
     attr(tree, "kmers") <- NULL
     xk <- round(kmer::kcount(x, k = ksize))
-    xk <- xk/(vapply(x, length, 0L) - ksize + 1)
-    neighbors <- RANN::nn2(zk, query = xk, k = min(50, length(x)))
+    xk <- xk/(vapply(x, length, 0L) - ksize + 1L)
+    neighbors <- RANN::nn2(zk, query = xk, k = min(50, nrow(zk) - 1L))
     denom <- if(inherits(x, "DNAbin")){
       ksize * 0.006
     }else{
