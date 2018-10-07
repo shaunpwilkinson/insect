@@ -285,8 +285,11 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   }
   tree <- dendrapply(tree, encodemods) # more memory efficient
   truncatetaxIDs <- function(node){
-    attr(node, "taxID") <- as.integer(gsub(".+; ", "", attr(node, "lineage")))
-    attr(node, "lineage") <- NULL
+    if(is.null(attr(node, "taxID"))){ # in case tree manually expanded
+      stopifnot(!is.null(attr(node, "lineage")))
+      attr(node, "taxID") <- as.integer(gsub(".+; ", "", attr(node, "lineage")))
+      attr(node, "lineage") <- NULL
+    }
     return(node)
   }
   tree <- dendrapply(tree, truncatetaxIDs) # more memory efficient

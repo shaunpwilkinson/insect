@@ -217,7 +217,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     }else{
       0.03 ## need to empirically test AA kmers
     }
-    neighbors$nn.dists <- (neighbors$nn.dists^2)/0.025 ## linearize with JC69, K80 etc - TODO ksize
+    neighbors$nn.dists <- (neighbors$nn.dists^2)/denom ## linearize with JC69, K80 etc - TODO ksize
     nnidxs <- match(neighbors$nn.idx[, 1], attr(tree, "pointers")) # nearest neighbor indices in full set
     if((ping > 0 & ping < 1) | (ping == 1 & is.null(key))){
       td <- 1 - ping #threshold distance
