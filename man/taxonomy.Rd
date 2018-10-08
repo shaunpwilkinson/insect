@@ -32,7 +32,7 @@ This function downloads the specified taxonomy database as a data.frame
 }
 \examples{
 \donttest{
-  db <- taxonomy()
+  # db <- taxonomy()
 }
 }
 \references{

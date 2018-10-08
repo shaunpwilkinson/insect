@@ -175,7 +175,7 @@ get_taxID <- function(lineage, db, multimatch = NA){
 #'  \url{https://www.ncbi.nlm.nih.gov/taxonomy/}
 #' @examples
 #' \donttest{
-#'   db <- taxonomy()
+#'   # db <- taxonomy()
 #' }
 ################################################################################
 taxonomy <- function(db = "NCBI", synonyms = FALSE){

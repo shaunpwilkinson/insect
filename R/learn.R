@@ -208,7 +208,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
     xuw <- sapply(split(attr(x, "weights"), attr(x, "pointers")), sum)
     if(!quiet) cat("Deriving top level model\n")
     if(length(xu) > 1000){
-      # progressive model training to avoid excessive memory usage
+      # sample model training to avoid excessive memory usage
       samp <- sample(seq_along(xu), size = 1000)
       suppressWarnings(
         model <- aphid::derivePHMM(xu[samp], refine = refine,
@@ -216,11 +216,11 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
                                    inserts = "inherited", alignment = FALSE,
                                    quiet = TRUE, cores = cores, maxiter = 20)
       )
-      suppressWarnings(
-        model <- aphid::train(model, xu, method = refine, seqweights = xuw,
-                              inserts = "inherited", alignment = FALSE,
-                              cores = cores, quiet = TRUE, maxiter = 20)
-      )
+      # suppressWarnings(
+      #   model <- aphid::train(model, xu, method = refine, seqweights = xuw,
+      #                         inserts = "inherited", alignment = FALSE,
+      #                         cores = cores, quiet = TRUE, maxiter = 20)
+      # )
     }else{
       suppressWarnings(
         model <- aphid::derivePHMM(xu, refine = refine, seqweights = xuw,
