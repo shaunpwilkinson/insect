@@ -1,9 +1,7 @@
 ---
 title: ""
 output: 
-  html_document:
-    keep_md: true
-    css: kable.css
+  md_document
 ---
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
@@ -11,7 +9,6 @@ output:
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
-# insect
 
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/insect)](https://cran.r-project.org/package=insect)
 [![CRAN_Downloads_Badge](http://cranlogs.r-pkg.org/badges/grand-total/insect)](https://cran.r-project.org/package=insect)
