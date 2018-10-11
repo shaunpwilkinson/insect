@@ -1,8 +1,6 @@
 ---
-title: "The 'insect' R package and bioinformatic pipeline."
-subtitle: "Tutorial 1: reading and classifying NGS data."
-author: "Shaun Wilkinson"
-date: "`r Sys.Date()`"
+title: "The insect R package" 
+subtitle: "Tutorial 1: taxonomic identification for amplicon sequence variants"
 output: 
   html_document:
     css: kable.css
@@ -12,256 +10,360 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
 ------------------------------------------------------------------------
 
 Introduction
 ------------
 
-Welcome to the **insect** R package, a pipeline for classifying next
-generation sequencing (NGS) amplicon libraries with **in**formatic
-**se**quence **c**lassification **t**rees. The pipeline employs a
-machine-learning approach that uses a set of *training* sequences
-obtained from GenBank, BOLD and other sources to *learn* a
-classification tree, which is then used to assign taxonomic IDs to a set
-of *query* sequences (e.g. generated from an NGS platform such as
-Illumina MiSeq). The package also includes a suite of functions for
-FASTQ/FASTA sequence parsing, de-multiplexing, paired-end read
-stitching, primer trimming, quality filtering, de-replication,
-re-replication, etc. Most of the functions contained within the
-**insect** package are generally better suited to run on multiple
-processors; however, smaller datasets can be run on standard personal
-computers if time is available. While not a prerequisite, **insect** is
-designed to be used in conjunction with the **ape** package (Paradis *et
-al.*, 2004; Paradis, 2012), which features a memory-efficient binary
-format for DNA (the "DNAbin" object type), and the **dada2** package
-(Callahan *et al.*, 2016) which contains essential functions for
-de-noising high-throughput sequencing data and other important
-processing steps.
+Welcome to the **insect** R package, a tool for assigning taxon IDs to
+amplicon libraries with **in**formatic **se**quence **c**lassification
+**t**rees. The pipeline employs a machine-learning approach that uses a
+set of training sequences (obtained from GenBank and/or other sources)
+to learn a classification tree, which is then used to assign taxonomic
+IDs to a set of query sequences (e.g. those generated from an NGS
+platform such as Illumina MiSeq). The package also includes a suite of
+functions for FASTQ/FASTA sequence parsing, de-multiplexing, paired-end
+read stitching, primer trimming, quality filtering, de-replication,
+re-replication and output in a variety of formats. The primary learning
+and classification functions are best suited to computing environments
+with multiple processors and access to substantial amounts of memory;
+however, most modest-sized datasets can be processed on standard
+personal computers if time is available. While not a prerequisite,
+**insect** is designed to be used in conjunction with the **ape**
+package (Paradis *et al.*, 2004; Paradis, 2012), which features
+memory-efficient binary formats for DNA and amino acid sequences
+("DNAbin" and "AAbin" object types), and the **dada2** package (Callahan
+*et al.*, 2016) which contains essential functions for de-noising
+high-throughput sequencing data and other important pre-processing
+steps.
 
 The **insect** package can be used to analyze environmental DNA (eDNA)
 meta-barcode libraries as well as single-source NGS/Sanger amplicon
 sequences.
 
 The most time-consuming and memory-intensive stage of the **insect**
-work-flow generally involves training a DNA classifier. For example, the
-COI classifier used in this tutorial, which was built from a training
-dataset consisting of 150,000 unique ~310 bp COI barcode sequences, took
-around three days to run on 24 CPUs and used around 40 GB of memory. The
-**insect** classification trees are amplicon specific, so a unique tree
-is generally required for each primer set. However, trees are already
-available for some of the more commonly used barcoding primers
-[here](https://www.dropbox.com/sh/0n4a1xsgzzj39el/AADNDDMP5QVj0PmbuEOflZJXa?dl=0).
+work-flow generally involves training the classifier. For example, the
+COI classifiers used in this tutorial, which were built from the [MIDORI
+UNIQUE](http://reference-midori.info/download.php) trainingset
+consisting of nearly a million COI barcode sequences, each took 12-24
+hours to run using a 32 x CPU multithread. The **insect** classification
+trees are amplicon specific, so a unique tree is generally required for
+each primer set. However, trees are already available for some of the
+more commonly used barcoding primers:
+
+  
+<!-- note newlines needed between html tags and code chunk -->
+
+<table>
+<thead>
+<tr class="header">
+<th align="left">Marker</th>
+<th align="left">Target</th>
+<th align="left">Primers</th>
+<th align="left">Source</th>
+<th align="left">Version</th>
+<th align="right">Date</th>
+<th align="left">Download</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">16S</td>
+<td align="left">Marine crustaceans</td>
+<td align="left">Crust16S_F/Crust16S_R (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al 2017</a>)</td>
+<td align="left">GenBank</td>
+<td align="left">4</td>
+<td align="right">20180626</td>
+<td align="left"><a href="https://www.dropbox.com/s/9vl9gj3frw7ng1m/classifier.rds?dl=1">RDS (7.1 MB)</a></td>
+</tr>
+<tr class="even">
+<td align="left">16S</td>
+<td align="left">Marine fish</td>
+<td align="left">Fish16sF/16s2R (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al 2017</a>; <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1959119/">Deagle et al 2007</a>)</td>
+<td align="left">GenBank</td>
+<td align="left">4</td>
+<td align="right">20180627</td>
+<td align="left"><a href="https://www.dropbox.com/s/fvfrd46exdah037/classifier.rds?dl=1">RDS (6.8MB)</a></td>
+</tr>
+<tr class="odd">
+<td align="left">18S</td>
+<td align="left">Marine eukaryotes</td>
+<td align="left">18S_1F/18S_400R (<a href="https://www.ncbi.nlm.nih.gov/pubmed/24023913">Pochon et al 2017</a>)</td>
+<td align="left">SILVA_132_LSUParc, GenBank</td>
+<td align="left">5</td>
+<td align="right">20180709</td>
+<td align="left"><a href="https://www.dropbox.com/s/rmhh1g73jtipagu/classifier.rds?dl=1">RDS (11.8 MB)</a></td>
+</tr>
+<tr class="even">
+<td align="left">18S</td>
+<td align="left">Marine eukaryotes</td>
+<td align="left">18S_V4F/18S_V4R (<a href="https://www.ncbi.nlm.nih.gov/pubmed/28947818">Stat et al 2017</a>)</td>
+<td align="left">GenBank</td>
+<td align="left">4</td>
+<td align="right">20180525</td>
+<td align="left"><a href="https://www.dropbox.com/s/s315gxuo4p24kx8/classifier.rds?dl=1">RDS (11.5 MB)</a></td>
+</tr>
+<tr class="odd">
+<td align="left">23S</td>
+<td align="left">Algae</td>
+<td align="left">p23SrV_f1/p23SrV_r1 (<a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1529-8817.2007.00341.x">Sherwood &amp; Presting 2007</a>)</td>
+<td align="left">SILVA_132_LSUParc</td>
+<td align="left">1</td>
+<td align="right">20180715</td>
+<td align="left"><a href="https://www.dropbox.com/s/6o8cauqrlgnmwp5/classifier.rds?dl=1">RDS (26.9MB)</a></td>
+</tr>
+<tr class="even">
+<td align="left">COI</td>
+<td align="left">Metazoans (amino)</td>
+<td align="left">mlCOIintF/jgHCO2198 (<a href="https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34">Leray et al 2013</a>)</td>
+<td align="left">Midori, GenBank</td>
+<td align="left">4aa</td>
+<td align="right">20181009</td>
+<td align="left"><a href="https://www.dropbox.com/s/c987wohded37cxg/classifier.rds?dl=1">RDS (47 MB)</a></td>
+</tr>
+<tr class="odd">
+<td align="left">COI</td>
+<td align="left">Metazoans (marine only)</td>
+<td align="left">mlCOIintF/jgHCO2198 (<a href="https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34">Leray et al 2013</a>)</td>
+<td align="left">Midori, GenBank</td>
+<td align="left">4mo</td>
+<td align="right">20181009</td>
+<td align="left"><a href="https://www.dropbox.com/s/vn1yit2wkug9f7p/classifier.rds?dl=1">RDS (34.1 MB)</a></td>
+</tr>
+<tr class="even">
+<td align="left">COI</td>
+<td align="left">Metazoans (no third codon positions)</td>
+<td align="left">mlCOIintF/jgHCO2198 (<a href="https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34">Leray et al 2013</a>)</td>
+<td align="left">Midori, GenBank</td>
+<td align="left">4nt</td>
+<td align="right">20181009</td>
+<td align="left"><a href="https://www.dropbox.com/s/bfvqnggi4jt591i/classifier.rds?dl=1">RDS (51.9 MB)</a></td>
+</tr>
+<tr class="odd">
+<td align="left">ITS2</td>
+<td align="left">Cnidarians and sponges</td>
+<td align="left">scl58SF/scl28SR (<a href="https://www.dropbox.com/s/6hcs1goju60wqi4/README.txt?dl=1">Wilkinson et al in prep</a>)</td>
+<td align="left">GenBank</td>
+<td align="left">5</td>
+<td align="right">20180920</td>
+<td align="left"><a href="https://www.dropbox.com/s/f07cka6308ebk2o/classifier.rds?dl=1">RDS (6.6 MB)</a></td>
+</tr>
+</tbody>
+</table>
+
+  
 The package also includes functions and instructions for downloading and
 filtering training data (including a "virtual PCR" tool and a taxonomic
-quality filter), building the taxonomy database, and training the
-classifier; however, these methods are beyond the scope of this
+quality filter), building a hierarchical taxonomy database, and training
+the classifier; however, these methods are beyond the scope of this
 introductory tutorial. New classification trees and updates are
 frequently added to the collection, so please feel free to suggest a
 barcoding primer set with which to train a classifier and we will
 endeavor to add it to the list.
 
-To produce a classification tree, the training data is first obtained
-from GenBank, BOLD and/or other databases where barcode sequences with
-accurate species-level IDs are available. These sequences are filtered
-to remove any with obvious taxonomic labeling issues, and trimmed to
-retain only the region of interest using the `virtualPCR` function
-(sequences that do not span the entire amplicon region are removed). the
-`learn` function then recursively partitions the training sequences as
-follows: The dataset is initially divided in two, and a profile hidden
-Markov model is derived for each subset (see Durbin et al. (1998) for a
-detailed description of these models). The lowest common taxon of each
-subset is also stored at each new node. The partitioning and model
-training procedure then continues recursively, splitting the training
-data into smaller and smaller subsets while adding new nodes, models and
-taxonomic information to the classification tree.
+The INSECT training and classification algorithms
+-------------------------------------------------
 
-Once the classifier tree has been trained, query sequences obtained from
-the specified primer set can be analysed to assign taxonomic IDs along
-with confidence values. The classification algorithm works as follows:
-starting from the root node of the classification tree, the *likelihood*
-of the query sequence (the full probability of the sequence given a
-particular model) is computed for each of the models at the child nodes
-using the forward algorithm (see Durbin et al. (1998)). The competing
-likelihood values are then compared by computing their Akaike weights
-(see Johnson and Omland, 2004). If one model is overwhelmingly more
-likely to have produced the sequence than the other, that child node is
-selected and the classification is updated to reflect the taxonomic
-information of the training sequences belonging to the node.
+To train a classification tree, a reference sequence dataset is first
+obtained from GenBank and/or other sources from which barcode sequences
+with accurate species-level IDs are available. These sequences are
+filtered to remove any with obvious taxonomic labeling issues, and
+trimmed to retain only the region of interest using the `virtualPCR`
+function (sequences that do not span the entire amplicon region are
+removed). the `learn` function then splits the training sequences into
+two subsets, maximizing the dissimilarity between the two groups. A
+profile hidden Markov model is then derived for each group (see Durbin
+et al. (1998) for a detailed description of these models). The
+partitioning and model training procedure then continues recursively,
+splitting the reference sequences into smaller and smaller subsets while
+adding new nodes and models to the classification tree.
 
-This procedure is repeated recursively, continuing down the tree until
-either an inconclusive result is returned from the model comparison test
-(i.e. the Akaike weight is lower than a pre-defined threshold, usually
+Once the classifier has been trained, query sequences obtained from the
+specified primer set can be assigned taxonomic IDs along with
+probabilistic confidence values. The classification algorithm works as
+follows: starting from the root node of the classification tree, the
+*likelihood* of the query sequence (the full probability of the sequence
+given a particular model) is computed for each of the models at the two
+immediate child nodes using the forward algorithm (see Durbin et al.
+(1998)). The competing likelihood values are then compared by computing
+their Akaike weights (see Johnson and Omland, 2004). If one model is
+overwhelmingly more likely to have produced the sequence than the other,
+that child node is selected and the classification is updated to reflect
+the lowest common taxonomic rank of the training sequences belonging to
+the node.
+
+This procedure is repeated recursively, descending down the tree until
+either an inconclusive result is returned from a model comparison test
+(i.e. the Akaike weight is lower than a pre-defined threshold, e.g.
 0.9), or a terminal leaf node is reached, at which point a species-level
 ID is generally returned. The `classify` function outputs the taxon
-name, rank and ID number (i.e. NCBI taxon ID, WORMS aphia ID, or other
+name, rank and ID number (i.e. NCBI taxon ID, WoRMS aphia ID, or other
 identifier depending on the taxonomy database used in the training
-step), along with the Akaike weight of the model at the final node. Note
-that the default behavior is for the Akaike weight to 'decay' as it
-moves down the tree, by computing the cumulative product of all
-preceding Akaike weight values. This is perhaps an overly conservative
-approach, but it minimizes the chance of mis-classifying or
-over-classifying the query sequences.
-
-In addition to the two key functions `learn` and `classify`, the package
-includes several tools to encode the work-flow from raw sequence data
-input to tabular output. At any stage during the process, users can
-export the sequence data using the `writeFASTA` or `writeFASTQ`
-functions.
+step), along with the final Akaike weight value which can be interpreted
+as a confidence score (between 0 and 1, with values close to 1
+indicating high confidence). Note that the default behavior is for the
+Akaike weight to 'decay' as it moves down the tree, by computing the
+cumulative product of all preceding Akaike weight values. This is
+perhaps an overly conservative approach, but it minimizes the chance of
+mis-classifying or over-classifying the query sequences.
 
 A worked example
 ----------------
 
 This tutorial demonstrates the **insect** work-flow using an example
-dataset of COI sequences derived from Autonomous Reef Monitoring
-Structures (ARMS) in Timor-Leste, amplified using the metazoan COI
-barcoding primers mlCOIintF and jgHCO2198 (GGWACWGGWTGAACWGTWTAYCCYCC
-and TAIACYTCIGGRTGICCRAARAAYCA, respectively; Leray et al. (2013)).
+dataset of COI sequences derived from autonomous reef monitoring
+structures (ARMS) in Ofu, American Samoa, amplified using the metazoan
+COI barcoding primers mlCOIintF and jgHCO2198
+(GGWACWGGWTGAACWGTWTAYCCYCC and TAIACYTCIGGRTGICCRAARAAYCA,
+respectively; Leray et al. (2013)).
 
-First install and load the package as follows:
+The dataset was first de-noised and tabulated using the
+[DADA2](https://benjjneb.github.io/dada2/tutorial.html) pipeline, to
+produce a table of chimera-free amplicon sequence variants (ASVs). The
+most abundant 16 ASVs are included in the **insect** package as an
+example dataset (see below).
 
-    install.packages("insect")
+If using other tools for de-noising, trimming, merging, etc, the data
+can be read in using either the `readFASTA` or `readFASTQ` functions to
+produce a "DNAbin" object compatible with the **insect** classifier.
+
+### Loading the package and data
+
+First install and load the latest development version of the package
+from GitHub as follows:
+
+    if(!require("devtools")) install.packages("devtools")
+    devtools::install_github("shaunpwilkinson/insect")
     library(insect)
 
-Next, download the latest marine eDNA classifier for the Leray et al.
-(2013) primer set from
-[here](https://www.dropbox.com/s/aawh33hneqru6j9/metazoan_COI_marine_v3.zip?dl=0)
-and extract the contents of the zip archive to the current working
-directory.
+There are currently three classifiers available for the
+mlCOIintF/jgHCO2198 primer set:
+
+-   marine: only includes taxa that cross-referenced to the
+    [WoRMS](www.marinespecies.org/) database using the
+    [lifewatch](http://www.lifewatch.be/data-services) taxon match
+    service
+
+-   nothirds: trained on all [MIDORI UNIQUE
+    20180221](http://reference-midori.info/download.php) DNA sequences
+    with third codon positions removed
+
+-   amino: created by translating the [MIDORI UNIQUE
+    20180221](http://reference-midori.info/download.php) dataset using
+    the [EBI5](https://www.ebi.ac.uk/ena/browse/translation-tables)
+    invertebrate mitochondrial translation table
+
+You can download the classifiers in their parent directories from
+[here](https://www.dropbox.com/sh/nlsv59lh0jjcpy3/AADmQRiM04L50oqRvJZvvPFKa?dl=0)
+and add them to the current working directory. The files are quite large
+(~ 50 MB each), so make sure there is a good internet connection
+available.
 
 This can alternatively be done from within R as follows:
 
-    URL <- "https://www.dropbox.com/s/aawh33hneqru6j9/metazoan_COI_marine_v3.zip?dl=1"
-    download.file(URL, destfile = "metazoan_COI_marine_v3.zip", mode = "wb")
-    unzip("metazoan_COI_marine_v3.zip")
-    file.remove("metazoan_COI_marine_v3.zip")
+    dir.create("marine")
+    dir.create("nothirds")
+    dir.create("amino")
+    download.file("https://www.dropbox.com/s/vn1yit2wkug9f7p/classifier.rds?dl=1", 
+                  destfile = "marine/classifier.rds", mode = "wb")
+    download.file("https://www.dropbox.com/s/bfvqnggi4jt591i/classifier.rds?dl=1", 
+                  destfile = "nothirds/classifier.rds", mode = "wb")
+    download.file("https://www.dropbox.com/s/c987wohded37cxg/classifier.rds?dl=1", 
+                  destfile = "amino/classifier.rds", mode = "wb")
 
-The zip archive contains the following files:
+### Classifying sequences
 
--   `README.txt` a brief description of the files contained within the
-    archive
--   `classification_tree.rds` data file containing the classifier
--   `training_data.rds` data file containing the training data used to
-    train the classifier, as a "DNAbin" list object with WoRMS aphia ID
-    numbers included in the sequence names
--   `COI_sample1_read1.fastq` and `COI_sample1_read2.fastq` example
-    FASTQ files from an ARMS experiment containing 1000 COI amplicons
-    sequenced in both directions
--   `COI_sample2.fastq` example FASTQ file from an ARMS experiment
-    containing 1000 pre-stiched COI sequence reads
+To assign taxonomic IDs to the table of amplicon sequence variants
+(ASVs) produced by DADA2, we first extract the sequences stored as
+column names in the `seqtab.nochim` matrix (see the [DADA2
+tutorial](https://benjjneb.github.io/dada2/tutorial.html) for
+instructions on how to produce this table), and remove any that don't
+produce a valid amino acid sequence.
 
-We generally recommend using the **dada2** package (Callahan *et al.*,
-2016) to de-noise and stitch sequences prior to taxonomic classification
-with **insect**; however, standard pre-processing functions are provided
-with the insect package for convenience. Non-stitched and pre-stitched
-example FASTQ files are included in the zip archive in order to
-demonstrate the pre-processing work-flow for both of these
-commonly-encountered input data formats.
+Once the sequences are stored in memory as a "DNAbin" object, we can
+optionally nullify the column names in the table to avoid flooding the
+console with long sequence strings:
 
-The FASTQ files can be read into R as either concatenated upper-case
-character strings or binary "DNAbin" objects, with "quality" attributes.
-In this example we will opt for the latter by leaving `bin = TRUE` (the
-default option). This is because subsetting or concatenating the
-character vector will result in the loss of the "quality" attributes,
-while this isn't an issue with the DNAbin list objects, whose quality
-scores are attributed to each sequence individually.
+    ## read in the example seqtab.nochim ASV table
+    data(samoa)
+    ## get sequences from table column names
+    x <- char2dna(colnames(samoa))
+    ## name the sequences sequentially
+    names(x) <- paste0("ASV", seq_along(x))
+    ## discard any that don't translate with a frame shift of 1
+    keeps <- sapply(x, length) %% 3 == 1
+    x <- x[keeps]
+    samoa <- samoa[, keeps]
+    ## optionally remove column names that can flood the console when printed
+    colnames(samoa) <- NULL 
 
-    S1R1 <- readFASTQ("COI_sample1_read1.fastq")
-    S1R2 <- readFASTQ("COI_sample1_read2.fastq")
-    S2 <- readFASTQ("COI_sample2.fastq")
+The next step is to load the classifier. Note that this 'insect' class
+object is just a large dendrogram with additional attributes for
+classifying sequences including profile HMMs and taxonomic information:
 
-The next step is to stitch the forward and reverse reads from sample 1
-together to create a single vector of sequences, similar to sample 2.
-The `stitch` function performs this operation, as well as optionally
-removing any sequences that don't contain the primer sequences in either
-direction, trimming the primers from those that do, and outputting all
-sequences in the 5' -&gt; 3' orientation. The optional primer
-filter-trim and sequence orientation is activated by passing the primer
-sequences to the `stitch` function (again either as character strings or
-"DNAbin" objects).
+<!-- Prior to training the classifier, the sequences were trimmed to only 
+include the amplicon produced by the mlCOIintF/jgHCO2198 primers, 
+and further quality filtered to include only
+sequences translating to functional proteins by aligning each sequence to 
+a COI profile hidden Markov model using the **aphid** R package 
+(https://CRAN.R-project.org/package=aphid). -->
+    classifier_mo <- readRDS("marine/classifier.rds")
+    classifier_mo
+    names(attributes(classifier_mo))
 
-    S1 <- stitch(S1R1, S1R2, up = "GGWACWGGWTGAACWGTWTAYCCYCC", 
-                 down = "TAIACYTCIGGRTGICCRAARAAYCA")
+    #> 'dendrogram' with 2 branches and 25554 members total, at height 40
+    #>  [1] "height"      "midpoint"    "members"     "class"       "taxonomy"   
+    #>  [6] "clade"       "sequences"   "minscore"    "minlength"   "maxlength"  
+    #> [11] "key"         "model"       "alternative" "nunique"     "ntotal"     
+    #> [16] "taxID"       "trainingset" "pointers"    "k"           "kmers"      
+    #> [21] "seqlengths"
 
-Of the original 1000 sequences in sample 1, 299 were retained and
-stitched while the remainder didn't contain both of the primer sequences
-in either direction and were discarded.
+The final step is to assign taxon IDs and confidence values to each ASV.
+The `classify` function may take a minute or so to process these
+sequences, since it uses a computationally intensive dynamic programming
+algorithm to find the likelihood values of each sequence given the
+models at each node of the tree. The exception is when the argument
+`ping` is set to TRUE or any number between 0 and 1 (typically &gt;
+0.95) and there is an exact match or high similarity (e.g. &gt;= 0.99 if
+`ping = 0.99`) between the query sequence and at least one of the
+sequences in the training dataset, in which case the function simply
+returns the common ancestor of the matching sequences without a
+confidence score.
 
-The sample 2 sequences have been pre-stitched but still have their
-primers attached. Here, we will use the `trim` function to discard any
-sequences that don't contain both primer sequences, orientate all
-sequences in the 5' -&gt; 3' direction, and finally, trim the primer
-sequences from each end:
+The `classify` function can also be run in parallel by setting the
+`cores` argument to 2 or more depending on the number available (setting
+`cores = "autodetect"` will automatically run on one less than the
+number available). If choosing this option, ensure there is at least 1
+GB of available RAM per CPU. Classification times can vary, and depend
+on several factors including the number of unique sequences in the
+dataset, the size of the tree, the length of the input sequences, the
+processing speed, number of processors used, etc. The average time to ID
+COI sequences using the marine classifier above is approximately 3 - 4
+seconds per unique sequence per processor. For example, a dataset
+containing 1000 unique sequences would take around an hour on a single
+CPU, half an hour on two, and so on.
 
-    S2 <- trim(S2, up = "GGWACWGGWTGAACWGTWTAYCCYCC", 
-                 down = "TAIACYTCIGGRTGICCRAARAAYCA")
+In the following code we set `tabulize = FALSE` (the default setting)
+since the DADA2 output table already contains the sequence counts and we
+are only classifying the unique sequence variants. In the case where a
+list of sequences containing replicates is to be processed, users can
+prefix the sequence names with their respective sample names, delimited
+with an underscore (e.g. "sample001\_sequence001") and set
+`tabulize = TRUE`. In this case, the `classify` function will
+automatically count and dereplicate the sequences, producing an output
+table that includes one column of sequence counts for each sample.
 
-Next we merge all samples together into one DNAbin list, while retaining
-the sample origins in the sequence names. In keeping with the style of
-the **qiime** pipeline (Caporaso *et al.*, 2010), we append the sample
-names to the front of each sequence name, delimited with an underscore:
+    longDF <- classify(x, classifier_mo, cores = 2, tabulize = FALSE, ping = 0.99)
 
-    names(S1) <- paste0("Sample1_", names(S1))
-    names(S2) <- paste0("Sample2_", names(S2))
-    x <- c(S1, S2)
+For DADA2 users, the ASV abundance table can now be transposed and
+appended to the table of taxonomic information if required:
 
-The sequences now need further filtering to remove low-quality reads,
-those with ambiguous base calls, singletons and overly short/long
-sequences. The function `qfilter` is a quality control function that can
-be used to apply any or all of these filters. By default, the function
-removes any sequences with a mean quality score less than 30, those that
-contain at least one ambiguous base call, those that appear only once in
-the dataset, and those with length outside the range of 50 - 500
-nucleotides (inclusive). To disable any of the filters, simply set the
-parameter value to `NULL`. In this example we will stick with the
-default settings, except that we change the acceptable length range to
-250 - 350 bp.
+    longDF <- cbind(longDF, t(samoa))
 
-    x <- qfilter(x, minlength = 250, maxlength = 350)
-
-If sequences were pre-processed with **dada2** instead of **insect**
-(i.e. by following the work-flow
-[here](https://benjjneb.github.io/dada2/tutorial.html)), the table of
-chimera-removed amplicon sequence variants (ASVs) can be read in as
-follows:
-
-    x <- char2dna(colnames(seqtab.nochim))
-    ## optionally remove column names that can flood the console 
-    colnames(seqtab.nochim) <- NULL 
-
-In this case we can simply transpose and append the `seqtab.nochim` ASV
-abundance table to the table of taxonomic information produced by
-`insect::classify`.
-
-The final step is to load the classification tree and run the `classify`
-function to assign taxonomic IDs and confidence scores. First, read in
-the `classification_tree.rds` file:
-
-    tree <- readRDS("classification_tree.rds")
-
-This 'insect' class object is just a large dendrogram with additional
-attributes for classifying sequences including profile HMMs and
-taxonomic information. The `classify` function may take a minute or two
-to process these sequences, since it uses a computationally intensive
-dynamic programming algorithm to find the likelihood values of each
-(unique) sequence given the models at each node of the tree. The
-exception is when the argument `ping` is set to TRUE and there is an
-exact match between the query sequence and at least one of the sequences
-in the training dataset, in which case the function simply returns the
-common ancestor of the matching sequences. The `classify` function can
-also be run in parallel by setting the `cores` argument to 2 or more
-depending on the number available (you can run `parallel::detectCores()`
-if you are unsure). Classification times can vary, and depend on several
-factors including the number of unique sequences in the dataset, the
-size of the tree, the length of the input sequences, the processing
-speed, number of processors used, etc. The average time for classifying
-COI sequences using the tree above is approximately 3 - 4 seconds per
-unique sequence per processor. For example, a dataset containing 10,000
-sequences of which 1000 are unique would take around an hour on a single
-processor, half an hour on two, etc.
-
-    longDF <- classify(x, tree, cores = 4)
-
+  
 <!-- note newlines needed between html tags and code chunk -->
+
 <table>
 <thead>
 <tr class="header">
@@ -277,229 +379,863 @@ processor, half an hour on two, etc.
 <th align="left">family</th>
 <th align="left">genus</th>
 <th align="left">species</th>
-<th align="right">Sample1</th>
+<th align="right">OFU04A-100_S64</th>
+<th align="right">OFU04A-1_S13</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">Sample1_M...</td>
-<td align="right">2</td>
-<td align="left">Animalia</td>
-<td align="left">kingdom</td>
-<td align="right">0.9999</td>
-<td align="left">Animalia</td>
+<td align="left">ASV1</td>
+<td align="right">2763</td>
+<td align="left">Rhodophyta</td>
+<td align="left">no rank</td>
+<td align="right">0.9917</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">4</td>
+<td align="left"></td>
+<td align="right">156</td>
+<td align="right">5600</td>
 </tr>
 <tr class="even">
-<td align="left">Sample1_M...</td>
-<td align="right">1839</td>
-<td align="left">Ascidiacea</td>
-<td align="left">class</td>
-<td align="right">0.9999</td>
-<td align="left">Animalia</td>
-<td align="left">Chordata</td>
-<td align="left">Ascidiacea</td>
+<td align="left">ASV2</td>
+<td align="right">6072</td>
+<td align="left">Eumetazoa</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left">Metazoa</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">30</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">4496</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
-<td align="left">Sample1_M...</td>
-<td align="right">2</td>
-<td align="left">Animalia</td>
-<td align="left">kingdom</td>
-<td align="right">0.9922</td>
-<td align="left">Animalia</td>
+<td align="left">ASV3</td>
+<td align="right">2763</td>
+<td align="left">Rhodophyta</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">16</td>
+<td align="left"></td>
+<td align="right">28</td>
+<td align="right">3267</td>
 </tr>
 <tr class="even">
-<td align="left">Sample1_M...</td>
-<td align="right">2</td>
-<td align="left">Animalia</td>
-<td align="left">kingdom</td>
-<td align="right">0.9561</td>
-<td align="left">Animalia</td>
+<td align="left">ASV4</td>
+<td align="right">2759</td>
+<td align="left">Eukaryota</td>
+<td align="left">superkingdom</td>
+<td align="right">1.0000</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">23</td>
+<td align="left"></td>
+<td align="right">3203</td>
+<td align="right">0</td>
 </tr>
 <tr class="odd">
-<td align="left">Sample1_M...</td>
-<td align="right">1839</td>
-<td align="left">Ascidiacea</td>
-<td align="left">class</td>
-<td align="right">0.9999</td>
-<td align="left">Animalia</td>
-<td align="left">Chordata</td>
-<td align="left">Ascidiacea</td>
+<td align="left">ASV5</td>
+<td align="right">1</td>
+<td align="left">root</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">2</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">3024</td>
+<td align="right">0</td>
 </tr>
 <tr class="even">
-<td align="left">Sample1_M...</td>
-<td align="right">1839</td>
-<td align="left">Ascidiacea</td>
+<td align="left">ASV6</td>
+<td align="right">2763</td>
+<td align="left">Rhodophyta</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">20</td>
+<td align="right">2409</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV7</td>
+<td align="right">2759</td>
+<td align="left">Eukaryota</td>
+<td align="left">superkingdom</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">2379</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">ASV8</td>
+<td align="right">2759</td>
+<td align="left">Eukaryota</td>
+<td align="left">superkingdom</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">2156</td>
+<td align="right">104</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV9</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
 <td align="left">class</td>
-<td align="right">0.9999</td>
-<td align="left">Animalia</td>
-<td align="left">Chordata</td>
-<td align="left">Ascidiacea</td>
+<td align="right">0.9989</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">0</td>
+<td align="right">2149</td>
+</tr>
+<tr class="even">
+<td align="left">ASV11</td>
+<td align="right">6341</td>
+<td align="left">Polychaeta</td>
+<td align="left">class</td>
+<td align="right">0.9989</td>
+<td align="left">Metazoa</td>
+<td align="left">Annelida</td>
+<td align="left">Polychaeta</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1905</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV12</td>
+<td align="right">2763</td>
+<td align="left">Rhodophyta</td>
+<td align="left">no rank</td>
+<td align="right">0.9871</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">87</td>
+<td align="right">1757</td>
+</tr>
+<tr class="even">
+<td align="left">ASV13</td>
+<td align="right">6072</td>
+<td align="left">Eumetazoa</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left">Metazoa</td>
+<td align="left"></td>
+<td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="right">27</td>
+<td align="right">1800</td>
 </tr>
 <tr class="odd">
-<td align="left">Sample1_M...</td>
-<td align="right">1839</td>
-<td align="left">Ascidiacea</td>
-<td align="left">class</td>
-<td align="right">0.9999</td>
-<td align="left">Animalia</td>
-<td align="left">Chordata</td>
-<td align="left">Ascidiacea</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="right">24</td>
-</tr>
-<tr class="even">
-<td align="left">Sample1_M...</td>
-<td align="right">2</td>
-<td align="left">Animalia</td>
-<td align="left">kingdom</td>
+<td align="left">ASV14</td>
+<td align="right">1</td>
+<td align="left">root</td>
+<td align="left">no rank</td>
 <td align="right">1.0000</td>
-<td align="left">Animalia</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">6</td>
+<td align="left"></td>
+<td align="right">1729</td>
+<td align="right">9</td>
 </tr>
-<tr class="odd">
-<td align="left">Sample1_M...</td>
-<td align="right">368670</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9599</td>
-<td align="left">Plantae</td>
+<tr class="even">
+<td align="left">ASV15</td>
+<td align="right">2763</td>
 <td align="left">Rhodophyta</td>
-<td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="right">2</td>
-</tr>
-<tr class="even">
-<td align="left">Sample1_M...</td>
-<td align="right">2</td>
-<td align="left">Animalia</td>
-<td align="left">kingdom</td>
-<td align="right">0.9537</td>
-<td align="left">Animalia</td>
+<td align="left">no rank</td>
+<td align="right">0.9882</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">2</td>
+<td align="left"></td>
+<td align="right">0</td>
+<td align="right">1725</td>
 </tr>
 <tr class="odd">
-<td align="left">Sample1_M...</td>
-<td align="right">1839</td>
-<td align="left">Ascidiacea</td>
-<td align="left">class</td>
-<td align="right">0.9999</td>
-<td align="left">Animalia</td>
-<td align="left">Chordata</td>
-<td align="left">Ascidiacea</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="right">2</td>
-</tr>
-<tr class="even">
-<td align="left">Sample1_M...</td>
-<td align="right">1041930</td>
-<td align="left">Terpios gelatinosus</td>
-<td align="left">species</td>
-<td align="right">NA</td>
-<td align="left">Animalia</td>
-<td align="left">Porifera</td>
-<td align="left">Demospongiae</td>
-<td align="left">Suberitida</td>
-<td align="left">Suberitidae</td>
-<td align="left">Terpios</td>
-<td align="left">Terpios gelatinosus</td>
-<td align="right">2</td>
-</tr>
-<tr class="odd">
-<td align="left">Sample1_M...</td>
-<td align="right">2</td>
-<td align="left">Animalia</td>
-<td align="left">kingdom</td>
-<td align="right">0.9984</td>
-<td align="left">Animalia</td>
+<td align="left">ASV16</td>
+<td align="right">6072</td>
+<td align="left">Eumetazoa</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left">Metazoa</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">2</td>
+<td align="right">1481</td>
+<td align="right">0</td>
 </tr>
 </tbody>
 </table>
 
-The function produces a data frame with one row for each unique
-sequence, the first few rows of which are shown above. Assuming `ping`
-is set to `TRUE`, query sequences that have exact matches in the
-training dataset (and hence bypass the recursive classification
-procedure; e.g. *Terpios gelatinosus* above), are assigned a score of
-`NA`.
+  
+<!--
+The function produces a data frame with one row for each ASV
+Assuming `ping` is not `FALSE`, query sequences that have 
+exact or close matches in the training dataset 
+(and hence bypass the recursive classification procedure)
+are assigned a score of `NA`.
+-->
 
-For **dada2** users, the ASV abundance table can be transposed and
-appended to the table of taxonomic information at this point if
-required:
+As shown in the above example, many of the sequences return fairly
+uninformative taxon IDs (e.g. 'Eukaryota'). This is a fairly typical
+feature of eDNA datasets that can contain a large number of novel
+sequences that are dissimilar to anything recorded in the reference
+database(s).
 
-    longDF <- cbind(longDF[-ncol(longDF)], t(seqtab.nochim))
+To improve resolution (recall), it sometimes helps to work with more
+conserved sequences. One option is to use the 'nothirds' classifier to
+process sequences with the hyper-variable third codon positions omitted.
+This requires a little extra preparation to strip every third base from
+the sequences as follows:
 
-For a more succinct output we can aggregate the table to show one row
-for each unique taxon as follows:
+    ## remove every third base
+    x_nt <- lapply(x, function(s) s[-(seq(1, length(s), by = 3))])
+    ## reset class attriubute
+    class(x_nt) <- "DNAbin"
+    ## read in nothirds classifier
+    classifier_nt <- readRDS("nothirds/classifier.rds")
+    ## assign taxon IDs
+    longDF <- classify(x_nt, classifier_nt, cores = 1, tabulize = FALSE, ping = 0.99)
+    ## append sequence counts
+    longDF <- cbind(longDF, t(samoa))
+
+  
+<!-- note newlines needed between html tags and code chunk -->
+
+<table>
+<thead>
+<tr class="header">
+<th align="left">representative</th>
+<th align="right">taxID</th>
+<th align="left">taxon</th>
+<th align="left">rank</th>
+<th align="right">score</th>
+<th align="left">kingdom</th>
+<th align="left">phylum</th>
+<th align="left">class</th>
+<th align="left">order</th>
+<th align="left">family</th>
+<th align="left">genus</th>
+<th align="left">species</th>
+<th align="right">OFU04A-100_S64</th>
+<th align="right">OFU04A-1_S13</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">ASV1</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9958</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">156</td>
+<td align="right">5600</td>
+</tr>
+<tr class="even">
+<td align="left">ASV2</td>
+<td align="right">1</td>
+<td align="left">root</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">4496</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV3</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9635</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">28</td>
+<td align="right">3267</td>
+</tr>
+<tr class="even">
+<td align="left">ASV4</td>
+<td align="right">131567</td>
+<td align="left">cellular organisms</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">3203</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV5</td>
+<td align="right">131567</td>
+<td align="left">cellular organisms</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">3024</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">ASV6</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9647</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">20</td>
+<td align="right">2409</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV7</td>
+<td align="right">1206795</td>
+<td align="left">Lophotrochozoa</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left">Metazoa</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">2379</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">ASV8</td>
+<td align="right">131567</td>
+<td align="left">cellular organisms</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">2156</td>
+<td align="right">104</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV9</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9654</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">0</td>
+<td align="right">2149</td>
+</tr>
+<tr class="even">
+<td align="left">ASV11</td>
+<td align="right">1</td>
+<td align="left">root</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1905</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV12</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9016</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">87</td>
+<td align="right">1757</td>
+</tr>
+<tr class="even">
+<td align="left">ASV13</td>
+<td align="right">1</td>
+<td align="left">root</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">27</td>
+<td align="right">1800</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV14</td>
+<td align="right">131567</td>
+<td align="left">cellular organisms</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1729</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="left">ASV15</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">0</td>
+<td align="right">1725</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV16</td>
+<td align="right">39820</td>
+<td align="left">Nereididae</td>
+<td align="left">family</td>
+<td align="right">0.9301</td>
+<td align="left">Metazoa</td>
+<td align="left">Annelida</td>
+<td align="left">Polychaeta</td>
+<td align="left">Phyllodocida</td>
+<td align="left">Nereididae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1481</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+
+  
+This has improved the resolution somewhat, but we can recall even more
+taxa to class level and below by using an amino acid sequence
+classifier. Again, this requires some extra prep, to translate the DNA
+sequences and remove any that produce stop codons. The sequence residues
+are first converted to characters for translation with the `translate`
+function in the [seqinr](https://cran.r-project.org/package=seqinr)
+package, and converted back to binary form object using `ape::as.AAbin`.
+
+    ## convert to character class
+    x_aa <- ape::as.character.DNAbin(x)
+    ## translate with number 5 table
+    x_aa <- lapply(x_aa, seqinr::translate, numcode = 5, frame = 1)
+    ## convert back to AAbin class
+    x_aa <- ape::as.AAbin(x_aa)
+    ## check for stop codons
+    keeps <- sapply(xaa, function(v) !any(v == as.raw(42)))
+    ## remove any offending sequences 
+    xaa <- xaa[keeps]
+    samoa <- samoa[, keeps]
+    ## read in classifier
+    classifier_aa <- readRDS("amino/classifier.rds")
+    ## assign taxon IDs
+    longDF <- classify(x_aa, classifier_aa, cores = 1, tabulize = FALSE, ping = 0.99)
+    ## attach sequence counts
+    longDF <- cbind(longDF, t(samoa))
+
+  
+<!-- note newlines needed between html tags and code chunk -->
+
+<table>
+<thead>
+<tr class="header">
+<th align="left">representative</th>
+<th align="right">taxID</th>
+<th align="left">taxon</th>
+<th align="left">rank</th>
+<th align="right">score</th>
+<th align="left">kingdom</th>
+<th align="left">phylum</th>
+<th align="left">class</th>
+<th align="left">order</th>
+<th align="left">family</th>
+<th align="left">genus</th>
+<th align="left">species</th>
+<th align="right">OFU04A-100_S64</th>
+<th align="right">OFU04A-1_S13</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">ASV1</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9966</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">156</td>
+<td align="right">5600</td>
+</tr>
+<tr class="even">
+<td align="left">ASV2</td>
+<td align="right">6379</td>
+<td align="left">Chaetopterus</td>
+<td align="left">genus</td>
+<td align="right">0.9881</td>
+<td align="left">Metazoa</td>
+<td align="left">Annelida</td>
+<td align="left">Polychaeta</td>
+<td align="left">Spionida</td>
+<td align="left">Chaetopteridae</td>
+<td align="left">Chaetopterus</td>
+<td align="left"></td>
+<td align="right">4496</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV3</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9769</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">28</td>
+<td align="right">3267</td>
+</tr>
+<tr class="even">
+<td align="left">ASV4</td>
+<td align="right">116569</td>
+<td align="left">Neocopepoda</td>
+<td align="left">infraclass</td>
+<td align="right">0.9986</td>
+<td align="left">Metazoa</td>
+<td align="left">Arthropoda</td>
+<td align="left">Hexanauplia</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">3203</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV5</td>
+<td align="right">33213</td>
+<td align="left">Bilateria</td>
+<td align="left">no rank</td>
+<td align="right">0.9456</td>
+<td align="left">Metazoa</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">3024</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">ASV6</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9973</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">20</td>
+<td align="right">2409</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV7</td>
+<td align="right">39820</td>
+<td align="left">Nereididae</td>
+<td align="left">family</td>
+<td align="right">0.9110</td>
+<td align="left">Metazoa</td>
+<td align="left">Annelida</td>
+<td align="left">Polychaeta</td>
+<td align="left">Phyllodocida</td>
+<td align="left">Nereididae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">2379</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">ASV8</td>
+<td align="right">1</td>
+<td align="left">root</td>
+<td align="left">no rank</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">2156</td>
+<td align="right">104</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV9</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9147</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">0</td>
+<td align="right">2149</td>
+</tr>
+<tr class="even">
+<td align="left">ASV11</td>
+<td align="right">2759</td>
+<td align="left">Eukaryota</td>
+<td align="left">superkingdom</td>
+<td align="right">1.0000</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1905</td>
+<td align="right">6</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV12</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9424</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">87</td>
+<td align="right">1757</td>
+</tr>
+<tr class="even">
+<td align="left">ASV13</td>
+<td align="right">2759</td>
+<td align="left">Eukaryota</td>
+<td align="left">superkingdom</td>
+<td align="right">0.9999</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">27</td>
+<td align="right">1800</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV14</td>
+<td align="right">33213</td>
+<td align="left">Bilateria</td>
+<td align="left">no rank</td>
+<td align="right">0.9456</td>
+<td align="left">Metazoa</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1729</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="left">ASV15</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9530</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">0</td>
+<td align="right">1725</td>
+</tr>
+<tr class="odd">
+<td align="left">ASV16</td>
+<td align="right">39820</td>
+<td align="left">Nereididae</td>
+<td align="left">family</td>
+<td align="right">NA</td>
+<td align="left">Metazoa</td>
+<td align="left">Annelida</td>
+<td align="left">Polychaeta</td>
+<td align="left">Phyllodocida</td>
+<td align="left">Nereididae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1481</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+
+  
+Any sequences that return exact hits or near matches (&gt; 99%
+similarity in this case) with at least one training sequence are
+assigned a score of `NA`, as in the final row of the table above. Here,
+the multiple matching sequences have a Nereid polychaete common
+ancestor, and the query sequence was therefore assigned to the family
+Nereidae.
+
+For a more succinct output we can aggregate the table to only include
+one row for each unique taxon as follows:
 
     taxa <- aggregate(longDF[3:12], longDF["taxID"], head, 1)
     counts <- aggregate(longDF[13:ncol(longDF)], longDF["taxID"], sum)
     shortDF <- merge(taxa, counts, by = "taxID")
 
+  
 <!-- note newlines needed between html tags and code chunk -->
+
 <table>
 <thead>
 <tr class="header">
@@ -514,15 +1250,15 @@ for each unique taxon as follows:
 <th align="left">family</th>
 <th align="left">genus</th>
 <th align="left">species</th>
-<th align="right">Sample1</th>
-<th align="right">Sample2</th>
+<th align="right">OFU04A-100_S64</th>
+<th align="right">OFU04A-1_S13</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td align="right">1</td>
-<td align="left">Biota</td>
-<td align="left"></td>
+<td align="left">root</td>
+<td align="left">no rank</td>
 <td align="right">1.0000</td>
 <td align="left"></td>
 <td align="left"></td>
@@ -531,154 +1267,122 @@ for each unique taxon as follows:
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">0</td>
-<td align="right">47</td>
+<td align="right">2156</td>
+<td align="right">104</td>
 </tr>
 <tr class="even">
-<td align="right">2</td>
-<td align="left">Animalia</td>
-<td align="left">kingdom</td>
-<td align="right">0.9999</td>
-<td align="left">Animalia</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="right">55</td>
-<td align="right">88</td>
-</tr>
-<tr class="odd">
-<td align="right">1086</td>
-<td align="left">Eumalacostraca</td>
-<td align="left">subclass</td>
-<td align="right">0.9815</td>
-<td align="left">Animalia</td>
-<td align="left">Arthropoda</td>
-<td align="left">Malacostraca</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="right">0</td>
-<td align="right">3</td>
-</tr>
-<tr class="even">
-<td align="right">1090</td>
-<td align="left">Peracarida</td>
-<td align="left">superorder</td>
-<td align="right">0.9884</td>
-<td align="left">Animalia</td>
-<td align="left">Arthropoda</td>
-<td align="left">Malacostraca</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="right">0</td>
-<td align="right">6</td>
-</tr>
-<tr class="odd">
-<td align="right">1102</td>
-<td align="left">Harpacticoida</td>
-<td align="left">order</td>
+<td align="right">2759</td>
+<td align="left">Eukaryota</td>
+<td align="left">superkingdom</td>
 <td align="right">1.0000</td>
-<td align="left">Animalia</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">1932</td>
+<td align="right">1806</td>
+</tr>
+<tr class="odd">
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9966</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">291</td>
+<td align="right">16907</td>
+</tr>
+<tr class="even">
+<td align="right">6379</td>
+<td align="left">Chaetopterus</td>
+<td align="left">genus</td>
+<td align="right">0.9881</td>
+<td align="left">Metazoa</td>
+<td align="left">Annelida</td>
+<td align="left">Polychaeta</td>
+<td align="left">Spionida</td>
+<td align="left">Chaetopteridae</td>
+<td align="left">Chaetopterus</td>
+<td align="left"></td>
+<td align="right">4496</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">33213</td>
+<td align="left">Bilateria</td>
+<td align="left">no rank</td>
+<td align="right">0.9456</td>
+<td align="left">Metazoa</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">4753</td>
+<td align="right">9</td>
+</tr>
+<tr class="even">
+<td align="right">39820</td>
+<td align="left">Nereididae</td>
+<td align="left">family</td>
+<td align="right">0.9110</td>
+<td align="left">Metazoa</td>
+<td align="left">Annelida</td>
+<td align="left">Polychaeta</td>
+<td align="left">Phyllodocida</td>
+<td align="left">Nereididae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right">3860</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">116569</td>
+<td align="left">Neocopepoda</td>
+<td align="left">infraclass</td>
+<td align="right">0.9986</td>
+<td align="left">Metazoa</td>
 <td align="left">Arthropoda</td>
 <td align="left">Hexanauplia</td>
-<td align="left">Harpacticoida</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="right">0</td>
-<td align="right">19</td>
-</tr>
-<tr class="even">
-<td align="right">1135</td>
-<td align="left">Amphipoda</td>
-<td align="left">order</td>
-<td align="right">0.9484</td>
-<td align="left">Animalia</td>
-<td align="left">Arthropoda</td>
-<td align="left">Malacostraca</td>
-<td align="left">Amphipoda</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="right">0</td>
-<td align="right">4</td>
-</tr>
-<tr class="odd">
-<td align="right">1839</td>
-<td align="left">Ascidiacea</td>
-<td align="left">class</td>
-<td align="right">0.9999</td>
-<td align="left">Animalia</td>
-<td align="left">Chordata</td>
-<td align="left">Ascidiacea</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">85</td>
-<td align="right">0</td>
-</tr>
-<tr class="even">
-<td align="right">368670</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9599</td>
-<td align="left">Plantae</td>
-<td align="left">Rhodophyta</td>
-<td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="right">2</td>
-<td align="right">2</td>
-</tr>
-<tr class="odd">
-<td align="right">1041930</td>
-<td align="left">Terpios gelatinosus</td>
-<td align="left">species</td>
-<td align="right">NA</td>
-<td align="left">Animalia</td>
-<td align="left">Porifera</td>
-<td align="left">Demospongiae</td>
-<td align="left">Suberitida</td>
-<td align="left">Suberitidae</td>
-<td align="left">Terpios</td>
-<td align="left">Terpios gelatinosus</td>
-<td align="right">2</td>
+<td align="right">3203</td>
 <td align="right">0</td>
 </tr>
 </tbody>
 </table>
 
-As shown in the above example, many of the sequences return fairly
-uninformative taxon IDs (e.g. 'Biota'). This is a fairly typical feature
-of eDNA datasets that can contain a large number of pseudo-genes,
-chimeras, other PCR artifacts, and novel sequences that are dissimilar
-to anything recorded in the reference database(s). Query sequences with
-high similarity to reference sequences can also occasionaly produce
-uninformative classifications due to inconclusive model comparison tests
-at top-level nodes. This may be circumvented by reducing the `threshold`
-parameter or setting `decay = FALSE`; however, users are advised against
-the excessive relaxation of these parameters since it may increase the
-chance of returning spurious classifications (these tend to be very rare
-when using the conservative default values of `0.9` and `TRUE`,
+  
+This has classified the majority of sequences to at least class level,
+with a handful of novel sequences still producing uninformative taxon
+IDs. Note that query sequences with high similarity to reference
+sequences can also occasionally produce uninformative classifications
+due to inconclusive model comparison tests at top-level nodes. This may
+be circumvented by reducing the `threshold` parameter or setting
+`decay = FALSE`; however, users are advised against the excessive
+relaxation of these parameters since it may increase the chance of
+returning spurious classifications (these tend to be very rare when
+using the conservative default values of `0.9` and `TRUE`,
 respectively). Further testing and optimization may help to address some
 of these best-practice considerations, and will be a focus of future
 research.
 
 This basic introduction to the **insect** package has outlined the steps
-involved in parsing paired-end NGS data, and filtering, trimming
-primers, de-replication, and taxonomic identification using a pre-built
-classification tree. The next tutorial will deal with downloading and
-curating a primer-specific local sequence database and using it to build
-a classification tree.
+involved in taxonomic identification of amplicon sequence variants
+(ASVs) using a pre-built classification tree. The next tutorial will
+deal with downloading and curating a primer-specific local sequence
+database and using it to build a classification tree.
 
 Please feel free to email the author directly with any feedback or
 questions at shaunpwilkinson AT gmail DOT com. Bug reports can also be
@@ -690,18 +1394,16 @@ Acknowledgements
 
 This software was developed with funding from a Rutherford Foundation
 Postdoctoral Research Fellowship from the Royal Society of New Zealand.
-Thanks to Molly Timmers for helpful feedback and sharing COI data, and
-to Danyl McLauchlan and Dinindu Senanayake for assistance with high
-performance computing facilities.
+Many thanks to Molly Timmers for helpful feedback and sharing
+unpublished COI data, Gustav Paulay, Matthieu Leray and many others for
+feedback and suggestions, and to Danyl McLauchlan and Dinindu Senanayake
+for assistance with high performance computing facilities.
 
 References
 ----------
 
 Callahan,B.J. *et al.* (2016) DADA2: High-resolution sample inference
 from illumina amplicon data. *Nature Methods*, **13**, 581–583.
-
-Caporaso,J.G. *et al.* (2010) QIIME allows analysis of high-throughput
-community sequencing data. *Nature Methods*, **7**, 335–336.
 
 Durbin,R. *et al.* (1998) Biological Sequence Analysis: Probabilistic
 Models of Proteins and Nucleic Acids. Cambridge University Press,
