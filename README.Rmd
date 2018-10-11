@@ -205,7 +205,7 @@ and the query sequence was therefore assigned to the family Nereidae.
 
 ### Further reading
 
-A more detailed overview of the package and its functions can be found at
+A more detailed overview of the package and its functions can be found
 [here](https://rpubs.com/shaunpwilkinson/insect) or by running
 
 ```{r, eval = FALSE}

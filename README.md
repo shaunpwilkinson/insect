@@ -60,7 +60,7 @@ the more common metabarcoding primer sets:
 <th align="left">Source</th>
 <th align="left">Version</th>
 <th align="right">Date</th>
-<th align="left">Link</th>
+<th align="left">Download</th>
 </tr>
 </thead>
 <tbody>
@@ -180,9 +180,10 @@ and one for translated amino acid sequences
 ([amino](https://www.dropbox.com/s/c987wohded37cxg/classifier.rds?dl=1)).
 
 Here we'll use the amino acid version, which was created by translating
-the MIDORI training dataset using the invertebrate mitochondrial
-translation table
-([EBI5](https://www.ebi.ac.uk/ena/browse/translation-tables)).
+the [MIDORI UNIQUE 20180221](http://reference-midori.info/download.php)
+training dataset using the
+[EBI5](https://www.ebi.ac.uk/ena/browse/translation-tables) invertebrate
+mitochondrial translation table.
 
 The 47 MB classifier can be downloaded to the current working directory
 and read into R as follows:
@@ -460,14 +461,14 @@ to 0.99 is considered a match), set `ping = 0.99`.
 Any sequences that return exact hits or near matches (&gt; 99%
 similarity in this case) with at least one training sequence are
 assigned a score of `NA`, as in the final row of the table above. Here,
-the multiple matching sequences has a Nereid common ancestor (a
-polychaete worm), and the query sequence was therefore assigned to the
-family Nereidae.
+the multiple matching sequences have a Nereid polychaete common
+ancestor, and the query sequence was therefore assigned to the family
+Nereidae.
 
 ### Further reading
 
 A more detailed overview of the package and its functions can be found
-at [here](https://rpubs.com/shaunpwilkinson/insect) or by running
+[here](https://rpubs.com/shaunpwilkinson/insect) or by running
 
     vignette("insect-vignette")
 
