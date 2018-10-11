@@ -214,7 +214,8 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
         model <- aphid::derivePHMM(xu[samp], refine = refine,
                                    seqweights = xuw[samp], maxsize = maxsize,
                                    inserts = "inherited", alignment = FALSE,
-                                   quiet = TRUE, cores = cores, maxiter = 20)
+                                   quiet = TRUE, cores = cores, maxiter = 20,
+                                   limit = 0.98)
       )
       # suppressWarnings(
       #   model <- aphid::train(model, xu, method = refine, seqweights = xuw,

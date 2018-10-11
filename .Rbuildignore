@@ -1,6 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^README\.Rmd$
+^README\.html$
 ^cran-comments\.md$
 ^NEWS\.md$
 ^Makefile$
@@ -8,3 +9,4 @@
 ^\.Rhistory$
 ^\.travis\.yml$
 ^\.httr-oauth$
+^kable\.css$

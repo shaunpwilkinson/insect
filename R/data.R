@@ -44,3 +44,18 @@
 #'
 "whale_taxonomy"
 ################################################################################
+#' Table of marine COI amplicon sequence variants from American Samoa
+#'
+#'  This matrix contains counts of COI amplicon sequence variants (ASV)
+#'  extracted from autonomous reef monitoring structures (ARMS) in
+#'  Ofu, American Samoa. Unpublished data courtesy of Molly Timmers (NOAA).
+#'
+#' @format a 2 x 16 integer matrix containing abundance counts of 16 ASVs from
+#'   two sites. This table contains the first 16 rows of the 'seqtab.nochim' output from
+#'   the DADA2 pipeline (\url{https://benjjneb.github.io/dada2/tutorial.html}).
+#'   The column names contain the DNA sequences of the ASVs, and row names
+#'   correspond with site codes.
+#'
+"samoa"
+################################################################################
+

@@ -6,7 +6,10 @@ output:
     css: kable.css
 ---
 
-
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+#knitr::opts_chunk$set(out.width='750px', dpi=200)
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
 
 # insect
 
@@ -50,21 +53,21 @@ much faster to process.
 
 To download **insect** from CRAN and load the package, run
 
-
-```r
+```{r, eval = FALSE}
 install.packages("insect")
 library(insect)
 ```
 
 To download the latest development version from GitHub, run:
 
-
-```r
+```{r, eval = FALSE}
 devtools::install_github("shaunpwilkinson/insect", build_vignettes = TRUE) 
 library(insect)
 ```
 
-
+```{r, echo = FALSE}
+library(insect)
+```
 
 
 
@@ -78,26 +81,22 @@ sets:
 
 <div class="verysmall">
 
-
-Marker   Target                                 Primers                                                                                                                                                                  Source                       Version        Date  Link                                                                           
--------  -------------------------------------  -----------------------------------------------------------------------------------------------------------------------------------------------------------------------  ---------------------------  --------  ---------  -------------------------------------------------------------------------------
-16S      Marine crustaceans                     Crust16S_F/Crust16S_R ([Berry et al 2017](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/))                                                                        GenBank                      4          20180626  [RDS (7.1 MB)](https://www.dropbox.com/s/9vl9gj3frw7ng1m/classifier.rds?dl=1)  
-16S      Marine fish                            Fish16sF/16s2R ([Berry et al 2017](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/); [Deagle et al 2007](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1959119/))   GenBank                      4          20180627  [RDS (6.8MB)](https://www.dropbox.com/s/fvfrd46exdah037/classifier.rds?dl=1)   
-18S      Marine eukaryotes                      18S_1F/18S_400R ([Pochon et al 2017](https://www.ncbi.nlm.nih.gov/pubmed/24023913))                                                                                      SILVA_132_LSUParc, GenBank   5          20180709  [RDS (11.8 MB)](https://www.dropbox.com/s/rmhh1g73jtipagu/classifier.rds?dl=1) 
-18S      Marine eukaryotes                      18S_V4F/18S_V4R ([Stat et al 2017](https://www.ncbi.nlm.nih.gov/pubmed/28947818))                                                                                        GenBank                      4          20180525  [RDS (11.5 MB)](https://www.dropbox.com/s/s315gxuo4p24kx8/classifier.rds?dl=1) 
-23S      Algae                                  p23SrV_f1/p23SrV_r1 ([Sherwood & Presting 2007](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1529-8817.2007.00341.x))                                               SILVA_132_LSUParc            1          20180715  [RDS (26.9MB)](https://www.dropbox.com/s/6o8cauqrlgnmwp5/classifier.rds?dl=1)  
-COI      Metazoans (amino)                      mlCOIintF/jgHCO2198 ([Leray et al 2013](https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34))                                                  Midori, GenBank              4aa        20181009  [RDS (47 MB)](https://www.dropbox.com/s/c987wohded37cxg/classifier.rds?dl=1)   
-COI      Metazoans (marine only)                mlCOIintF/jgHCO2198 ([Leray et al 2013](https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34))                                                  Midori, GenBank              4mo        20181009  [RDS (34.1 MB)](https://www.dropbox.com/s/vn1yit2wkug9f7p/classifier.rds?dl=1) 
-COI      Metazoans (no third codon positions)   mlCOIintF/jgHCO2198 ([Leray et al 2013](https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34))                                                  Midori, GenBank              4nt        20181009  [RDS (51.9 MB)](https://www.dropbox.com/s/bfvqnggi4jt591i/classifier.rds?dl=1) 
-ITS2     Cnidarians and sponges                 scl58SF/scl28SR ([Wilkinson et al in prep](https://www.dropbox.com/s/6hcs1goju60wqi4/README.txt?dl=1))                                                                   GenBank                      5          20180920  [RDS (6.6 MB)](https://www.dropbox.com/s/f07cka6308ebk2o/classifier.rds?dl=1)  
+```{r, echo = FALSE, results='asis'}
+tmp <- tempfile(fileext = ".csv")
+u <- "https://docs.google.com/spreadsheets/d/1pmTlZBnWIZzxZzS8zm943uGL56qpDPBmoOBht9OzVvQ/export?gid=0&format=csv"
+download.file(u, destfile = tmp)
+mytab <- read.table(text = readLines(tmp, warn = FALSE), header = TRUE,  sep = ",", stringsAsFactors = FALSE)
+mytab <- mytab[order(mytab$Marker, mytab$Target),]
+rownames(mytab) <- NULL
+knitr::kable(mytab)
+```
 
 </div>
 
 To classify a sequence or set of sequences, first read them into R as a "DNAbin" 
 list object. FASTA files can be parsed as follows:
 
-
-```r
+```{r, eval = FALSE}
 x <- readFASTA("<path-to-file>.fasta")
 ```
 
@@ -106,8 +105,7 @@ Alternatively users may wish to assign taxon IDs to the output from the
 pipeline, in which case the column names of the ouput
 table can be parsed as in the following example:
 
-
-```r
+```{r}
 data("samoa") 
 x <- char2dna(colnames(samoa))
 ```
@@ -136,14 +134,15 @@ MIDORI training dataset using the invertebrate mitochondrial translation table
 The 47 MB classifier can be downloaded to the current working directory 
 and read into R as follows:
 
-
-```r
+```{r, eval = FALSE}
 download.file("https://www.dropbox.com/s/c987wohded37cxg/classifier.rds?dl=1", 
               destfile = "classifier.rds", mode = "wb")
 classifier <- readRDS("classifier.rds")
 ```
 
-
+```{r, echo = FALSE}
+classifier <- readRDS("~/Dropbox/R/insect/trees/COI/metazoan_COI/version_4/amino/classifier.rds")
+```
 
 Now we need to translate the amplicon sequence variants (ASVs) 
 to amino acid sequences using the same number 5 translation table. 
@@ -154,8 +153,7 @@ with the `translate` function in the
 [seqinr](https://cran.r-project.org/package=seqinr) package, and
 converted back to binary form object using `ape::as.AAbin`.
 
-
-```r
+```{r}
 keeps <- sapply(x, length) %% 3 == 1L
 x <- x[keeps]
 x <- ape::as.character.DNAbin(x)
@@ -165,8 +163,7 @@ x <- ape::as.AAbin(x)
 
 Now we need to check that none of the translated sequences contain stop codons:
 
-
-```r
+```{r}
 keeps <- sapply(x, function(v) !any(v == as.raw(42)))
 x <- x[keeps]
 ```
@@ -185,8 +182,7 @@ To perform a nearest-neighbor search with a similarity threshold of say 0.99
 equal to 0.99 is considered a match), set `ping = 0.99`.
 
 
-
-```r
+```{r}
 out <- classify(x, classifier, cores = 2, ping = 0.99)
 ```
 
@@ -195,24 +191,9 @@ out <- classify(x, classifier, cores = 2, ping = 0.99)
 
 <div class="verysmall">
 
-
-representative     taxID  taxon             rank             score  kingdom   phylum       class             order          family           genus          species 
----------------  -------  ----------------  -------------  -------  --------  -----------  ----------------  -------------  ---------------  -------------  --------
-S1                  2806  Florideophyceae   class           0.9966                         Florideophyceae                                                          
-S2                  6379  Chaetopterus      genus           0.9881  Metazoa   Annelida     Polychaeta        Spionida       Chaetopteridae   Chaetopterus           
-S3                  2806  Florideophyceae   class           0.9769                         Florideophyceae                                                          
-S4                116569  Neocopepoda       infraclass      0.9986  Metazoa   Arthropoda   Hexanauplia                                                              
-S5                 33213  Bilateria         no rank         0.9456  Metazoa                                                                                         
-S6                  2806  Florideophyceae   class           0.9973                         Florideophyceae                                                          
-S7                 39820  Nereididae        family          0.9110  Metazoa   Annelida     Polychaeta        Phyllodocida   Nereididae                              
-S8                     1  root              no rank         1.0000                                                                                                  
-S9                  2806  Florideophyceae   class           0.9147                         Florideophyceae                                                          
-S10                 2759  Eukaryota         superkingdom    1.0000                                                                                                  
-S11                 2806  Florideophyceae   class           0.9424                         Florideophyceae                                                          
-S12                 2759  Eukaryota         superkingdom    0.9999                                                                                                  
-S13                33213  Bilateria         no rank         0.9456  Metazoa                                                                                         
-S14                 2806  Florideophyceae   class           0.9530                         Florideophyceae                                                          
-S15                39820  Nereididae        family              NA  Metazoa   Annelida     Polychaeta        Phyllodocida   Nereididae                              
+```{r, echo = FALSE}
+knitr::kable(out)
+```
 
 </div>
 
@@ -229,8 +210,7 @@ Here, the multiple matching sequences has a Nereid common ancestor
 A more detailed overview of the package and its functions can be found at
 [here](https://rpubs.com/shaunpwilkinson/insect) or by running
 
-
-```r
+```{r, eval = FALSE}
 vignette("insect-vignette")
 ```
 
