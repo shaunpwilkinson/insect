@@ -182,7 +182,18 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
   attr(tree, "pointers") <- attr(x, "pointers") #new
   dots <- list(...)
-  ksize <- if(is.null(dots$k)) 4 else dots$k
+  if(is.null(dots$k)){
+    ksize <- if(inherits(x, "DNAbin")) 4 else 2
+  }else{
+    if(inherits(x, "DNAbin")){
+      if(dots$k > 6) stop("Maximum kmer size of 6 for DNA\n")
+      ksize <- dots$k
+    }else{
+      if(dots$k > 3) stop("Maximum kmer size of 3 for amino acid sequences\n")
+      ksize <- dots$k
+    }
+  }
+  #ksize <- if(is.null(dots$k)) 4 else dots$k
   attr(tree, "k") <- ksize #new
   if(is.null(attr(x, "weights"))){
     if(!quiet) cat("Deriving sequence weights\n")

@@ -160,6 +160,8 @@ following example:
 
     data("samoa") 
     x <- char2dna(colnames(samoa))
+    ## name the sequences sequentially
+    names(x) <- paste0("ASV", seq_along(x))
 
 The next step is to download and read in the classifier. It is important
 to ensure that the classifier was trained using the same primer set as
@@ -246,7 +248,7 @@ to 0.99 is considered a match), set `ping = 0.99`.
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">S1</td>
+<td align="left">ASV1</td>
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
@@ -260,21 +262,21 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="even">
-<td align="left">S2</td>
-<td align="right">6379</td>
-<td align="left">Chaetopterus</td>
-<td align="left">genus</td>
-<td align="right">0.9881</td>
+<td align="left">ASV2</td>
+<td align="right">352263</td>
+<td align="left">Chaetopterus sarsii</td>
+<td align="left">species</td>
+<td align="right">NA</td>
 <td align="left">Metazoa</td>
 <td align="left">Annelida</td>
 <td align="left">Polychaeta</td>
 <td align="left">Spionida</td>
 <td align="left">Chaetopteridae</td>
 <td align="left">Chaetopterus</td>
-<td align="left"></td>
+<td align="left">Chaetopterus sarsii</td>
 </tr>
 <tr class="odd">
-<td align="left">S3</td>
+<td align="left">ASV3</td>
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
@@ -288,7 +290,7 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="even">
-<td align="left">S4</td>
+<td align="left">ASV4</td>
 <td align="right">116569</td>
 <td align="left">Neocopepoda</td>
 <td align="left">infraclass</td>
@@ -302,7 +304,7 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="odd">
-<td align="left">S5</td>
+<td align="left">ASV5</td>
 <td align="right">33213</td>
 <td align="left">Bilateria</td>
 <td align="left">no rank</td>
@@ -316,7 +318,7 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="even">
-<td align="left">S6</td>
+<td align="left">ASV6</td>
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
@@ -330,7 +332,7 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="odd">
-<td align="left">S7</td>
+<td align="left">ASV7</td>
 <td align="right">39820</td>
 <td align="left">Nereididae</td>
 <td align="left">family</td>
@@ -344,7 +346,7 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="even">
-<td align="left">S8</td>
+<td align="left">ASV8</td>
 <td align="right">1</td>
 <td align="left">root</td>
 <td align="left">no rank</td>
@@ -358,7 +360,7 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="odd">
-<td align="left">S9</td>
+<td align="left">ASV9</td>
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
@@ -372,7 +374,7 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="even">
-<td align="left">S10</td>
+<td align="left">ASV11</td>
 <td align="right">2759</td>
 <td align="left">Eukaryota</td>
 <td align="left">superkingdom</td>
@@ -386,21 +388,21 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="odd">
-<td align="left">S11</td>
-<td align="right">2806</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9424</td>
+<td align="left">ASV12</td>
+<td align="right">1684788</td>
+<td align="left">Lithophyllum yemenense</td>
+<td align="left">species</td>
+<td align="right">NA</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">Corallinales</td>
+<td align="left">Corallinaceae</td>
+<td align="left">Lithophyllum</td>
+<td align="left">Lithophyllum yemenense</td>
 </tr>
 <tr class="even">
-<td align="left">S12</td>
+<td align="left">ASV13</td>
 <td align="right">2759</td>
 <td align="left">Eukaryota</td>
 <td align="left">superkingdom</td>
@@ -414,7 +416,7 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="odd">
-<td align="left">S13</td>
+<td align="left">ASV14</td>
 <td align="right">33213</td>
 <td align="left">Bilateria</td>
 <td align="left">no rank</td>
@@ -428,7 +430,7 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="even">
-<td align="left">S14</td>
+<td align="left">ASV15</td>
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
@@ -442,7 +444,7 @@ to 0.99 is considered a match), set `ping = 0.99`.
 <td align="left"></td>
 </tr>
 <tr class="odd">
-<td align="left">S15</td>
+<td align="left">ASV16</td>
 <td align="right">39820</td>
 <td align="left">Nereididae</td>
 <td align="left">family</td>
@@ -463,7 +465,7 @@ similarity in this case) with at least one training sequence are
 assigned a score of `NA`, as in the final row of the table above. Here,
 the multiple matching sequences have a Nereid polychaete common
 ancestor, and the query sequence was therefore assigned to the family
-Nereidae.
+Nereididae.
 
 ### Further reading
 

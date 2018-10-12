@@ -148,6 +148,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     names(x) <- nam
     class(x) <- "DNAbin"
   }
+  DNA <- inherits(x, "DNAbin")
   origins <- if(all(grepl("_", names(x)))){
     gsub("_.+", "", names(x))
   }else{
@@ -175,10 +176,11 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   attr(tree, "taxonomy") <- NULL # reduce memory usage for multithreading
   key <- attr(tree, "key")
   attr(tree, "key") <- NULL
-  ###### kmers too, and hash key etc
+  z <- attr(tree, "trainingset")
+  attr(tree, "trainingset") <- NULL
 
   if(is.null(attr(tree, "kmers"))){ ## for backward compatibility
-    warning("Tree is missing kmer count matrix, cant complete nearest-neighbor search\n")
+    warning("Tree is missing kmer count matrix, can't complete nearest-neighbor search\n")
     if(ping > 0 & ping < 1){
       ping <- 0
     }else if(ping == 1){
@@ -212,29 +214,43 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     xk <- round(kmer::kcount(x, k = ksize))
     xk <- xk/(vapply(x, length, 0L) - ksize + 1L)
     neighbors <- RANN::nn2(zk, query = xk, k = min(50, nrow(zk) - 1L))
-    denom <- if(inherits(x, "DNAbin")){
-      ksize * 0.006
+    if(DNA){
+      denom <- ksize * 0.006
     }else{
-      0.03 ## need to empirically test AA kmers
+      denom <- if(ksize == 2) 0.029 else if (ksize == 3) 0.043 else stop("kmer size error\n")
     }
     neighbors$nn.dists <- (neighbors$nn.dists^2)/denom ## linearize with JC69, K80 etc - TODO ksize
     nnidxs <- match(neighbors$nn.idx[, 1], attr(tree, "pointers")) # nearest neighbor indices in full set
+    m <- decodePHMM(attr(tree, "model"))
     if((ping > 0 & ping < 1) | (ping == 1 & is.null(key))){
       td <- 1 - ping #threshold distance
+      td2 <- 2 * td
       for(i in seq_along(x)){
-        if(neighbors$nn.dists[i, 1] <= td){
-          idxs <- neighbors$nn.idx[i, neighbors$nn.dists[i,] <= td]
+        if(neighbors$nn.dists[i, 1] <= td2){
+          idxs <- neighbors$nn.idx[i, neighbors$nn.dists[i,] <= td2]
+          alig <- aphid::align(c(x[i], z[idxs]), model = m, quiet = TRUE)
+          dis <- if(DNA) ape::dist.dna(alig) else ape::dist.aa(alig)/100
+          dis <- unname(dis[seq_along(idxs)])
+          idxs <- idxs[dis <= td]
           #taxs <- as.integer(gsub(".+\\|", "", seqnames[idxs]))
           taxs <- unname(key[idxs]) ## length(key) = nrow(kmers)
-          if(length(taxs) == 1L){
+          if(length(taxs) == 0L){
+            attr(x[[i]], "NN") <-  nnidxs[i] #nnidxs[i] # sequence index
+            attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
+          }else if(length(taxs) == 1L){
             attr(x[[i]], "NN") <- taxs # taxid
             attr(x[[i]], "NNhit") <- TRUE # -> skip full classification procedure
+            neighbors$nn.dists[i, 1] <- dis[dis <= td]
+            neighbors$nn.idx[i, 1] <- idxs[1]
           }else{
             lins <- get_lineage(taxs, db, numbers = TRUE)
             lins <- vapply(lins, paste0, "", collapse = "; ")
             anc <- .ancestor(lins)
             attr(x[[i]], "NN") <- as.integer(gsub(".+; ", "", anc)) # taxid
             attr(x[[i]], "NNhit") <- TRUE # -> skip full classification procedure
+            wmd <- which.min(dis[dis <= td])
+            neighbors$nn.dists[i, 1] <- min(dis)
+            neighbors$nn.idx[i, 1] <- idxs[wmd]
           }
         }else{
           attr(x[[i]], "NN") <-  nnidxs[i] #nnidxs[i] # sequence index

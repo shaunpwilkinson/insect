@@ -105,6 +105,8 @@ table can be parsed as in the following example:
 ```{r}
 data("samoa") 
 x <- char2dna(colnames(samoa))
+## name the sequences sequentially
+names(x) <- paste0("ASV", seq_along(x))
 ```
 
 The next step is to download and read in the classifier.
@@ -200,7 +202,7 @@ Any sequences that return exact hits or near matches (> 99% similarity in this c
 with at least one training sequence are assigned 
 a score of `NA`, as in the final row of the table above. 
 Here, the multiple matching sequences have a Nereid polychaete common ancestor,
-and the query sequence was therefore assigned to the family Nereidae.
+and the query sequence was therefore assigned to the family Nereididae.
 
 
 ### Further reading
