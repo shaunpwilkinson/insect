@@ -10,7 +10,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
 ------------------------------------------------------------------------
 
 Introduction
@@ -993,17 +992,17 @@ package, and converted back to binary form object using `ape::as.AAbin`.
 </tr>
 <tr class="even">
 <td align="left">ASV2</td>
-<td align="right">6379</td>
-<td align="left">Chaetopterus</td>
-<td align="left">genus</td>
-<td align="right">0.9881</td>
+<td align="right">352263</td>
+<td align="left">Chaetopterus sarsii</td>
+<td align="left">species</td>
+<td align="right">NA</td>
 <td align="left">Metazoa</td>
 <td align="left">Annelida</td>
 <td align="left">Polychaeta</td>
 <td align="left">Spionida</td>
 <td align="left">Chaetopteridae</td>
 <td align="left">Chaetopterus</td>
-<td align="left"></td>
+<td align="left">Chaetopterus sarsii</td>
 <td align="right">4496</td>
 <td align="right">0</td>
 </tr>
@@ -1137,17 +1136,17 @@ package, and converted back to binary form object using `ape::as.AAbin`.
 </tr>
 <tr class="odd">
 <td align="left">ASV12</td>
-<td align="right">2806</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9424</td>
+<td align="right">1684788</td>
+<td align="left">Lithophyllum yemenense</td>
+<td align="left">species</td>
+<td align="right">NA</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">Corallinales</td>
+<td align="left">Corallinaceae</td>
+<td align="left">Lithophyllum</td>
+<td align="left">Lithophyllum yemenense</td>
 <td align="right">87</td>
 <td align="right">1757</td>
 </tr>
@@ -1224,7 +1223,7 @@ similarity in this case) with at least one training sequence are
 assigned a score of `NA`, as in the final row of the table above. Here,
 the multiple matching sequences have a Nereid polychaete common
 ancestor, and the query sequence was therefore assigned to the family
-Nereidae.
+Nereididae.
 
 For a more succinct output we can aggregate the table to only include
 one row for each unique taxon as follows:
@@ -1297,25 +1296,10 @@ one row for each unique taxon as follows:
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">291</td>
-<td align="right">16907</td>
+<td align="right">204</td>
+<td align="right">15150</td>
 </tr>
 <tr class="even">
-<td align="right">6379</td>
-<td align="left">Chaetopterus</td>
-<td align="left">genus</td>
-<td align="right">0.9881</td>
-<td align="left">Metazoa</td>
-<td align="left">Annelida</td>
-<td align="left">Polychaeta</td>
-<td align="left">Spionida</td>
-<td align="left">Chaetopteridae</td>
-<td align="left">Chaetopterus</td>
-<td align="left"></td>
-<td align="right">4496</td>
-<td align="right">0</td>
-</tr>
-<tr class="odd">
 <td align="right">33213</td>
 <td align="left">Bilateria</td>
 <td align="left">no rank</td>
@@ -1330,7 +1314,7 @@ one row for each unique taxon as follows:
 <td align="right">4753</td>
 <td align="right">9</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="right">39820</td>
 <td align="left">Nereididae</td>
 <td align="left">family</td>
@@ -1345,7 +1329,7 @@ one row for each unique taxon as follows:
 <td align="right">3860</td>
 <td align="right">0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="right">116569</td>
 <td align="left">Neocopepoda</td>
 <td align="left">infraclass</td>
@@ -1359,6 +1343,36 @@ one row for each unique taxon as follows:
 <td align="left"></td>
 <td align="right">3203</td>
 <td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">352263</td>
+<td align="left">Chaetopterus sarsii</td>
+<td align="left">species</td>
+<td align="right">NA</td>
+<td align="left">Metazoa</td>
+<td align="left">Annelida</td>
+<td align="left">Polychaeta</td>
+<td align="left">Spionida</td>
+<td align="left">Chaetopteridae</td>
+<td align="left">Chaetopterus</td>
+<td align="left">Chaetopterus sarsii</td>
+<td align="right">4496</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="right">1684788</td>
+<td align="left">Lithophyllum yemenense</td>
+<td align="left">species</td>
+<td align="right">NA</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left">Corallinales</td>
+<td align="left">Corallinaceae</td>
+<td align="left">Lithophyllum</td>
+<td align="left">Lithophyllum yemenense</td>
+<td align="right">87</td>
+<td align="right">1757</td>
 </tr>
 </tbody>
 </table>
