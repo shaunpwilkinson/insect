@@ -229,10 +229,10 @@ produce a "DNAbin" object compatible with the **insect** classifier.
 
 ### Loading the package and data
 
-First install and load the latest development version of the package
-from GitHub as follows:
+First, make sure that the **devtools**, **ape** and **seqinr** packages
+are installed and up to date. Then install and load the latest
+development version of the **insect** package from GitHub as follows:
 
-    if(!require("devtools")) install.packages("devtools")
     devtools::install_github("shaunpwilkinson/insect")
     library(insect)
 
@@ -322,13 +322,15 @@ The final step is to assign taxon IDs and confidence values to each ASV.
 The `classify` function may take a minute or so to process these
 sequences, since it uses a computationally intensive dynamic programming
 algorithm to find the likelihood values of each sequence given the
-models at each node of the tree. The exception is when the argument
-`ping` is set to TRUE or any number between 0 and 1 (typically &gt;
-0.95) and there is an exact match or high similarity (e.g. &gt;= 0.99 if
-`ping = 0.99`) between the query sequence and at least one of the
-sequences in the training dataset, in which case the function simply
-returns the common ancestor of the matching sequences without a
-confidence score.
+models at each node of the tree. The exception is when `ping` is not
+`FALSE`  
+and there is an exact match or high similarity  
+between the query sequence and at least one of the sequences in the
+training dataset (e.g. &gt;= 99% if `ping = 0.99`). In this case the
+function simply returns the common ancestor of the matching sequences
+without a confidence score. To stay on the safe side, we will set
+`ping = 1` (i.e. only sequences with 100% identity are considered
+matches).
 
 The `classify` function can also be run in parallel by setting the
 `cores` argument to 2 or more depending on the number available (setting
@@ -353,7 +355,7 @@ with an underscore (e.g. "sample001\_sequence001") and set
 automatically count and dereplicate the sequences, producing an output
 table that includes one column of sequence counts for each sample.
 
-    longDF <- classify(x, classifier_mo, cores = 2, tabulize = FALSE, ping = 0.99)
+    longDF <- classify(x, classifier_mo, cores = 2, tabulize = FALSE, ping = 1)
 
 For DADA2 users, the ASV abundance table can now be transposed and
 appended to the table of taxonomic information if required:
@@ -654,7 +656,7 @@ the sequences as follows:
     ## read in nothirds classifier
     classifier_nt <- readRDS("nothirds/classifier.rds")
     ## assign taxon IDs
-    longDF <- classify(x_nt, classifier_nt, cores = 1, tabulize = FALSE, ping = 0.99)
+    longDF <- classify(x_nt, classifier_nt, cores = 1, tabulize = FALSE, ping = 1)
     ## append sequence counts
     longDF <- cbind(longDF, t(samoa))
 
@@ -925,8 +927,8 @@ the sequences as follows:
 </table>
 
   
-This has improved the resolution somewhat, but we can recall even more
-taxa to class level and below by using an amino acid sequence
+This has improved the resolution to some extent, but we can recall even
+more taxa to class level and below by using an amino acid sequence
 classifier. Again, this requires some extra prep, to translate the DNA
 sequences and remove any that produce stop codons. The sequence residues
 are first converted to characters for translation with the `translate`
@@ -947,7 +949,7 @@ package, and converted back to binary form object using `ape::as.AAbin`.
     ## read in classifier
     classifier_aa <- readRDS("amino/classifier.rds")
     ## assign taxon IDs
-    longDF <- classify(x_aa, classifier_aa, cores = 1, tabulize = FALSE, ping = 0.99)
+    longDF <- classify(x_aa, classifier_aa, cores = 1, tabulize = FALSE, ping = 1)
     ## attach sequence counts
     longDF <- cbind(longDF, t(samoa))
 
@@ -992,17 +994,17 @@ package, and converted back to binary form object using `ape::as.AAbin`.
 </tr>
 <tr class="even">
 <td align="left">ASV2</td>
-<td align="right">352263</td>
-<td align="left">Chaetopterus sarsii</td>
-<td align="left">species</td>
-<td align="right">NA</td>
+<td align="right">6379</td>
+<td align="left">Chaetopterus</td>
+<td align="left">genus</td>
+<td align="right">0.9881</td>
 <td align="left">Metazoa</td>
 <td align="left">Annelida</td>
 <td align="left">Polychaeta</td>
 <td align="left">Spionida</td>
 <td align="left">Chaetopteridae</td>
 <td align="left">Chaetopterus</td>
-<td align="left">Chaetopterus sarsii</td>
+<td align="left"></td>
 <td align="right">4496</td>
 <td align="right">0</td>
 </tr>
@@ -1136,17 +1138,17 @@ package, and converted back to binary form object using `ape::as.AAbin`.
 </tr>
 <tr class="odd">
 <td align="left">ASV12</td>
-<td align="right">1684788</td>
-<td align="left">Lithophyllum yemenense</td>
-<td align="left">species</td>
-<td align="right">NA</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9424</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
-<td align="left">Corallinales</td>
-<td align="left">Corallinaceae</td>
-<td align="left">Lithophyllum</td>
-<td align="left">Lithophyllum yemenense</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 <td align="right">87</td>
 <td align="right">1757</td>
 </tr>
@@ -1218,12 +1220,11 @@ package, and converted back to binary form object using `ape::as.AAbin`.
 </table>
 
   
-Any sequences that return exact hits or near matches (&gt; 99%
-similarity in this case) with at least one training sequence are
-assigned a score of `NA`, as in the final row of the table above. Here,
-the multiple matching sequences have a Nereid polychaete common
-ancestor, and the query sequence was therefore assigned to the family
-Nereididae.
+Any sequences that return exact hits (or near matches if `ping = 0.99`
+or similar) with at least one training sequence are assigned a score of
+`NA`, as in the final row of the table above. Here, the multiple
+matching sequences have a Nereid polychaete common ancestor, and the
+query sequence was therefore assigned to the family Nereididae.
 
 For a more succinct output we can aggregate the table to only include
 one row for each unique taxon as follows:
@@ -1296,10 +1297,25 @@ one row for each unique taxon as follows:
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="right">204</td>
-<td align="right">15150</td>
+<td align="right">291</td>
+<td align="right">16907</td>
 </tr>
 <tr class="even">
+<td align="right">6379</td>
+<td align="left">Chaetopterus</td>
+<td align="left">genus</td>
+<td align="right">0.9881</td>
+<td align="left">Metazoa</td>
+<td align="left">Annelida</td>
+<td align="left">Polychaeta</td>
+<td align="left">Spionida</td>
+<td align="left">Chaetopteridae</td>
+<td align="left">Chaetopterus</td>
+<td align="left"></td>
+<td align="right">4496</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
 <td align="right">33213</td>
 <td align="left">Bilateria</td>
 <td align="left">no rank</td>
@@ -1314,7 +1330,7 @@ one row for each unique taxon as follows:
 <td align="right">4753</td>
 <td align="right">9</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="right">39820</td>
 <td align="left">Nereididae</td>
 <td align="left">family</td>
@@ -1329,7 +1345,7 @@ one row for each unique taxon as follows:
 <td align="right">3860</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="right">116569</td>
 <td align="left">Neocopepoda</td>
 <td align="left">infraclass</td>
@@ -1343,36 +1359,6 @@ one row for each unique taxon as follows:
 <td align="left"></td>
 <td align="right">3203</td>
 <td align="right">0</td>
-</tr>
-<tr class="odd">
-<td align="right">352263</td>
-<td align="left">Chaetopterus sarsii</td>
-<td align="left">species</td>
-<td align="right">NA</td>
-<td align="left">Metazoa</td>
-<td align="left">Annelida</td>
-<td align="left">Polychaeta</td>
-<td align="left">Spionida</td>
-<td align="left">Chaetopteridae</td>
-<td align="left">Chaetopterus</td>
-<td align="left">Chaetopterus sarsii</td>
-<td align="right">4496</td>
-<td align="right">0</td>
-</tr>
-<tr class="even">
-<td align="right">1684788</td>
-<td align="left">Lithophyllum yemenense</td>
-<td align="left">species</td>
-<td align="right">NA</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">Florideophyceae</td>
-<td align="left">Corallinales</td>
-<td align="left">Corallinaceae</td>
-<td align="left">Lithophyllum</td>
-<td align="left">Lithophyllum yemenense</td>
-<td align="right">87</td>
-<td align="right">1757</td>
 </tr>
 </tbody>
 </table>
@@ -1392,7 +1378,7 @@ respectively). Further testing and optimization may help to address some
 of these best-practice considerations, and will be a focus of future
 research.
 
-This basic introduction to the **insect** package has outlined the steps
+This introduction to the **insect** package has outlined the steps
 involved in taxonomic identification of amplicon sequence variants
 (ASVs) using a pre-built classification tree. The next tutorial will
 deal with downloading and curating a primer-specific local sequence

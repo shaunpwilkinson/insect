@@ -224,9 +224,11 @@ query sequence is missing from the trainingset, the algorithm may
 over-classify the sequence and return a congeneric taxon. To perform a
 nearest-neighbor search with a similarity threshold of say 0.99 (meaning
 any sequence in the trainingset with a similarity greater than or equal
-to 0.99 is considered a match), set `ping = 0.99`.
+to 0.99 is considered a match), set `ping = 0.99`. To stay on the safe
+side, we will set `ping = 1` (i.e. only sequences with 100% identity are
+considered matches).
 
-    out <- classify(x, classifier, cores = 2, ping = 0.99)
+    out <- classify(x, classifier, cores = 2, ping = 1)
 
 <!-- note newlines needed between html tags and code chunk -->
 <table>
@@ -263,17 +265,17 @@ to 0.99 is considered a match), set `ping = 0.99`.
 </tr>
 <tr class="even">
 <td align="left">ASV2</td>
-<td align="right">352263</td>
-<td align="left">Chaetopterus sarsii</td>
-<td align="left">species</td>
-<td align="right">NA</td>
+<td align="right">6379</td>
+<td align="left">Chaetopterus</td>
+<td align="left">genus</td>
+<td align="right">0.9881</td>
 <td align="left">Metazoa</td>
 <td align="left">Annelida</td>
 <td align="left">Polychaeta</td>
 <td align="left">Spionida</td>
 <td align="left">Chaetopteridae</td>
 <td align="left">Chaetopterus</td>
-<td align="left">Chaetopterus sarsii</td>
+<td align="left"></td>
 </tr>
 <tr class="odd">
 <td align="left">ASV3</td>
@@ -389,17 +391,17 @@ to 0.99 is considered a match), set `ping = 0.99`.
 </tr>
 <tr class="odd">
 <td align="left">ASV12</td>
-<td align="right">1684788</td>
-<td align="left">Lithophyllum yemenense</td>
-<td align="left">species</td>
-<td align="right">NA</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9424</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
-<td align="left">Corallinales</td>
-<td align="left">Corallinaceae</td>
-<td align="left">Lithophyllum</td>
-<td align="left">Lithophyllum yemenense</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
 </tr>
 <tr class="even">
 <td align="left">ASV13</td>
@@ -460,12 +462,11 @@ to 0.99 is considered a match), set `ping = 0.99`.
 </tbody>
 </table>
 
-Any sequences that return exact hits or near matches (&gt; 99%
-similarity in this case) with at least one training sequence are
-assigned a score of `NA`, as in the final row of the table above. Here,
-the multiple matching sequences have a Nereid polychaete common
-ancestor, and the query sequence was therefore assigned to the family
-Nereididae.
+Any sequences that return exact hits (or near matches if `ping = 0.99`
+or similar) with at least one training sequence are assigned a score of
+`NA`, as in the final row of the table above. Here, the multiple
+matching sequences have a Nereid polychaete common ancestor, and the
+query sequence was therefore assigned to the family Nereididae.
 
 ### Further reading
 

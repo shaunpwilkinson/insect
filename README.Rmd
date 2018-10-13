@@ -180,10 +180,12 @@ and return a congeneric taxon.
 To perform a nearest-neighbor search with a similarity threshold of say 0.99
 (meaning any sequence in the trainingset with a similarity greater than or 
 equal to 0.99 is considered a match), set `ping = 0.99`.
+To stay on the safe side, we will set `ping = 1` 
+(i.e. only sequences with 100% identity are considered matches).
 
 
 ```{r}
-out <- classify(x, classifier, cores = 2, ping = 0.99)
+out <- classify(x, classifier, cores = 2, ping = 1)
 ```
 
 
@@ -198,7 +200,7 @@ knitr::kable(out)
 </div>
 
 
-Any sequences that return exact hits or near matches (> 99% similarity in this case) 
+Any sequences that return exact hits (or near matches if `ping = 0.99` or similar) 
 with at least one training sequence are assigned 
 a score of `NA`, as in the final row of the table above. 
 Here, the multiple matching sequences have a Nereid polychaete common ancestor,
