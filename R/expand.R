@@ -4,8 +4,6 @@
 #'   using more relaxed parameter settings than those used when the tree was
 #'   created, or if fine-scale control over the tree-learning operation
 #'   is required.
-#'   Note that the same reference sequence database used to
-#'   build the original tree is required.
 #'
 #' @param tree an object of class \code{"insect"}.
 #' @param clades a vector of character strings giving the binary indices
@@ -35,28 +33,28 @@
 #'   set.seed(123)
 #'   tree <- learn(whales, db = whale_taxonomy, recursive = FALSE)
 #'   ## expand only the first clade
-#'   tree <- expand(tree, whales, clades = "1")
+#'   tree <- expand(tree, clades = "1")
 #'  }
 ################################################################################
-expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
+expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
                    nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
-                   retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
+                   retry = TRUE, resize = TRUE, maxsize = 1000,
                    recursive = TRUE, cores = 1, quiet = FALSE, verbose = FALSE,
                    ...){
+  dots <- list(...)
+  x <- attr(tree, "trainingset")
+  pointers <- attr(x, "rerep.pointers")
+  xnames <- attr(x, "rerep.names")
+  seqweights <- attr(x, "rerep.weights") # length of derep'd set
+  if(is.null(seqweights)) seqweights <- aphid::weight(x, k = if(is.null(dots$k)) 4 else dots$k)
+  lineages <- attr(x, "lineages") # same length as full set, includes full strings
+  if(is.null(lineages)){
+    taxIDs <- as.integer(gsub(".+\\|", "", xnames))
+    lineages <- get_lineage(taxIDs, db = attr(tree, "taxonomy"), numbers = TRUE)
+    lineages <- vapply(lineages, paste0, "", collapse = "; ")
+  }
   ## Establish which parts of the tree to expand
-  if(mode(x) == "character") x <- char2dna(x)
-  if(!grepl("\\|", names(x)[1])){
-    stop("Names of input sequences must include taxonomic ID numbers\n")
-  }
-  taxIDs <- as.integer(gsub(".+\\|", "", names(x)))
-  lineages <- get_lineage(taxIDs, db = attr(tree, "taxonomy"),
-                          cores = cores, numbers = TRUE)
-  lineages <- vapply(lineages, paste0, "", collapse = "; ")
-  # attr(x, "lineage") <- lineages
   clades <- gsub("0", "", clades)
-  if(!(identical(unname(attr(tree, "sequences")), seq_along(x)))){
-    stop("tree is incompatible with sequences\n")
-  }
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
   findnestedleaves <- function(node){
     if(!is.list(node) & is.null(attr(node, "lock"))){
@@ -85,42 +83,17 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   clades <- unlist(allnestedleaves, use.names = FALSE)
   if(length(clades) == 0) return(tree)
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
-  ## following lines are for trees that have been stripped of memory-intensive elements
-  if(!quiet) cat("Dereplicating sequences\n")
-  hashes <- attr(x, "hashes")
-  if(is.null(hashes)) hashes <- hash(x)
-  # attr(tree, "hashes") <- NULL
-  duplicates <- attr(x, "duplicates")
-  if(is.null(duplicates)) duplicates <- duplicated(hashes)
-  if(!quiet) cat("Found", sum(!duplicates), "unique sequences\n")
-  # attr(tree, "duplicates") <- NULL
-  pointers <- attr(x, "pointers")
-  if(is.null(pointers)) pointers <- .point(hashes)
-  seqweights <- attr(x, "weights")
-  if(is.null(seqweights)) seqweights <- aphid::weight(x, k = 5)
-  # attr(tree, "weights") <- NULL ## replaced later
-  # lineages <- gsub("\\.$", "", attr(x, "lineage"))
-  # lineages <- paste0(lineages, "; ", attr(x, "species"))
-  # lineages <- attr(x, "lineage")
-  # lineages <- paste0(lineages, "; ~", attr(x, "species"), "~")
-  x <- x[!duplicates]# strip attrs regardless of duplicates
+  duplicates <- duplicated(pointers)
   if(any(duplicates)){
-    # fullseqset <- x # needed??
-    # x <- x[!duplicates]  ## attributes not needed
     lineages <- sapply(split(lineages, pointers), .ancestor)
-    seqweights <- sapply(split(seqweights, pointers), sum)
-    ###
+    #seqweights <- sapply(split(seqweights, pointers), sum) ### removed 20181014
     rmduplicates <- function(node, whchunq, pointers){
       tmp <- attr(node, "sequences")[attr(node, "sequences") %in% whchunq]
       attr(node, "sequences") <- pointers[tmp]
       return(node)
     }
     tree <- dendrapply(tree, rmduplicates, which(!duplicates), pointers)
-    # if(nrow(distances) == nseq) distances <- distances[!duplicates, ]
-    # if(nrow(kmers) == nseq) kmers <- kmers[!duplicates, ]
-    # rm attrs, condensed version in final tree
-  }# else distances <- distances[ , ]
-
+  }
   ### set up multithread if required
   if(inherits(cores, "cluster")){
     ncores <- length(cores)
@@ -144,9 +117,6 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
       stopclustr <- TRUE
     }
   }
-  ## calculate k-mers once but only if run on single core
-  ## otherwise uses excessive memory (since this matrix can be > 1GB)
-  dots <- list(...)
   kmers <- attr(tree, "kmers")
   if(is.null(kmers)) {
     kmers <- .encodekc(kmer::kcount(x, k = if(is.null(dots$k)) 4 else dots$k))
@@ -159,7 +129,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   #   kmers <- kmer::kcount(x, k = if(is.null(dots$k)) 5 else dots$k)
   #   kmers <- kmers/(sapply(x, length) - 4) #k - 1 = 4
   # }else kmers <- NULL
-  ############### kmers <- NULL ###################### need this if using partition to count kmers
+  # kmers <- NULL # need this if using partition to count kmers
   attr(tree, "kmers") <- NULL ## replaced later
   ## prev line commented to prevent k-mer stripping
   ### recursively split nodes
@@ -257,7 +227,7 @@ expand <- function(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
   }
   if(stopclustr) parallel::stopCluster(cores)
   ### remove kmers since can be memory hungry, prevent next operations
-  ############### rm(kmers) ######################
+  #rm(kmers)
   gc()
   ### fix midpoints, members, heights and leaf integers
   ### note changes here also apply to 'learn' function

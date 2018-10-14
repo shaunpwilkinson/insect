@@ -150,37 +150,11 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
                   retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
                   recursive = TRUE, cores = 1, quiet = FALSE, verbose = FALSE,
                   ...){
+
+
   if(!quiet) cat("Training classifier\n")
   if(mode(x) == "character") x <- char2dna(x)
-  if(!quiet) cat("Converting taxon IDs to full lineage strings\n")
-  if(!grepl("\\|", names(x)[1])){
-    stop("Names of input sequences must include taxonomic ID numbers\n")
-  }
-  taxIDs <- as.integer(gsub(".+\\|", "", names(x)))
-  lineages <- get_lineage(taxIDs, db = db, cores = cores, numbers = TRUE)
-  attr(x, "lineage") <- vapply(lineages, paste0, "", collapse = "; ")
-  ## Initialize the tree as a dendrogram object
-  if(!quiet) cat("Initializing tree object\n")
-  tree <- 1
-  attr(tree, "leaf") <- TRUE
-  attr(tree, "height") <- 0
-  attr(tree, "midpoint") <- 0
-  attr(tree, "members") <- 1
-  class(tree) <- "dendrogram"
-  attr(tree, "taxonomy") <- prune_taxonomy(db, taxIDs = taxIDs, keep = TRUE)
-  attr(tree, "clade") <- ""
-  attr(tree, "sequences") <- seq_along(x)
-  #attr(tree, "seqnames") <- names(x) # cant just name sequences attr due to derep-rerep
-  attr(tree, "trainingset") <- dereplicate(x)
-  attr(tree, "lineage") <- .ancestor(attr(x, "lineage")) # eventually removed during expansion
-  attr(tree, "minscore") <- -1E06 # nominal
-  xlengths <- vapply(x, length, 0L, USE.NAMES = FALSE)
-  attr(tree, "minlength") <- min(xlengths)
-  attr(tree, "maxlength") <- max(xlengths)
-  if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- hash(x)
-  if(is.null(attr(x, "duplicates"))) attr(x, "duplicates") <- duplicated(attr(x, "hashes"))
-  if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
-  attr(tree, "pointers") <- attr(x, "pointers") #new
+
   dots <- list(...)
   if(is.null(dots$k)){
     ksize <- if(inherits(x, "DNAbin")) 4 else 2
@@ -193,49 +167,83 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
       ksize <- dots$k
     }
   }
-  #ksize <- if(is.null(dots$k)) 4 else dots$k
-  attr(tree, "k") <- ksize #new
+
+
+  if(!quiet) cat("Converting taxon IDs to full lineage strings\n")
+  if(!grepl("\\|", names(x)[1])){
+    stop("Names of input sequences must include taxonomic ID numbers\n")
+  }
+  taxIDs <- as.integer(gsub(".+\\|", "", names(x)))
+  lineages <- get_lineage(taxIDs, db = db, cores = cores, numbers = TRUE)
+  lineages <- vapply(lineages, paste0, "", collapse = "; ")
+
   if(is.null(attr(x, "weights"))){
     if(!quiet) cat("Deriving sequence weights\n")
     suppressMessages(attr(x, "weights") <- aphid::weight(x, method = "Henikoff", k = ksize))
   }
+
+  if(!quiet) cat("Initializing tree object\n")
+  tree <- 1
+  attr(tree, "k") <- ksize #new
+  attr(tree, "leaf") <- TRUE
+  attr(tree, "height") <- 0
+  attr(tree, "midpoint") <- 0
+  attr(tree, "members") <- 1
+  class(tree) <- "dendrogram"
+  attr(tree, "taxonomy") <- prune_taxonomy(db, taxIDs = taxIDs, keep = TRUE)
+  attr(tree, "clade") <- ""
+  attr(tree, "sequences") <- seq_along(x)
+  #attr(tree, "seqnames") <- names(x) # cant just name sequences attr due to derep-rerep
+
+  tset <- dereplicate(x)
+  attr(tset, "lineages") <- lineages #full length, just to pass to 'expand' to save time
+
+  attr(tree, "lineage") <- .ancestor(lineages) # eventually removed during expansion
+  attr(tree, "minscore") <- -1E06 # nominal
+  xlengths <- vapply(tset, length, 0L, USE.NAMES = FALSE)
+  attr(tree, "seqlengths") <- xlengths #new
+  attr(tree, "minlength") <- min(xlengths)
+  attr(tree, "maxlength") <- max(xlengths)
+
+  hashes <- hash(x)
+  duplicates <- duplicated(hashes)
+  # if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- hash(x)
+  # if(is.null(attr(x, "duplicates"))) attr(x, "duplicates") <- duplicated(attr(x, "hashes"))
+  # if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
+  attr(tree, "pointers") <- attr(tset, "rerep.pointers") #new
+
   if(!quiet) cat("Making hash key for exact sequence matching\n")
-  ancestors <- split(attr(x, "lineage"), f = factor(attr(x, "hashes"), levels = unique(attr(x, "hashes"))))
+  ancestors <- split(lineages, f = factor(hashes, levels = unique(hashes)))
   anclens <- vapply(ancestors, length, 0L, USE.NAMES = FALSE)
   ancestors[anclens > 1] <- lapply(ancestors[anclens > 1], .ancestor)
   tmpnames <- names(ancestors)
   ancestors <- as.integer(gsub(".+; ", "", ancestors))
   names(ancestors) <- tmpnames
   attr(tree, "key") <- ancestors # for exact matching - order matches kmer matrix row wise
-  attr(tree, "seqlengths") <- xlengths[!attr(x, "duplicates")] #new
+
   ## same length as hash key, nrow(kmers)
   if(!quiet) cat("Counting ", ksize, "-mers\n", sep = "")
-  attr(tree, "kmers") <- .encodekc(kmer::kcount(x[!attr(x, "duplicates")], k = ksize)) #new
+  attr(tree, "kmers") <- .encodekc(kmer::kcount(tset, k = ksize)) #new
   # attr(tree, "kmers") <- kmer::kcount(x[!attr(x, "duplicates")],
   #                                              k = if(is.null(dots$k)) 5 else dots$k)
   if(is.null(model)){
     if(!quiet) cat("Dereplicating sequences\n")
-    xu <- x[!attr(x, "duplicates")]
-    xuw <- sapply(split(attr(x, "weights"), attr(x, "pointers")), sum)
     if(!quiet) cat("Deriving top level model\n")
-    if(length(xu) > 1000){
+    if(length(tset) > 1000){
       # sample model training to avoid excessive memory usage
-      samp <- sample(seq_along(xu), size = 1000)
+      samp <- sample(seq_along(tset), size = 1000)
       suppressWarnings(
-        model <- aphid::derivePHMM(xu[samp], refine = refine,
-                                   seqweights = xuw[samp], maxsize = maxsize,
+        model <- aphid::derivePHMM(tset[samp], refine = refine,
+                                   seqweights = attr(tset, "derep.weights")[samp],
+                                   maxsize = maxsize,
                                    inserts = "inherited", alignment = FALSE,
                                    quiet = TRUE, cores = cores, maxiter = 20,
                                    limit = 0.98)
       )
-      # suppressWarnings(
-      #   model <- aphid::train(model, xu, method = refine, seqweights = xuw,
-      #                         inserts = "inherited", alignment = FALSE,
-      #                         cores = cores, quiet = TRUE, maxiter = 20)
-      # )
     }else{
       suppressWarnings(
-        model <- aphid::derivePHMM(xu, refine = refine, seqweights = xuw,
+        model <- aphid::derivePHMM(tset, refine = refine,
+                                   seqweights = attr(tset, "derep.weights"),
                                    inserts = "inherited", alignment = FALSE,
                                    quiet = TRUE, cores = cores, maxiter = 20)
       )
@@ -251,11 +259,14 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
     model <- decodePHMM(model)
   }
   attr(tree, "model") <- model
-  tree <- expand(tree, x, clades = "", refine = refine, iterations = iterations,
+  attr(tree, "trainingset") <- tset # includes full numbered lineages
+  rm(tset)
+  tree <- expand(tree, clades = "", refine = refine, iterations = iterations,
                  nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
                  probs = probs, retry = retry, resize = resize, maxsize = maxsize,
                  recursive = recursive, cores = cores, quiet = quiet,
                  verbose = verbose, ... = ...)
+  attr(attr(tree, "trainingset"), "lineages") <- NULL # no longer required
   return(tree)
 }
 ################################################################################

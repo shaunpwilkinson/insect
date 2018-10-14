@@ -28,11 +28,13 @@ dereplicate <- function(x, cores = 1){
   orignames <- names(x)
   hashes <- hash(x)
   pointers <- .point(hashes)
+  wgts <- attr(x, "weights")
   x <- x[!duplicated(pointers)]
   #if(.isDNA(x)) for(i in seq_along(x)) attr(x[[i]], "quality") <- NULL
   attributes(x) <- NULL
   attr(x, "rerep.names") <- orignames
   attr(x, "rerep.pointers") <- pointers
+  if(!is.null(wgts)) attr(x, "rerep.weights") <- sapply(split(wgts, pointers), sum)
   class(x) <- classx
   return(x)
 }
@@ -44,10 +46,20 @@ rereplicate <- function(x){
     stop("x is not rereplicable\n")
   }
   orignames <- attr(x, "rerep.names")
-  x <- x[attr(x, "rerep.pointers")]
+  origwgts <- attr(x, "rerep.weights")
+  pointers <- attr(x, "rerep.pointers")
+  x <- x[pointers]
   names(x) <- orignames
+  if(!is.null(origwgts)){
+    spl <- split(seq_along(pointers), f = factor(pointers))
+    ## divide weight eveny among duplicates
+    origwgts <- origwgts/vapply(spl, length, 0L)
+    origwgts <- origwgts[pointers]
+    attr(x, "weights") <- unname(origwgts)
+  }
   attr(x, "rerep.names") <- NULL
   attr(x, "rerep.pointers") <- NULL
+  attr(x, "rerep.weights") <- NULL
   return(x)
 }
 ################################################################################

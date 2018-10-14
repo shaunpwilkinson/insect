@@ -4,24 +4,13 @@
 \alias{expand}
 \title{Expand an existing classification tree.}
 \usage{
-expand(tree, x, clades = "0", refine = "Viterbi", iterations = 50,
+expand(tree, clades = "0", refine = "Viterbi", iterations = 50,
   nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
-  retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
-  recursive = TRUE, cores = 1, quiet = FALSE, verbose = FALSE, ...)
+  retry = TRUE, resize = TRUE, maxsize = 1000, recursive = TRUE,
+  cores = 1, quiet = FALSE, verbose = FALSE, ...)
 }
 \arguments{
 \item{tree}{an object of class \code{"insect"}.}
-
-\item{x}{an object of class\code{"DNAbin"} representing a list of
-DNA sequences to be used as the training data for the tree-learning process.
-All sequences should be from the same genetic region of interest
-and be globally alignable (i.e. without unjustified end-gaps).
-The sequences must have "names" attributes that include
-taxonomic ID numbers corresponding with those in the taxonomy
-database \code{db} (separated from the sequence ID by a "|" character).
-For example: "AF296347|30962", "AF296346|8022", "AF296345|8017", etc.
-See \code{\link{searchGB}} for more details on creating the reference
-sequence database.}
 
 \item{clades}{a vector of character strings giving the binary indices
 matching the labels of the nodes that are to be expanded.
@@ -112,8 +101,6 @@ This function is used to grow an existing classification tree, typically
   using more relaxed parameter settings than those used when the tree was
   created, or if fine-scale control over the tree-learning operation
   is required.
-  Note that the same reference sequence database used to
-  build the original tree is required.
 }
 \details{
 The clade indexing system used here is based on character strings,
@@ -130,7 +117,7 @@ The clade indexing system used here is based on character strings,
   set.seed(123)
   tree <- learn(whales, db = whale_taxonomy, recursive = FALSE)
   ## expand only the first clade
-  tree <- expand(tree, whales, clades = "1")
+  tree <- expand(tree, clades = "1")
  }
 }
 \seealso{
