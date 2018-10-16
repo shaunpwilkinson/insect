@@ -10,6 +10,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+
 ------------------------------------------------------------------------
 
 Introduction
@@ -942,9 +943,9 @@ package, and converted back to binary form object using `ape::as.AAbin`.
     ## convert back to AAbin class
     x_aa <- ape::as.AAbin(x_aa)
     ## check for stop codons
-    keeps <- sapply(xaa, function(v) !any(v == as.raw(42)))
+    keeps <- sapply(x_aa, function(v) !any(v == as.raw(42)))
     ## remove any offending sequences 
-    xaa <- xaa[keeps]
+    x_aa <- x_aa[keeps]
     samoa <- samoa[, keeps]
     ## read in classifier
     classifier_aa <- readRDS("amino/classifier.rds")
