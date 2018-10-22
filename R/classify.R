@@ -181,7 +181,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   m <- decodePHMM(attr(tree, "model"))
   ksize <- attr(tree, "k")
   td <- 1 - ping #threshold distance
-  doNN <- FALSE
+  ###doNN <- FALSE
   if(is.null(attr(tree, "kmers"))){ ## for backward compatibility
     warning("Tree is missing kmer count matrix, can't complete nearest-neighbor search\n")
     if(ping > 0 & ping < 1){
@@ -213,19 +213,19 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     zk <- .decodekc(attr(tree, "kmers"))
     zk <- zk/(attr(tree, "seqlengths") - ksize + 1L)
     attr(tree, "kmers") <- NULL
+    xl <- vapply(x, length, 0L)
     xk <- round(kmer::kcount(x, k = ksize))
-    xk <- xk/(vapply(x, length, 0L) - ksize + 1L)
+    xk <- xk/( - ksize + 1L)
     neighbors <- RANN::nn2(zk, query = xk, k = min(50, nrow(zk) - 1L))
-    if(DNA){
-      denom <- ksize * 0.006
-    }else{
-      denom <- if(ksize == 2) 0.029 else if (ksize == 3) 0.043 else stop("kmer size error\n")
-    }
-    neighbors$nn.dists <- (neighbors$nn.dists^2)/denom ## linearize with JC69, K80 etc - TODO ksize
-    nnidxs <- match(neighbors$nn.idx[, 1], attr(tree, "pointers")) # nearest neighbor indices in full set
-
+    # if(DNA){
+    #   denom <- ksize * 0.006
+    # }else{
+    #   denom <- if(ksize == 2) 0.029 else if (ksize == 3) 0.043 else stop("kmer size error\n")
+    # }
+    neighbors$nn.dists <-  xl/(2 * ksize) * neighbors$nn.dists^2 ## linearize with JC69
+    nnidxs <- match(neighbors$nn.idx[, 1], attr(tree, "pointers")) #NN indices in full set
     if((ping > 0 & ping < 1) | (ping == 1 & is.null(key))){
-      doNN <- TRUE # do nearest neighbor search
+      ###doNN <- TRUE # do nearest neighbor search
       ##########
       for(i in seq_along(x)){
         attr(x[[i]], "idxs") <- neighbors$nn.idx[i, ]
@@ -235,39 +235,42 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
 
       ###########
 
-      # td2 <- 2 * td
-      # for(i in seq_along(x)){
-      #   if(neighbors$nn.dists[i, 1] <= td2){
-      #     idxs <- neighbors$nn.idx[i, neighbors$nn.dists[i,] <= td2]
-      #     alig <- aphid::align(c(x[i], z[idxs]), model = m, quiet = TRUE)
-      #     dis <- if(DNA) ape::dist.dna(alig) else ape::dist.aa(alig)/100
-      #     dis <- unname(dis[seq_along(idxs)])
-      #     idxs <- idxs[dis <= td]
-      #     #taxs <- as.integer(gsub(".+\\|", "", seqnames[idxs]))
-      #     taxs <- unname(key[idxs]) ## length(key) = nrow(kmers)
-      #     if(length(taxs) == 0L){
-      #       attr(x[[i]], "NN") <-  nnidxs[i] #nnidxs[i] # sequence index
-      #       attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
-      #     }else if(length(taxs) == 1L){
-      #       attr(x[[i]], "NN") <- taxs # taxid
-      #       attr(x[[i]], "NNhit") <- TRUE # -> skip full classification procedure
-      #       neighbors$nn.dists[i, 1] <- dis[dis <= td]
-      #       neighbors$nn.idx[i, 1] <- idxs[1]
-      #     }else{
-      #       lins <- get_lineage(taxs, db, numbers = TRUE)
-      #       lins <- vapply(lins, paste0, "", collapse = "; ")
-      #       anc <- .ancestor(lins)
-      #       attr(x[[i]], "NN") <- as.integer(gsub(".+; ", "", anc)) # taxid
-      #       attr(x[[i]], "NNhit") <- TRUE # -> skip full classification procedure
-      #       wmd <- which.min(dis[dis <= td])
-      #       neighbors$nn.dists[i, 1] <- min(dis)
-      #       neighbors$nn.idx[i, 1] <- idxs[wmd]
-      #     }
-      #   }else{
-      #     attr(x[[i]], "NN") <-  nnidxs[i] #nnidxs[i] # sequence index
-      #     attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
-      #   }
-      # }
+      ###td2 <- 2 * td
+      td2 <- td
+      for(i in seq_along(x)){
+        if(neighbors$nn.dists[i, 1] <= td2){
+          idxs <- neighbors$nn.idx[i, neighbors$nn.dists[i,] <= td2]
+          ###alig <- aphid::align(c(x[i], z[idxs]), model = m, quiet = TRUE)
+          ###dis <- if(DNA) ape::dist.dna(alig) else ape::dist.aa(alig)/100
+          ###dis <- unname(dis[seq_along(idxs)])
+          ###idxs <- idxs[dis <= td]
+          #taxs <- as.integer(gsub(".+\\|", "", seqnames[idxs]))
+          taxs <- unname(key[idxs]) ## length(key) = nrow(kmers)
+          if(length(taxs) == 0L){
+            attr(x[[i]], "NN") <-  nnidxs[i] #nnidxs[i] # sequence index
+            attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
+          }else if(length(taxs) == 1L){
+            attr(x[[i]], "NN") <- taxs # taxid
+            attr(x[[i]], "NNhit") <- TRUE # -> skip full classification procedure
+            ###neighbors$nn.dists[i, 1] <- dis[dis <= td]
+            ###neighbors$nn.idx[i, 1] <- idxs[1]
+          }else{
+            lins <- get_lineage(taxs, db, numbers = TRUE)
+            lins <- vapply(lins, paste0, "", collapse = "; ")
+            anc <- .ancestor(lins)
+            attr(x[[i]], "NN") <- as.integer(gsub(".+; ", "", anc)) # taxid
+            attr(x[[i]], "NNhit") <- TRUE # -> skip full classification procedure
+            ###wmd <- which.min(dis[dis <= td])
+            ###neighbors$nn.dists[i, 1] <- min(dis)
+            ###neighbors$nn.idx[i, 1] <- idxs[wmd]
+          }
+        }else{
+          attr(x[[i]], "NN") <-  nnidxs[i] #nnidxs[i] # sequence index
+          attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
+        }
+      }
+
+      #####
     }else if(ping == 1){ # faster hash matching
       xhash <- unname(hash(x))
       xmatch <- unname(key[xhash])
@@ -283,7 +286,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       }
       ## hash key
     }else{
-      doNN <- FALSE
+      ###doNN <- FALSE
       for(i in seq_along(x)){
         attr(x[[i]], "NN") <- nnidxs[i] #  nnidxs[i]# sequence index
         attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
@@ -302,45 +305,45 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       }
     }
   }
-  classify0 <- function(xx, z, m, td, db, key, DNA){ ## parallelizable
-    stopifnot(!is.null(attr(xx, "dists")))
-    stopifnot(!is.null(attr(xx, "idxs")))
-    stopifnot(!is.null(attr(xx, "NN")))
-    if(attr(xx, "dists")[1] <= 2 * td){
-      idxs <- attr(xx, "idxs")[attr(xx, "dists") <= 2 * td]
-      alig <- aphid::align(c(list(xx), z[idxs]), model = m, quiet = TRUE)
-      dis <- if(DNA) ape::dist.dna(alig) else ape::dist.aa(alig)/100
-      dis <- unname(dis[seq_along(idxs)])
-      idxs <- idxs[dis <= td]
-      #taxs <- as.integer(gsub(".+\\|", "", seqnames[idxs]))
-      taxs <- unname(key[idxs]) ## length(key) = nrow(kmers)
-      if(length(taxs) == 0L){
-        ##attr(xx, "NN") <- attr(xx, "nnidx") #nnidxs[i] # sequence index, no rplcmnt needed
-        attr(xx, "NNhit") <- FALSE # -> do full classification routine
-        attr(xx, "dists") <- attr(xx, "dists")[1]
-        attr(xx, "idxs") <- attr(xx, "idxs")[1]
-      }else if(length(taxs) == 1L){
-        attr(xx, "NN") <- taxs # taxid
-        attr(xx, "NNhit") <- TRUE # -> skip full classification routine
-        attr(xx, "dists") <- dis[dis <= td]
-        attr(xx, "idxs") <- idxs[1]
-      }else{
-        lins <- get_lineage(taxs, db, numbers = TRUE)
-        lins <- vapply(lins, paste0, "", collapse = "; ")
-        anc <- .ancestor(lins)
-        attr(xx, "NN") <- as.integer(gsub(".+; ", "", anc)) # taxid
-        attr(xx, "NNhit") <- TRUE # -> skip full classification routine
-        attr(xx, "dists") <- min(dis[dis <= td])
-        attr(xx, "idxs") <- idxs[which.min(dis[dis <= td])]
-      }
-    }else{
-      #attr(x[[i]], "NN") <-  nnidxs[i] #nnidxs[i] # sequence index
-      attr(xx, "NNhit") <- FALSE # -> do full classification routine
-      attr(xx, "dists") <- attr(xx, "dists")[1]
-      attr(xx, "idxs") <- attr(xx, "idxs")[1]
-    }
-    return(xx)
-  }
+  # classify0 <- function(xx, z, m, td, db, key, DNA){ ## parallelizable
+  #   stopifnot(!is.null(attr(xx, "dists")))
+  #   stopifnot(!is.null(attr(xx, "idxs")))
+  #   stopifnot(!is.null(attr(xx, "NN")))
+  #   if(attr(xx, "dists")[1] <= 2 * td){
+  #     idxs <- attr(xx, "idxs")[attr(xx, "dists") <= 2 * td]
+  #     alig <- aphid::align(c(list(xx), z[idxs]), model = m, quiet = TRUE)
+  #     dis <- if(DNA) ape::dist.dna(alig) else ape::dist.aa(alig)/100
+  #     dis <- unname(dis[seq_along(idxs)])
+  #     idxs <- idxs[dis <= td]
+  #     #taxs <- as.integer(gsub(".+\\|", "", seqnames[idxs]))
+  #     taxs <- unname(key[idxs]) ## length(key) = nrow(kmers)
+  #     if(length(taxs) == 0L){
+  #       ##attr(xx, "NN") <- attr(xx, "nnidx") #nnidxs[i] # sequence index, no rplcmnt needed
+  #       attr(xx, "NNhit") <- FALSE # -> do full classification routine
+  #       attr(xx, "dists") <- attr(xx, "dists")[1]
+  #       attr(xx, "idxs") <- attr(xx, "idxs")[1]
+  #     }else if(length(taxs) == 1L){
+  #       attr(xx, "NN") <- taxs # taxid
+  #       attr(xx, "NNhit") <- TRUE # -> skip full classification routine
+  #       attr(xx, "dists") <- dis[dis <= td]
+  #       attr(xx, "idxs") <- idxs[1]
+  #     }else{
+  #       lins <- get_lineage(taxs, db, numbers = TRUE)
+  #       lins <- vapply(lins, paste0, "", collapse = "; ")
+  #       anc <- .ancestor(lins)
+  #       attr(xx, "NN") <- as.integer(gsub(".+; ", "", anc)) # taxid
+  #       attr(xx, "NNhit") <- TRUE # -> skip full classification routine
+  #       attr(xx, "dists") <- min(dis[dis <= td])
+  #       attr(xx, "idxs") <- idxs[which.min(dis[dis <= td])]
+  #     }
+  #   }else{
+  #     #attr(x[[i]], "NN") <-  nnidxs[i] #nnidxs[i] # sequence index
+  #     attr(xx, "NNhit") <- FALSE # -> do full classification routine
+  #     attr(xx, "dists") <- attr(xx, "dists")[1]
+  #     attr(xx, "idxs") <- attr(xx, "idxs")[1]
+  #   }
+  #   return(xx)
+  # }
   classify1 <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE){
     ## takes a single named raw vector with NN and NNhit attrs
     ## outputs a 1-row dataframe
@@ -425,10 +428,10 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   }
   gc()
   if(inherits(cores, "cluster")){
-    if(doNN) x <- parallel::parLapply(cores, x, classify0, z, m, td, db, key, DNA)
+    ###if(doNN) x <- parallel::parLapply(cores, x, classify0, z, m, td, db, key, DNA)
     res <- parallel::parLapply(cores, x, classify1, tree, threshold, decay, ping)
   }else if(cores == 1){
-    if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
+    ###if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
     res <- lapply(x, classify1, tree, threshold, decay, ping)
   }else{
     navailcores <- parallel::detectCores()
@@ -436,11 +439,11 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
     if(cores > 1){
       cl <- parallel::makeCluster(cores)
-      if(doNN) x <- parallel::parLapply(cl, x, classify0, z, m, td, db, key, DNA)
+      ###if(doNN) x <- parallel::parLapply(cl, x, classify0, z, m, td, db, key, DNA)
       res <- parallel::parLapply(cl, x, classify1, tree, threshold, decay, ping)
       parallel::stopCluster(cl)
     }else{
-      if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
+      ###if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
       res <- lapply(x, classify1, tree, threshold, decay, ping)
     }
   }

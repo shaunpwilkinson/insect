@@ -326,3 +326,85 @@
     return(FALSE)
   }
 }
+
+
+.otu <- function(z, k = 4, threshold = 0.97){
+  stopifnot(!is.null(names(z)))
+  stopifnot(!any(duplicated(names(z))))
+  hashes <- insect::hash(z)
+  pointers <- .point(hashes)
+  catchnames <- names(z)
+  z <- z[!duplicated(hashes)]
+  derepnames <- names(z)
+  zl <- vapply(z, length, 0L)
+  kmers <- kmer::kcount(z, k = k)
+  kmers <- kmers/(apply(kmers, 1, sum) + k - 1)
+  myseq <- c(2, 5, (2:20)^4)
+  myseq <- myseq[myseq < length(z)]
+  res <- list()
+  counter <- 1L
+  takens <- logical(length(z))
+  names(takens) <- names(z)
+  for(m in myseq){
+    if(nrow(kmers) - 1 < m) m <- nrow(kmers) - 1
+    neighbors <- RANN::nn2(kmers, k = m)
+    idx <- neighbors$nn.idx
+    dis <- 1 - ((neighbors$nn.dists)^2 * zl/(2*k))
+    keeps <- dis[, m] < threshold
+    incursions <- idx[, 1] != seq_along(z) #
+    wincs <- which(incursions)
+    for(i in wincs){
+      ind <- match(i, idx[i, ])
+      if(!is.na(ind)){
+        tmp <- idx[i, ind]
+        idx[i, ind] <- idx[i, 1]
+        idx[i, 1] <- tmp
+        tmp <- dis[i, ind]
+        dis[i, ind] <- dis[i, 1]
+        dis[i, 1] <- tmp
+      }else{
+        warning("code whero\n")
+      }
+    }
+    if(sum(keeps) == 0){ ## final biggest cluster
+      degs <- apply(dis, 1, function(v) sum(v[v >= threshold]))
+      res[[counter]] <- names(z)[order(degs, decreasing = TRUE)]
+      break
+    }
+    idx <- idx[keeps, , drop = FALSE]
+    dis <- dis[keeps, , drop = FALSE]
+    degs <- apply(dis, 1, function(v) sum(v[v >= threshold]))
+    names(degs) <- names(z)[keeps]
+    degorder <- order(degs, decreasing = TRUE)
+    for(i in degorder){ # indices in reduced set
+      if(!takens[names(degs)[i]]){
+        nmmbs <- sum(dis[i, ] >= threshold)
+        members <- idx[i, 1:nmmbs] # indices in semi-full set
+        members <- names(z)[members]
+        members <- members[!takens[members]] # character matching
+        takens[members] <- TRUE # character matching
+        res[[counter]] <- members
+        counter <- counter + 1
+      }
+    }
+    kmers <- kmers[!keeps, , drop = FALSE]
+    z <- z[!keeps]
+    zl <- zl[!keeps]
+    if(length(z) == 0L) {
+      break
+    }else if(length(z) == 1L){ # cant do nn search with 1 row
+      res[[counter]] <- names(z)
+      break
+    }
+  }
+  res <- res[order(sapply(res, length), decreasing = TRUE)]
+  out <- rep(seq_along(res), sapply(res, length))
+  names(out) <- unlist(res, use.names = FALSE)
+  centrals <- vapply(res, "[", "", 1)
+  out <- out[derepnames]
+  out <- out[pointers]
+  centrals <- catchnames %in% centrals
+  catchnames[centrals] <- paste0(catchnames[centrals], "*")
+  names(out) <- catchnames
+  return(out)
+}
