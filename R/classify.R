@@ -213,9 +213,9 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     zk <- .decodekc(attr(tree, "kmers"))
     zk <- zk/(attr(tree, "seqlengths") - ksize + 1L)
     attr(tree, "kmers") <- NULL
-    xl <- vapply(x, length, 0L)
+    xl <- vapply(x, length, 0L, USE.NAMES = FALSE)
     xk <- round(kmer::kcount(x, k = ksize))
-    xk <- xk/( - ksize + 1L)
+    xk <- xk/(xl - ksize + 1L)
     neighbors <- RANN::nn2(zk, query = xk, k = min(50, nrow(zk) - 1L))
     # if(DNA){
     #   denom <- ksize * 0.006
