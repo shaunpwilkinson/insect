@@ -131,7 +131,7 @@
     membership <- tmp
     for(j in 1:K) seq_numbers[j] <- sum(membership == j)
     mcn <- min(seq_numbers)
-    if(mcn < 10) mcn <- 10
+    if(mcn < 4) mcn <- 4
     for(j in 1:K){
       # if(!quiet) cat("Calculating sequence weights given child model", j, "\n")
       # scale so that weights reflect smallest clade size
