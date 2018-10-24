@@ -136,8 +136,8 @@
       # if(!quiet) cat("Calculating sequence weights given child model", j, "\n")
       # scale so that weights reflect smallest clade size
       seqweightsj <- seqweights[membership == j]
-      seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
-      seqweightsj <- seqweightsj * mcn/seq_numbers[j] ########
+      ######seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
+      ######seqweightsj <- seqweightsj * mcn/seq_numbers[j] ########
       if(!quiet & verbose) cat("Training child model", j, "\n")
       ins <- if(finetune) res[[pnms[j]]]$inserts else model$inserts
       if(is.null(ins)) ins <- TRUE # top level only
