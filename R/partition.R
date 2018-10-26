@@ -2,8 +2,8 @@
 ################################################################################
 .partition <- function(x, model = NULL, K = 2, allocation = "cluster",
                       refine = "Viterbi", nstart = 20, iterations = 50,
-                      kmers = NULL, seqweights = "Gerstein", cores = 1,
-                      quiet = FALSE, verbose = FALSE, ...){
+                      kmers = NULL, ksize = NULL, #seqweights = "Henikoff",
+                      cores = 1, quiet = FALSE, verbose = FALSE, ...){
   ### x is a DNAbin object
   # model is a starting model to be trained on each side
   # assumes all seqs are unique
@@ -12,16 +12,18 @@
   res <- list()
   nseq <- length(x)
   if(K > nseq) K <- nseq
-  names(x) <- paste0("S", 1:nseq) # just ensures all names are unique
-  if(is.null(seqweights)){
-    seqweights <- rep(1, nseq)
-  }else if(identical(seqweights, "Henikoff")){
-    seqweights <- aphid::weight(x, method = "Henikoff", k = 5)
-  }else if(identical(seqweights, "Gerstein")){
-    seqweights <- aphid::weight(x, method = "Gerstein", k = 5)
-  }else if(length(seqweights) != nseq){
-    stop("Invalid sequence weights passed to '.partition'")
-  }
+  names(x) <- paste0("S", 1:nseq)
+  pointers <- seq_along(x)
+  # otud <- FALSE
+  # if(is.null(seqweights)){
+  #   seqweights <- rep(1, nseq)
+  # }else if(identical(seqweights, "Henikoff")){
+
+  # }else if(identical(seqweights, "Gerstein")){
+  #   seqweights <- aphid::weight(x, method = "Gerstein", k = 5)
+  # }else if(length(seqweights) != nseq){
+  #   stop("Invalid sequence weights passed to '.partition'")
+  # }
   if(nseq == 1) return(NULL)
   tmp <- integer(nseq)
   if(nseq == 2){
@@ -32,13 +34,12 @@
     tmp <- 1:nseq
   }else if(identical(allocation, "cluster") | identical(allocation, "split")){
     if(!quiet & verbose) cat("Clustering sequences into", K, "groups\n")
-    if(is.null(kmers)){
+    if(is.null(kmers) | is.null(ksize)){ # generally will not be true
       # if(!quiet) cat("Counting k-mers\n")
       # kmers <- kmer::kcount(x, k = 5)
       if(!quiet & verbose) cat("Counting", if(is.null(dots$k)) 4 else dots$k, "-mers\n")
-      suppressMessages(
-        kmers <- kmer::kcount(x, k = if(is.null(dots$k)) 4 else dots$k)
-      )
+      ksize = if(is.null(dots$k)) 4 else dots$k
+      suppressMessages(kmers <- kmer::kcount(x, k = ksize))
     }
     if(!quiet & verbose) cat("Assigning sequences to groups ")
     if(identical(allocation, "split")){
@@ -61,6 +62,32 @@
       if(!quiet & verbose) cat("using k-means algorithm\n")
       ##########kmers <- kmers/(sapply(x, length) - 4)## k - 1 = 3 ###############
       kmers <- .decodekc(kmers)
+      slens <- apply(kmers, 1, sum) # corrected sequence lengths
+      kmers <- kmers/(slens + ksize - 1)
+      if(length(x) > 1000){
+        centroid <- apply(kmers, 2, mean)
+        errs2 <- (t(t(kmers) - centroid))^2
+        euclids <- unname(apply(errs2, 1, sum))
+        dists <- slens/(2 * ksize) * euclids # linearized distances
+        if(!quiet & verbose) cat("Mean distance from centroid", round(mean(dists), 2), "\n")
+        if(mean(dists) > 0.1){
+          if(!quiet & verbose) cat("Original size: ", length(x), "\n")
+          otus <- .otu(x, k = 4, threshold = 0.99)
+          if(max(otus) > 20){
+            pointers <- .point(paste(otus))
+            centrals <- grepl("\\*$", names(otus)) # central (logical)
+            cord <- order(pointers[centrals]) # order of central seqs
+            x <- x[centrals][cord]
+            nseq <- length(x)
+            kmers <- kmers[centrals, , drop = FALSE][cord, , drop = FALSE]
+            #if(is.null(dim(kmers))) kmers <- matrix(kmers, nrow = 1)
+            #otud <- TRUE
+            if(!quiet & verbose) cat("Reduced size: ", length(x), "\n")
+          }else{
+            if(!quiet & verbose) cat("Too few OTUs to cluster\n")
+          }
+        }
+      }
       tmp <- tryCatch(kmeans(kmers, centers = K, nstart = nstart)$cluster,
                       error = function(er) sample(rep(1:K, nseq)[1:nseq]),
                       warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))
@@ -70,6 +97,7 @@
     if(length(allocation) != nseq) stop("Invalid argument given for 'allocation'")
     tmp <- allocation
   }
+  seqweights <- aphid::weight(x, method = "Henikoff", k = 5)
   res$membership <- integer(0)
   res$init_membership <- tmp
   #res$success <- NA
@@ -130,21 +158,22 @@
     if(!quiet & verbose) cat("Insect iteration", i, "\n")
     membership <- tmp
     for(j in 1:K) seq_numbers[j] <- sum(membership == j)
-    mcn <- min(seq_numbers)
-    if(mcn < 4) mcn <- 4
+    #mcn <- min(seq_numbers)
+    #if(mcn < 4) mcn <- 4
     for(j in 1:K){
       # if(!quiet) cat("Calculating sequence weights given child model", j, "\n")
       # scale so that weights reflect smallest clade size
       seqweightsj <- seqweights[membership == j]
-      seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
-      seqweightsj <- seqweightsj * mcn/seq_numbers[j] ########
+      ###### seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
+      ###### seqweightsj <- seqweightsj * mcn/seq_numbers[j] ########
       if(!quiet & verbose) cat("Training child model", j, "\n")
       ins <- if(finetune) res[[pnms[j]]]$inserts else model$inserts
       if(is.null(ins)) ins <- TRUE # top level only
       suppressWarnings(
         modelj <- aphid::train(if(finetune) res[[pnms[j]]] else model,
                                x[membership == j], #model
-                               method = refine, seqweights = seqweightsj,# pseudocounts = 0.1*length(seqweightsj),##############
+                               method = refine, seqweights = seqweightsj,
+                               # pseudocounts = 0.1*length(seqweightsj),#
                                inserts = "inherited",
                                alignment = sum(ins)/length(ins) < 0.5,
                                cores = cores, quiet = !(!quiet & verbose),
@@ -160,7 +189,6 @@
       modelj$alignment <- NULL
       if(!quiet & verbose) cat("Calculating sequence probabilities given child model",
                                j, "\n")
-      #cat(inherits(cores, "cluster"), "\n")
       scores[j, ] <- if(inherits(cores, "cluster")){
         parallel::parSapply(cores, x, fscore, model = modelj)
       }else{
@@ -194,8 +222,8 @@
     md5s <- c(md5s, tmpmd5)
   }
   if(stopclustr) parallel::stopCluster(cores) # not used if called from 'learn'
-  res$membership <- membership
-  res$scores <- scores
+  res$membership <- membership[pointers]
+  res$scores <- scores[, pointers]
   class(res) <- "split"
   return(res)
 }

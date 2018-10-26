@@ -381,7 +381,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       #####if(best_model == no_mods + 1L) threshold_met <- FALSE ###### null model selected
       # 4 is approx asymtote for single bp change as n training seqs -> inf
       if(threshold_met){
-        minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") - 0.01
+        minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore")
         minlength_met <- length(x) >= attr(tree[[best_model]], "minlength")# - 1
         maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength")# + 1
         neighbor_check <- if(is.na(attr(x, "NN"))){

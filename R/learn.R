@@ -177,10 +177,10 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   lineages <- get_lineage(taxIDs, db = db, cores = cores, numbers = TRUE)
   lineages <- vapply(lineages, paste0, "", collapse = "; ")
 
-  if(is.null(attr(x, "weights"))){
-    if(!quiet) cat("Deriving sequence weights\n")
-    suppressMessages(attr(x, "weights") <- aphid::weight(x, method = "Henikoff", k = ksize))
-  }
+  # if(is.null(attr(x, "weights"))){
+  #   if(!quiet) cat("Deriving sequence weights\n")
+  #   suppressMessages(attr(x, "weights") <- aphid::weight(x, method = "Henikoff", k = ksize))
+  # }
 
   if(!quiet) cat("Initializing tree object\n")
   tree <- 1
@@ -194,10 +194,16 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "clade") <- ""
   attr(tree, "sequences") <- seq_along(x)
   #attr(tree, "seqnames") <- names(x) # cant just name sequences attr due to derep-rerep
-
+  if(!quiet) cat("Dereplicating sequences\n")
   tset <- dereplicate(x)
-  attr(tset, "lineages") <- lineages #full length, just to pass to 'expand' to save time
-
+  if(!quiet) cat("Found", length(tset),"unique sequences\n")
+  #if(!quiet) cat("Clustering OTUs\n")
+  #otus <- .otu(tset, threshold = 0.97) # for increased partitioning speed at top levels
+  #if(!quiet) cat("Found", max(otus), "OTUs\n")
+  #names(tset) <- paste0("OTU", otus) ## S1, S2*, S3 etc, with asterisks showing central seqs
+  #centralseqs <- grepl("\\*$", names(otus))
+  #names(tset)[centralseqs] <- paste0(names(tset)[centralseqs], "*")
+  attr(tset, "lineages") <- lineages #full length, passed to 'expand' to save time
   attr(tree, "lineage") <- .ancestor(lineages) # eventually removed during expansion
   attr(tree, "minscore") <- -1E06 # nominal
   xlengths <- vapply(tset, length, 0L, USE.NAMES = FALSE)
@@ -234,7 +240,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
       samp <- sample(seq_along(tset), size = 1000)
       suppressWarnings(
         model <- aphid::derivePHMM(tset[samp], refine = refine,
-                                   seqweights = attr(tset, "derep.weights")[samp],
+                                   #seqweights = attr(tset, "derep.weights")[samp],
                                    maxsize = maxsize,
                                    inserts = "inherited", alignment = FALSE,
                                    quiet = TRUE, cores = cores, maxiter = 20,
@@ -243,7 +249,7 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
     }else{
       suppressWarnings(
         model <- aphid::derivePHMM(tset, refine = refine,
-                                   seqweights = attr(tset, "derep.weights"),
+                                   #seqweights = attr(tset, "derep.weights"),
                                    inserts = "inherited", alignment = FALSE,
                                    quiet = TRUE, cores = cores, maxiter = 20)
       )

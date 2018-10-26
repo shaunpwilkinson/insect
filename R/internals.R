@@ -26,20 +26,20 @@
 .forkr <- function(tree, x, lineages, refine = "Viterbi", nstart = 10,
                    iterations = 50, minK = 2, maxK = 2,
                    minscore = 0.9, probs = 0.05, retry = TRUE, resize = TRUE,
-                   maxsize = NULL, kmers = NULL,
-                   seqweights = "Gerstein", cores = 1, quiet = FALSE, ...){
+                   maxsize = NULL, kmers = NULL, ksize = NULL,
+                   cores = 1, quiet = FALSE, ...){
   tree <- .fork(tree, x, lineages, refine = refine, nstart = nstart,
                iterations = iterations, minK = minK,
                maxK = maxK, minscore = minscore, probs = probs,
                retry = retry, resize = resize, maxsize = maxsize,
-               kmers = kmers, seqweights = seqweights, cores = cores,
+               kmers = kmers, ksize = ksize, cores = cores,
                quiet = quiet, ... = ...)
   if(is.list(tree)) tree[] <- lapply(tree, .forkr, x = x, lineages = lineages,
                                      refine = refine, nstart = nstart,
                                      iterations = iterations, minK = minK, maxK = maxK,
                                      probs = probs, retry = retry, resize = resize,
                                      maxsize = maxsize, minscore = minscore,
-                                     kmers = kmers, seqweights = seqweights,
+                                     kmers = kmers, ksize = ksize,
                                      cores = cores, quiet = quiet, ... = ...)
   return(tree)
 }
@@ -329,7 +329,7 @@
 
 
 .otu <- function(z, k = 4, threshold = 0.97){
-  stopifnot(!is.null(names(z)))
+  if(is.null(names(z))) names(z) <- paste0("S", seq_along(z))
   stopifnot(!any(duplicated(names(z))))
   hashes <- insect::hash(z)
   pointers <- .point(hashes)
@@ -363,7 +363,9 @@
         dis[i, ind] <- dis[i, 1]
         dis[i, 1] <- tmp
       }else{
-        warning("code whero\n")
+        idx[i, ] <- c(i, idx[i, seq_len(m - 1)])
+        dis[i, ] <- c(0, dis[i, seq_len(m - 1)])
+        ## warning("code whero\n")
       }
     }
     if(sum(keeps) == 0){ ## final biggest cluster

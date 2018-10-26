@@ -45,8 +45,9 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
   x <- attr(tree, "trainingset")
   pointers <- attr(x, "rerep.pointers")
   xnames <- attr(x, "rerep.names")
-  seqweights <- attr(x, "rerep.weights") # length of derep'd set
-  if(is.null(seqweights)) seqweights <- aphid::weight(x, k = if(is.null(dots$k)) 4 else dots$k)
+  #seqweights <- attr(x, "rerep.weights") # length of derep'd set
+  #if(is.null(seqweights)) seqweights <- aphid::weight(x, k = if(is.null(dots$k)) 4 else dots$k)
+  #seqweights <- NULL # assigned to .partition 20181024
   lineages <- attr(x, "lineages") # same length as full set, includes full strings
   if(is.null(lineages)){
     taxIDs <- as.integer(gsub(".+\\|", "", xnames))
@@ -118,8 +119,10 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
     }
   }
   kmers <- attr(tree, "kmers")
-  if(is.null(kmers)) {
-    kmers <- .encodekc(kmer::kcount(x, k = if(is.null(dots$k)) 4 else dots$k))
+  ksize <- attr(tree, "k")
+  if(is.null(kmers) | is.null(ksize)){
+    ksize <- if(is.null(dots$k)) 4 else dots$k
+    kmers <- .encodekc(kmer::kcount(x, k = ksize))
   }else{
     stopifnot(nrow(kmers) == length(x))
   }
@@ -178,7 +181,7 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
                        index, ", x, lineages, refine = refine, ",
                        "nstart = nstart, iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, retry = retry, resize = resize, ",
-                       "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
+                       "maxsize = maxsize, kmers = kmers, ksize = ksize, ", #seqweights = seqweights, ",
                        "cores = cores, quiet = quiet, verbose = verbose, ... = ...)")
       eval(parse(text = toeval))
       ss <- FALSE # split success; prevents build note due to lack of visible binding
@@ -204,8 +207,9 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
                                  minK = minK, maxK = maxK, minscore = minscore,
                                  probs = probs, retry = retry, resize = resize,
                                  maxsize = maxsize,
-                                 kmers = kmers, # large matrix could cause memory probs
-                                 seqweights = seqweights, cores = 1,
+                                 kmers = kmers, ksize = ksize, # large matrix could cause memory probs
+                                 #seqweights = seqweights,
+                                 cores = 1,
                                  quiet = TRUE, ... = ...)
     for(i in seq_along(trees)){
       eval(parse(text = paste0("tree", indices[i], "<- trees[[", i, "]]")))
@@ -220,7 +224,7 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
                        indices[i], ", x, lineages, refine = refine, nstart = nstart, ",
                        "iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, retry = retry, resize = resize, ",
-                       "maxsize = maxsize, kmers = kmers, seqweights = seqweights, ",
+                       "maxsize = maxsize, kmers = kmers, ksize = ksize, ", #seqweights = seqweights, ",
                        "cores = cores, quiet = quiet, verbose = verbose, ... = ...)")
       eval(parse(text = toeval))
     }

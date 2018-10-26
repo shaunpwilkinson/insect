@@ -3,8 +3,8 @@
 .fork <- function(node, x, lineages, refine = "Viterbi", nstart = 20,
                  iterations = 50, minK = 2, maxK = 2, minscore = 0.9,
                  probs = 0.5, retry = TRUE, resize = TRUE, maxsize = NULL,
-                 kmers = NULL, seqweights = "Henikoff", cores = 1,
-                 quiet = FALSE, verbose = FALSE, ...){
+                 kmers = NULL, ksize = NULL, #seqweights = "Henikoff",
+                 cores = 1, quiet = FALSE, verbose = FALSE, ...){
   indices <- attr(node, "sequences")
   nseq <- length(indices)
   lineages <- lineages[indices]
@@ -16,24 +16,24 @@
     #   return(node)
     # }
     if(nseq < maxK) maxK <- nseq
-    if(is.null(seqweights)){
-      seqweights <- rep(1, nseq)
-    }else if(identical(seqweights, "Henikoff")){
-      seqweights <- aphid::weight(x[indices], method = "Henikoff", k = 5)
-    }else if(identical(seqweights, "Gerstein")){
-      seqweights <- aphid::weight(x[indices], method = "Gerstein", k = 5)
-    }else if(length(seqweights) == length(x)){
-      seqweights <- seqweights[indices]
-      seqweights <- seqweights/mean(seqweights) ##scale weights to average 1
-    }else stop("Invalid seqweights argument")
+
+    # if(is.null(seqweights)){
+    #   seqweights <- rep(1, nseq)
+    # }else if(identical(seqweights, "Henikoff")){
+    #   seqweights <- aphid::weight(x[indices], method = "Henikoff", k = 5)
+    # }else if(identical(seqweights, "Gerstein")){
+    #   seqweights <- aphid::weight(x[indices], method = "Gerstein", k = 5)
+    # }else if(length(seqweights) == length(x)){
+    #   seqweights <- seqweights[indices]
+    #   seqweights <- seqweights/mean(seqweights) ##scale weights to average 1
+    # }else stop("Invalid seqweights argument")
+
     ## uncommented following 20180828 due to fail at retry line 128
     dots <- list(...)
-    if(is.null(kmers)){# generally will be NULL due to large size?
+    if(is.null(kmers) | is.null(ksize)){# generally will not be NULL
       if(!quiet & verbose) cat("\nCounting kmers\n")
-      suppressMessages(
-        #kmers <- kmer::kcount(x[indices], k = if(!is.null(dots$k)) dots$k else 5)
-        kmers <- .encodekc(kmer::kcount(x[indices], k = if(is.null(dots$k)) 4 else dots$k))
-      )
+      ksize <- if(is.null(dots$k)) 4 else dots$k
+      suppressMessages(kmers <- .encodekc(kmer::kcount(x[indices], k = ksize)))
     }else{
       if(nrow(kmers) == length(x)) kmers <- kmers[indices, , drop = FALSE]
     }
@@ -84,7 +84,7 @@
         if(!quiet & verbose) cat("Resizing parent model\n")
         alig <- mod$alignment
         if(is.null(alig)) alig <- aphid::align(x[indices], model = mod, cores = cores)
-        mod <- aphid::derivePHMM.default(alig, seqweights = seqweights,
+        mod <- aphid::derivePHMM.default(alig, #seqweights = seqweights,
                                          inserts = if(nseq < 1000) "map" else "threshold",
                                          maxsize = maxsize)
         rm(alig)
@@ -98,11 +98,12 @@
     repeat{
       seqsplit <- .partition(x[indices], model = mod, refine = refine, K = nclades,
                             allocation = "cluster", nstart = nstart,
-                            iterations = iterations, kmers = kmers,
-                            seqweights = seqweights, cores = cores, quiet = quiet,
+                            iterations = iterations, kmers = kmers, ksize = ksize,
+                            #seqweights = seqweights,
+                            cores = cores, quiet = quiet,
                             verbose = verbose, ... = ...)
       if(is.null(seqsplit)){
-        if(!quiet & verbose) cat("Sequence splitting failed, returning unsplit node\n")
+        if(!quiet & verbose) cat("Sequence splitting failed, returning unsplit node\n\n")
         if(stopclustr) parallel::stopCluster(cores)
         #if(!is.null(attr(node, "model"))) attr(node, "model")$alignment <- NULL
         ## already done in previous block
@@ -144,8 +145,9 @@
           if(!all(alloc2 == membership) & !all(alloc2 == seqsplit$init_membership)){
             seqsplit2 <- .partition(x[indices], model = mod, refine = refine, K = 2,
                                    allocation = alloc2, nstart = nstart,
-                                   iterations = iterations, kmers = NULL,
-                                   seqweights = seqweights, cores = cores,
+                                   iterations = iterations, kmers = NULL, ksize = NULL,
+                                   #seqweights = seqweights,
+                                   cores = cores,
                                    quiet = quiet, verbose = verbose, ... = ...)
             if(!is.null(seqsplit2)){
               membership2 <- seqsplit2$membership
