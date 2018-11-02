@@ -64,30 +64,30 @@
       kmers <- .decodekc(kmers)
       slens <- apply(kmers, 1, sum) # corrected sequence lengths
       kmers <- kmers/(slens + ksize - 1)
-      if(length(x) > 1000){
-        centroid <- apply(kmers, 2, mean)
-        errs2 <- (t(t(kmers) - centroid))^2
-        euclids <- unname(apply(errs2, 1, sum))
-        dists <- slens/(2 * ksize) * euclids # linearized distances
-        if(!quiet & verbose) cat("Mean distance from centroid", round(mean(dists), 2), "\n")
-        if(mean(dists) > 0.1){
-          if(!quiet & verbose) cat("Original size: ", length(x), "\n")
-          otus <- .otu(x, k = 4, threshold = 0.99)
-          if(max(otus) > 20){
-            pointers <- .point(paste(otus))
-            centrals <- grepl("\\*$", names(otus)) # central (logical)
-            cord <- order(pointers[centrals]) # order of central seqs
-            x <- x[centrals][cord]
-            nseq <- length(x)
-            kmers <- kmers[centrals, , drop = FALSE][cord, , drop = FALSE]
-            #if(is.null(dim(kmers))) kmers <- matrix(kmers, nrow = 1)
-            #otud <- TRUE
-            if(!quiet & verbose) cat("Reduced size: ", length(x), "\n")
-          }else{
-            if(!quiet & verbose) cat("Too few OTUs to cluster\n")
-          }
-        }
-      }
+      # if(length(x) > 1000){
+      #   centroid <- apply(kmers, 2, mean)
+      #   errs2 <- (t(t(kmers) - centroid))^2
+      #   euclids <- unname(apply(errs2, 1, sum))
+      #   dists <- slens/(2 * ksize) * euclids # linearized distances
+      #   if(!quiet & verbose) cat("Mean distance from centroid", round(mean(dists), 2), "\n")
+      #   if(mean(dists) > 0.1){
+      #     if(!quiet & verbose) cat("Original size: ", length(x), "\n")
+      #     otus <- .otu(x, k = 4, threshold = 0.99)
+      #     if(max(otus) > 20){
+      #       pointers <- .point(paste(otus))
+      #       centrals <- grepl("\\*$", names(otus)) # central (logical)
+      #       cord <- order(pointers[centrals]) # order of central seqs
+      #       x <- x[centrals][cord]
+      #       nseq <- length(x)
+      #       kmers <- kmers[centrals, , drop = FALSE][cord, , drop = FALSE]
+      #       #if(is.null(dim(kmers))) kmers <- matrix(kmers, nrow = 1)
+      #       #otud <- TRUE
+      #       if(!quiet & verbose) cat("Reduced size: ", length(x), "\n")
+      #     }else{
+      #       if(!quiet & verbose) cat("Too few OTUs to cluster\n")
+      #     }
+      #   }
+      # }
       tmp <- tryCatch(kmeans(kmers, centers = K, nstart = nstart)$cluster,
                       error = function(er) sample(rep(1:K, nseq)[1:nseq]),
                       warning = function(wa) sample(rep(1:K, nseq)[1:nseq]))
