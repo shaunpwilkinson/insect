@@ -65,7 +65,7 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
       xrems <- xlengths %% 3
       if(length(unique(xrems)) > 1) stop("Error code 3274\n")
       x <- ape::as.character.DNAbin(x)
-      x <- lapply(x, seqinr::translate, numcode = numcode, frame = frame)
+      x <- lapply(x, seqinr::translate, numcode = attr(tree, "numcode"), frame = attr(tree, "frame"))
       x <- ape::as.AAbin(x)
       keeps <- sapply(x, function(v) !any(v == as.raw(42)))
       if(any(!keeps)) stop("Error code 0442\n")
