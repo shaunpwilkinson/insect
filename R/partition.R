@@ -166,6 +166,9 @@
       seqweightsj <- seqweights[membership == j]
       ###### seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
       ###### seqweightsj <- seqweightsj * mcn/seq_numbers[j] ########
+      myfac <- max(log(length(seqweightsj), 2)^2, 2)/length(seqweightsj)
+      cat(myfac, "\n")
+      seqweightsj <- seqweightsj * myfac
       if(!quiet & verbose) cat("Training child model", j, "\n")
       ins <- if(finetune) res[[pnms[j]]]$inserts else model$inserts
       if(is.null(ins)) ins <- TRUE # top level only
