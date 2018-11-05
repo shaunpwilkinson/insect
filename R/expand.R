@@ -42,18 +42,56 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
                    recursive = TRUE, cores = 1, quiet = FALSE, verbose = FALSE,
                    ...){
   dots <- list(...)
-  x <- attr(tree, "trainingset")
-  pointers <- attr(x, "rerep.pointers")
-  xnames <- attr(x, "rerep.names")
-  #seqweights <- attr(x, "rerep.weights") # length of derep'd set
-  #if(is.null(seqweights)) seqweights <- aphid::weight(x, k = if(is.null(dots$k)) 4 else dots$k)
-  #seqweights <- NULL # assigned to .partition 20181024
-  lineages <- attr(x, "lineages") # same length as full set, includes full strings
+
+  if(is.null(attr(tree, "numcode"))){
+    x <- attr(tree, "trainingset")
+    pointers <- attr(x, "rerep.pointers")
+    xnames <- attr(x, "rerep.names")
+    lineages <- attr(x, "lineages") # same length as full set, includes full strings. can be nul
+    kmers <- attr(tree, "kmers")
+    ksize <- attr(tree, "k")
+    if(is.null(kmers) | is.null(ksize)){
+      ksize <- if(is.null(dots$k)) 4 else dots$k
+      kmers <- .encodekc(kmer::kcount(x, k = ksize))
+    }else{
+      stopifnot(nrow(kmers) == length(x))
+    }
+  }else{ #amino classifier
+    if(is.null(attr(tree, "frame"))) stop("Error code 0227\n")
+    x <- attr(tree, "xaa")
+    if(is.null(x)){
+      x <- rereplicate(attr(tree, "trainingset"))
+      xlengths <- vapply(x, length, 0L, USE.NAMES = FALSE)
+      xrems <- xlengths %% 3
+      if(length(unique(xrems)) > 1) stop("Error code 3274\n")
+      x <- ape::as.character.DNAbin(x)
+      x <- lapply(x, seqinr::translate, numcode = numcode, frame = frame)
+      x <- ape::as.AAbin(x)
+      keeps <- sapply(x, function(v) !any(v == as.raw(42)))
+      if(any(!keeps)) stop("Error code 0442\n")
+      hashes <- hash(x)
+      xnames <- names(x)
+      pointers <- .point(hashes)
+      x <- x[!duplicated(hashes)]
+    }else{
+      pointers <- attr(x, "rerep.pointers")
+      xnames <- attr(x, "rerep.names")
+    }
+    lineages <- attr(attr(tree, "trainingset"), "lineages")
+    ksize <- 2
+    kmers <- .encodekc(kmer::kcount(x, k = ksize))
+  }
+  #attr(tree, "kmers") <- NULL ## replaced later
+
   if(is.null(lineages)){
     taxIDs <- as.integer(gsub(".+\\|", "", xnames))
     lineages <- get_lineage(taxIDs, db = attr(tree, "taxonomy"), numbers = TRUE)
     lineages <- vapply(lineages, paste0, "", collapse = "; ")
   }
+  #seqweights <- attr(x, "rerep.weights") # length of derep'd set
+  #if(is.null(seqweights)) seqweights <- aphid::weight(x, k = if(is.null(dots$k)) 4 else dots$k)
+  #seqweights <- NULL # assigned to .partition 20181024
+
   ## Establish which parts of the tree to expand
   clades <- gsub("0", "", clades)
   indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
@@ -118,14 +156,7 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
       stopclustr <- TRUE
     }
   }
-  kmers <- attr(tree, "kmers")
-  ksize <- attr(tree, "k")
-  if(is.null(kmers) | is.null(ksize)){
-    ksize <- if(is.null(dots$k)) 4 else dots$k
-    kmers <- .encodekc(kmer::kcount(x, k = ksize))
-  }else{
-    stopifnot(nrow(kmers) == length(x))
-  }
+
   # if(ncores == 1){
   #   if(!quiet) cat("Counting k-mers\n")
   #   dots <- list(...)
@@ -133,7 +164,7 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
   #   kmers <- kmers/(sapply(x, length) - 4) #k - 1 = 4
   # }else kmers <- NULL
   # kmers <- NULL # need this if using partition to count kmers
-  attr(tree, "kmers") <- NULL ## replaced later
+
   ## prev line commented to prevent k-mer stripping
   ### recursively split nodes
   switchpoint <- max(round((length(x) * 0.8)/ncores), 50L)
@@ -271,8 +302,9 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
   # attributes(x) <- tmpxattr
   if(!quiet) cat("Resetting node heights\n")
   tree <- phylogram::reposition(tree)
-  attr(tree, "kmers") <- kmers
+  #attr(tree, "kmers") <- kmers # can no longer do this due to temporary AA kmers
   rm(kmers)
+  rm(x)
   if(!quiet) cat("Done\n")
   class(tree) <- c("insect", "dendrogram")
   return(tree)

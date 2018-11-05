@@ -139,6 +139,8 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      tabulize = FALSE, metadata = FALSE, cores = 1){
   #if(is.null(attr(tree, "nullscore"))) attr(tree, "nullscore") <- -1E08 ###
   if(!is.null(attr(tree, "training_data"))) attr(tree, "training_data") <- NULL
+  urnks <- sort(unique(attr(tree, "taxonomy")$rank))
+  if(all(grepl("^rank[0123456789]+", urnks))) ranks <- urnks[-1] ##RDP format
   if(is.null(names(x))) names(x) <- paste0("S", seq_along(x))
   if(mode(x) == "character") x <- char2dna(x, simplify = FALSE)
   if(!is.list(x)){
@@ -232,9 +234,6 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
         attr(x[[i]], "dists") <- neighbors$nn.dists[i, ]
         attr(x[[i]], "NN") <- nnidxs[i]
       }
-
-      ###########
-
       ###td2 <- 2 * td
       td2 <- td
       for(i in seq_along(x)){
@@ -294,8 +293,6 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     }
   }
 
-
-
   # decode second and third tier models for increased speed
   for(i in seq_along(tree)){
     attr(tree[[i]], "model") <- decodePHMM(attr(tree[[i]], "model"))
@@ -305,45 +302,27 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       }
     }
   }
-  # classify0 <- function(xx, z, m, td, db, key, DNA){ ## parallelizable
-  #   stopifnot(!is.null(attr(xx, "dists")))
-  #   stopifnot(!is.null(attr(xx, "idxs")))
-  #   stopifnot(!is.null(attr(xx, "NN")))
-  #   if(attr(xx, "dists")[1] <= 2 * td){
-  #     idxs <- attr(xx, "idxs")[attr(xx, "dists") <= 2 * td]
-  #     alig <- aphid::align(c(list(xx), z[idxs]), model = m, quiet = TRUE)
-  #     dis <- if(DNA) ape::dist.dna(alig) else ape::dist.aa(alig)/100
-  #     dis <- unname(dis[seq_along(idxs)])
-  #     idxs <- idxs[dis <= td]
-  #     #taxs <- as.integer(gsub(".+\\|", "", seqnames[idxs]))
-  #     taxs <- unname(key[idxs]) ## length(key) = nrow(kmers)
-  #     if(length(taxs) == 0L){
-  #       ##attr(xx, "NN") <- attr(xx, "nnidx") #nnidxs[i] # sequence index, no rplcmnt needed
-  #       attr(xx, "NNhit") <- FALSE # -> do full classification routine
-  #       attr(xx, "dists") <- attr(xx, "dists")[1]
-  #       attr(xx, "idxs") <- attr(xx, "idxs")[1]
-  #     }else if(length(taxs) == 1L){
-  #       attr(xx, "NN") <- taxs # taxid
-  #       attr(xx, "NNhit") <- TRUE # -> skip full classification routine
-  #       attr(xx, "dists") <- dis[dis <= td]
-  #       attr(xx, "idxs") <- idxs[1]
-  #     }else{
-  #       lins <- get_lineage(taxs, db, numbers = TRUE)
-  #       lins <- vapply(lins, paste0, "", collapse = "; ")
-  #       anc <- .ancestor(lins)
-  #       attr(xx, "NN") <- as.integer(gsub(".+; ", "", anc)) # taxid
-  #       attr(xx, "NNhit") <- TRUE # -> skip full classification routine
-  #       attr(xx, "dists") <- min(dis[dis <= td])
-  #       attr(xx, "idxs") <- idxs[which.min(dis[dis <= td])]
-  #     }
-  #   }else{
-  #     #attr(x[[i]], "NN") <-  nnidxs[i] #nnidxs[i] # sequence index
-  #     attr(xx, "NNhit") <- FALSE # -> do full classification routine
-  #     attr(xx, "dists") <- attr(xx, "dists")[1]
-  #     attr(xx, "idxs") <- attr(xx, "idxs")[1]
-  #   }
-  #   return(xx)
-  # }
+
+  if(!is.null(attr(tree, "numcode"))){
+    if(is.null(attr(tree, "frame"))) stop("Amino classifier missing frame attribute\n")
+    if(is.null(attr(tree, "remainder"))) stop("Amino classifier missing remainder attribute\n")
+    for(i in seq_along(x)){
+      if(!attr(x[[i]], "NNhit")){ # leave DNA hits intact (in DNAbin format -for mixed hashing)
+        tmpattr <- attributes(x[[i]])
+        if(length(x[[i]]) %% 3 != attr(tree, "remainder")){
+          attr(x[[i]], "CODE6") <- TRUE ## invalid length
+        }else{
+          x[[i]] <- ape::as.character.DNAbin(x[[i]])
+          x[[i]] <- seqinr::translate(x[[i]], numcode = attr(tree, "numcode"), frame = attr(tree, "frame"))
+          x[[i]] <- ape::as.AAbin(x[[i]])
+          attributes(x[[i]]) <- tmpattr
+          if(any(x[[i]] == as.raw(42))) attr(x[[i]], "CODE7") <- TRUE ## contains stop codon(s)
+        }
+      }
+    }
+  }
+
+
   classify1 <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE){
     ## takes a single named raw vector with NN and NNhit attrs
     ## outputs a 1-row dataframe
@@ -353,7 +332,16 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                         score = NA_real_,
                         path = NA_character_,
                         scores = NA_character_,
-                        reason = NA_integer_,
+                        reason = -1L,
+                        stringsAsFactors = FALSE)
+      return(out)
+    }
+    if(!is.null(attr(x, "CODE6")) | !is.null(attr(x, "CODE7"))){
+      out <- data.frame(taxID = 1L,
+                        score = NA_real_,
+                        path = NA_character_,
+                        scores = NA_character_,
+                        reason = if(!is.null(attr(x, "CODE6"))) 6L else 7L,
                         stringsAsFactors = FALSE)
       return(out)
     }
@@ -426,7 +414,15 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                       stringsAsFactors = FALSE)
     return(out)
   }
+
+
+  ## next lines are to speed up aa sequence classifications
+  hashes2 <- hash(x) # now only finding duplicate aa seqs
+  pointers2 <- .point(hashes2)
+  xnames <- names(x) ## need to think about NN attrs?
+  x <- x[!duplicated(hashes2)]
   gc()
+
   if(inherits(cores, "cluster")){
     ###if(doNN) x <- parallel::parLapply(cores, x, classify0, z, m, td, db, key, DNA)
     res <- parallel::parLapply(cores, x, classify1, tree, threshold, decay, ping)
@@ -447,11 +443,13 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       res <- lapply(x, classify1, tree, threshold, decay, ping)
     }
   }
+
+  res <- res[pointers2] # rereplicating AA dupes
   res <- do.call("rbind", res) ## changed output to dataframe 20180617
   lineages <- get_lineage(res$taxID, db, cores = cores,
                           simplify = FALSE, numbers = FALSE)
   tmp <- sapply(lineages, tail, 1)
-  lhcols <- data.frame(representative = names(x),
+  lhcols <- data.frame(representative = xnames,
                      taxID = res$taxID,
                      taxon = tmp,
                      rank = names(tmp),
@@ -459,7 +457,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      stringsAsFactors = FALSE)
 
   if(!is.null(ranks)){
-    rnkmat <- matrix(NA_character_, nrow = length(x), ncol = length(ranks))
+    rnkmat <- matrix(NA_character_, nrow = length(xnames), ncol = length(ranks))
     rnkmat <- as.data.frame(rnkmat, stringsAsFactors = FALSE)
     colnames(rnkmat) <- ranks
     fun <- function(l, r) if(is.na(l[r])) "" else l[r]
@@ -473,7 +471,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     if(exists("neighbors")){
       taxids <- unname(key[neighbors$nn.idx[, 1]])
       dbinds <- match(taxids, db$taxID)
-      if(any(is.na(dbinds))) stop("Error 1\n")
+      if(any(is.na(dbinds))) stop("Error code 9283\n")
       nns <- cbind(taxids, db$name[dbinds], db$rank[dbinds], round(neighbors$nn.dists[, 1], 4))
       colnames(nns) <- c("NNtaxID", "NNtaxon", "NNrank","NNdistance")
       lhcols <- cbind(lhcols, nns)
@@ -489,3 +487,44 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   return(lhcols)
 }
 ################################################################################
+
+
+# classify0 <- function(xx, z, m, td, db, key, DNA){ ## parallelizable
+#   stopifnot(!is.null(attr(xx, "dists")))
+#   stopifnot(!is.null(attr(xx, "idxs")))
+#   stopifnot(!is.null(attr(xx, "NN")))
+#   if(attr(xx, "dists")[1] <= 2 * td){
+#     idxs <- attr(xx, "idxs")[attr(xx, "dists") <= 2 * td]
+#     alig <- aphid::align(c(list(xx), z[idxs]), model = m, quiet = TRUE)
+#     dis <- if(DNA) ape::dist.dna(alig) else ape::dist.aa(alig)/100
+#     dis <- unname(dis[seq_along(idxs)])
+#     idxs <- idxs[dis <= td]
+#     #taxs <- as.integer(gsub(".+\\|", "", seqnames[idxs]))
+#     taxs <- unname(key[idxs]) ## length(key) = nrow(kmers)
+#     if(length(taxs) == 0L){
+#       ##attr(xx, "NN") <- attr(xx, "nnidx") #nnidxs[i] # sequence index, no rplcmnt needed
+#       attr(xx, "NNhit") <- FALSE # -> do full classification routine
+#       attr(xx, "dists") <- attr(xx, "dists")[1]
+#       attr(xx, "idxs") <- attr(xx, "idxs")[1]
+#     }else if(length(taxs) == 1L){
+#       attr(xx, "NN") <- taxs # taxid
+#       attr(xx, "NNhit") <- TRUE # -> skip full classification routine
+#       attr(xx, "dists") <- dis[dis <= td]
+#       attr(xx, "idxs") <- idxs[1]
+#     }else{
+#       lins <- get_lineage(taxs, db, numbers = TRUE)
+#       lins <- vapply(lins, paste0, "", collapse = "; ")
+#       anc <- .ancestor(lins)
+#       attr(xx, "NN") <- as.integer(gsub(".+; ", "", anc)) # taxid
+#       attr(xx, "NNhit") <- TRUE # -> skip full classification routine
+#       attr(xx, "dists") <- min(dis[dis <= td])
+#       attr(xx, "idxs") <- idxs[which.min(dis[dis <= td])]
+#     }
+#   }else{
+#     #attr(x[[i]], "NN") <-  nnidxs[i] #nnidxs[i] # sequence index
+#     attr(xx, "NNhit") <- FALSE # -> do full classification routine
+#     attr(xx, "dists") <- attr(xx, "dists")[1]
+#     attr(xx, "idxs") <- attr(xx, "idxs")[1]
+#   }
+#   return(xx)
+# }

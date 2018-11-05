@@ -14,18 +14,18 @@ BugReports: http://github.com/shaunpwilkinson/insect/issues
 Encoding: UTF-8
 Imports:
     ape (>= 3.0.0),
-    aphid (>= 1.1.0),
-    kmer (>= 1.0.1),
+    aphid (>= 1.2.0),
+    kmer (>= 1.1.0),
     openssl, 
     phylogram (>= 2.0.0),
     RANN,
+    seqinr,
     stats,
     utils,
     xml2
 Suggests:
     knitr,
     rmarkdown,
-    seqinr,
     testthat
 VignetteBuilder: knitr
 RoxygenNote: 6.1.0

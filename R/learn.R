@@ -3,17 +3,21 @@
 #' This function learns a classification tree from a reference sequence database
 #'   using a recursive partitioning procedure.
 #'
-#' @param x an object of class\code{"DNAbin"} representing a list of
-#'   DNA sequences to be used as the training data for the tree-learning process.
+#' @param x a reference database of class\code{"DNAbin"} representing a list of
+#'   DNA sequences to be used as the training data.
 #'   All sequences should be from the same genetic region of interest
 #'   and be globally alignable (i.e. without unjustified end-gaps).
-#'   The sequences must have "names" attributes that include
-#'   taxonomic ID numbers corresponding with those in the taxonomy
+#'   The sequences must have "names" attributes, either in RDP format
+#'   (containing semicolon-delimited lineage strings),
+#'   or that include taxonomic ID numbers corresponding with those in the taxonomy
 #'   database \code{db} (separated from the sequence ID by a "|" character).
 #'   For example: "AF296347|30962", "AF296346|8022", "AF296345|8017", etc.
 #'   See \code{\link{searchGB}} for more details on creating the reference
-#'   sequence database.
+#'   sequence database and \code{\link{taxonomy}} for the associated heirarchical
+#'   taxonomic database.
 #' @param db a heirarchical taxonomy database in the form of a data.frame.
+#'   Cannot be NULL unless training data is in RDP format
+#'   (containing semicolon delimited lineage strings).
 #'   The object should have
 #'   four columns, labeled "taxID", "parent_taxID", "rank" and "name".
 #'   The first two should be numeric, and all ID numbers in the
@@ -86,6 +90,8 @@
 #'   to the console.
 #' @param verbose logical indicating whether extra feedback should be
 #'   printed to the console, including progress at each split.
+#' @param numcode,frame passed to \code{\link[seqinr]{translate}}.
+#'   Set to NULL (default) unless an amino acid sequence classifier is required.
 #' @param ... further arguments to be passed on to \code{\link[aphid]{train}}).
 #' @return an object of class \code{"insect"}.
 #' @details The "insect" object type is a dendrogram
@@ -145,16 +151,14 @@
 #'   get_lineage(taxID, whale_taxonomy)
 #' }
 ################################################################################
-learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
+learn <- function(x, db = NULL, model = NULL, refine = "Viterbi", iterations = 50,
                   nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
                   retry = TRUE, resize = TRUE, maxsize = max(sapply(x, length)),
                   recursive = TRUE, cores = 1, quiet = FALSE, verbose = FALSE,
-                  ...){
-
+                  numcode = NULL, frame = NULL, ...){
 
   if(!quiet) cat("Training classifier\n")
   if(mode(x) == "character") x <- char2dna(x)
-
   dots <- list(...)
   if(is.null(dots$k)){
     ksize <- if(inherits(x, "DNAbin")) 4 else 2
@@ -167,22 +171,70 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
       ksize <- dots$k
     }
   }
-
-
-  if(!quiet) cat("Converting taxon IDs to full lineage strings\n")
-  if(!grepl("\\|", names(x)[1])){
-    stop("Names of input sequences must include taxonomic ID numbers\n")
+  if(is.null(db)){
+    if(!all(grepl(";", names(x)))){
+      stop("Training data must be in RDP format if no taxonomy database is provided\n")
+    }else{
+      if(!quiet) cat("Building heirarchical taxonomy database\n")
+    }
+    if(all(grepl("\\\t", names(x)))){
+      xnames <- gsub("\\\t.+", "", names(x))
+      xlins <- gsub(".+\\\t", "", names(x))
+    }else{
+      xnames <- paste0("S", seq_along(x))
+      xlins <- names(x)
+    }
+    if(!grepl("^[Rr]oot;", xlins[1])){
+      xlins <- paste0("Root;", xlins)
+    }
+    xlins <- gsub(";$", "", xlins)
+    xlins <- gsub("; ", ";", xlins)
+    xs <- strsplit(xlins, split = ";") #split
+    linlens <- vapply(xs, length, 0L)
+    linlen <- max(linlens)
+    discards <- linlens < linlen
+    if(any(discards)){
+      warning("Incomplete lineages detected. Removing", sum(discards), "training sequences")
+      x <- x[!discards]
+      if(length(x) < 10) stop("Formatting error\n")
+    }
+    xsa <- lapply(xs, function(l) paste0(l, "__", seq_along(l) - 1)) #appended
+    taxa <- as.data.frame(xsa, stringsAsFactors = FALSE)
+    taxa <- t(as.matrix(taxa))
+    rownames(taxa) <- NULL
+    newmat <- matrix(NA_integer_, nrow = nrow(taxa), ncol = ncol(taxa))
+    newmat[, 1] <- 1L # taxID for Root
+    for(i in seq(2, linlen)){
+      taxa[, i] <- paste0(newmat[, i - 1], ";", taxa[, i])
+      newmat[, i] <- insect:::.point(taxa[, i]) + max(newmat[, i - 1])
+      taxa[, i] <- paste0(newmat[, i], ";", taxa[, i])
+    }
+    db <- unique(as.vector(taxa))
+    db[1] <- paste0("1;0;", db[1]) #root
+    db <- gsub("__([[:digit:]]+)$", paste0(";rank", "\\1"), db)
+    db <- strsplit(db, split = ";")
+    db <- t(as.matrix(as.data.frame(db, stringsAsFactors = FALSE)))
+    rownames(db) <- NULL
+    db <- db[, c(1, 2, 4, 3)]
+    colnames(db) <- c("taxID", "parent_taxID", "rank", "name")
+    db <- as.data.frame(db, stringsAsFactors = FALSE)
+    db$taxID <- as.integer(db$taxID)
+    db$parent_taxID <- as.integer(db$parent_taxID)
+    taxIDs <- newmat[, linlen]
+    lineages <- apply(newmat, 1, paste0, collapse = "; ")
+    names(x) <- paste0(xnames, "|", taxIDs)
+  }else{
+    if(!quiet) cat("Converting taxon IDs to full lineage strings\n")
+    if(!grepl("\\|", names(x)[1])){
+      stop("Names of input sequences must include taxonomic ID numbers\n")
+    }
+    taxIDs <- as.integer(gsub(".+\\|", "", names(x)))
+    lineages <- get_lineage(taxIDs, db = db, cores = cores, numbers = TRUE)
+    lineages <- vapply(lineages, paste0, "", collapse = "; ")
+    db <- prune_taxonomy(db, taxIDs = taxIDs, keep = TRUE)
   }
-  taxIDs <- as.integer(gsub(".+\\|", "", names(x)))
-  lineages <- get_lineage(taxIDs, db = db, cores = cores, numbers = TRUE)
-  lineages <- vapply(lineages, paste0, "", collapse = "; ")
 
-  # if(is.null(attr(x, "weights"))){
-  #   if(!quiet) cat("Deriving sequence weights\n")
-  #   suppressMessages(attr(x, "weights") <- aphid::weight(x, method = "Henikoff", k = ksize))
-  # }
-
-  if(!quiet) cat("Initializing tree object\n")
+  if(!quiet) cat("Initializing tree\n")
   tree <- 1
   attr(tree, "k") <- ksize #new
   attr(tree, "leaf") <- TRUE
@@ -190,13 +242,42 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "midpoint") <- 0
   attr(tree, "members") <- 1
   class(tree) <- "dendrogram"
-  attr(tree, "taxonomy") <- prune_taxonomy(db, taxIDs = taxIDs, keep = TRUE)
+  attr(tree, "taxonomy") <- db
   attr(tree, "clade") <- ""
+  amino <- FALSE
+  if(!is.null(numcode)){ #make amino acid classifier
+    if(is.null(frame)) stop("Argument provided for numcode but not frame\n")
+    amino <- TRUE
+    xlengths <- vapply(x, length, 0L, USE.NAMES = FALSE)
+    xrems <- xlengths %% 3
+    remtab <- sort(table(xrems), decreasing = TRUE)
+    remainder <- as.integer(names(remtab)[1]) # expected remainder
+    discards <- xrems != remainder
+    if(any(discards)) warning(sum(discards), " sequences are not translatable and will be removed from the trainingset")
+    x <- x[!discards]
+    lineages <- lineages[!discards]
+    if(length(x) < 10) stop("Too few training sequences remain\n")
+    if(!quiet) cat("Translating sequences\n")
+    xaa <- ape::as.character.DNAbin(x)
+    xaa <- lapply(xaa, seqinr::translate, numcode = numcode, frame = frame)
+    xaa <- ape::as.AAbin(xaa)
+    keeps <- sapply(xaa, function(v) !any(v == as.raw(42)))
+    if(any(!keeps)) warning(sum(!keeps), " translated sequences contain stop codons and will be removed from the trainingset")
+    xaa <- xaa[keeps]
+    x <- x[keeps]
+    lineages <- lineages[keeps]
+    if(length(x) < 10) stop("Too few training sequences remaining\n")
+    attr(tree, "numcode") <- numcode
+    attr(tree, "frame") <- frame
+    attr(tree, "remainder") <- remainder
+    xaa <- dereplicate(xaa)
+    attr(tree, "xaa") <- xaa
+  }
   attr(tree, "sequences") <- seq_along(x)
   #attr(tree, "seqnames") <- names(x) # cant just name sequences attr due to derep-rerep
-  if(!quiet) cat("Dereplicating sequences\n")
+  if(!quiet) cat("Dereplicating sequences")
   tset <- dereplicate(x)
-  if(!quiet) cat("Found", length(tset),"unique sequences\n")
+  if(!quiet) cat(", found", length(tset),"unique sequences\n")
   #if(!quiet) cat("Clustering OTUs\n")
   #otus <- .otu(tset, threshold = 0.97) # for increased partitioning speed at top levels
   #if(!quiet) cat("Found", max(otus), "OTUs\n")
@@ -207,18 +288,16 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "lineage") <- .ancestor(lineages) # eventually removed during expansion
   attr(tree, "minscore") <- -1E06 # nominal
   xlengths <- vapply(tset, length, 0L, USE.NAMES = FALSE)
-  attr(tree, "seqlengths") <- xlengths #new
-  attr(tree, "minlength") <- min(xlengths)
-  attr(tree, "maxlength") <- max(xlengths)
+  attr(tree, "seqlengths") <- xlengths #used to normalize kmer matrix in `classify``
 
-  hashes <- hash(x)
-  duplicates <- duplicated(hashes)
   # if(is.null(attr(x, "hashes"))) attr(x, "hashes") <- hash(x)
   # if(is.null(attr(x, "duplicates"))) attr(x, "duplicates") <- duplicated(attr(x, "hashes"))
   # if(is.null(attr(x, "pointers"))) attr(x, "pointers") <- .point(attr(x, "hashes"))
   attr(tree, "pointers") <- attr(tset, "rerep.pointers") #new
 
   if(!quiet) cat("Making hash key for exact sequence matching\n")
+  hashes <- hash(x)
+  #duplicates <- duplicated(hashes)
   ancestors <- split(lineages, f = factor(hashes, levels = unique(hashes)))
   anclens <- vapply(ancestors, length, 0L, USE.NAMES = FALSE)
   ancestors[anclens > 1] <- lapply(ancestors[anclens > 1], .ancestor)
@@ -232,28 +311,33 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "kmers") <- .encodekc(kmer::kcount(tset, k = ksize)) #new
   # attr(tree, "kmers") <- kmer::kcount(x[!attr(x, "duplicates")],
   #                                              k = if(is.null(dots$k)) 5 else dots$k)
+
+  if(amino){
+    x <- xaa
+    xlengths <- vapply(x, length, 0L, USE.NAMES = FALSE)
+  }else{
+    x <- tset
+  }
+  attr(tree, "minlength") <- min(xlengths)
+  attr(tree, "maxlength") <- max(xlengths)
+
   if(is.null(model)){
     if(!quiet) cat("Dereplicating sequences\n")
     if(!quiet) cat("Deriving top level model\n")
-    if(length(tset) > 1000){
+    if(length(x) > 1000){
       # sample model training to avoid excessive memory usage
-      samp <- sample(seq_along(tset), size = 1000)
-      suppressWarnings(
-        model <- aphid::derivePHMM(tset[samp], refine = refine,
-                                   #seqweights = attr(tset, "derep.weights")[samp],
-                                   maxsize = maxsize,
-                                   inserts = "inherited", alignment = FALSE,
-                                   quiet = TRUE, cores = cores, maxiter = 20,
-                                   limit = 0.98)
-      )
-    }else{
-      suppressWarnings(
-        model <- aphid::derivePHMM(tset, refine = refine,
-                                   #seqweights = attr(tset, "derep.weights"),
-                                   inserts = "inherited", alignment = FALSE,
-                                   quiet = TRUE, cores = cores, maxiter = 20)
-      )
+      samp <- sample(seq_along(x), size = 1000)
+      x <- x[samp]
     }
+    suppressWarnings(
+      model <- aphid::derivePHMM(x, refine = refine,
+                                 #seqweights = attr(tset, "derep.weights")[samp],
+                                 maxsize = maxsize,
+                                 inserts = "inherited", alignment = FALSE,
+                                 quiet = TRUE, cores = cores, maxiter = 20,
+                                 limit = 0.98)
+    )
+
     ## strip memory intensive elements but not alignment yet
     model$weights <- NULL
     model$mask <- NULL
@@ -267,12 +351,16 @@ learn <- function(x, db, model = NULL, refine = "Viterbi", iterations = 50,
   attr(tree, "model") <- model
   attr(tree, "trainingset") <- tset # includes full numbered lineages
   rm(tset)
+  rm(x)
+  if(exists("xaa")) rm(xaa)
+  if(!quiet) cat("Recursively splitting nodes\n")
   tree <- expand(tree, clades = "", refine = refine, iterations = iterations,
                  nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
                  probs = probs, retry = retry, resize = resize, maxsize = maxsize,
                  recursive = recursive, cores = cores, quiet = quiet,
                  verbose = verbose, ... = ...)
   attr(attr(tree, "trainingset"), "lineages") <- NULL # no longer required
+  attr(tree, "xaa") <- NULL # no longer required
   return(tree)
 }
 ################################################################################
