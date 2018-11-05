@@ -2,7 +2,7 @@
 ################################################################################
 .partition <- function(x, model = NULL, K = 2, allocation = "cluster",
                       refine = "Viterbi", nstart = 20, iterations = 50,
-                      kmers = NULL, ksize = NULL, #seqweights = "Henikoff",
+                      kmers = NULL, ksize = NULL, seqweights = "Henikoff",
                       cores = 1, quiet = FALSE, verbose = FALSE, ...){
   ### x is a DNAbin object
   # model is a starting model to be trained on each side
@@ -15,15 +15,15 @@
   names(x) <- paste0("S", 1:nseq)
   pointers <- seq_along(x)
   # otud <- FALSE
-  # if(is.null(seqweights)){
-  #   seqweights <- rep(1, nseq)
-  # }else if(identical(seqweights, "Henikoff")){
-
-  # }else if(identical(seqweights, "Gerstein")){
-  #   seqweights <- aphid::weight(x, method = "Gerstein", k = 5)
-  # }else if(length(seqweights) != nseq){
-  #   stop("Invalid sequence weights passed to '.partition'")
-  # }
+  if(is.null(seqweights)){
+    seqweights <- rep(1, nseq)
+  }else if(identical(seqweights, "Henikoff")){
+    seqweights <- aphid::weight(x, method = "Henikoff", k = 5)
+  }else if(identical(seqweights, "Gerstein")){
+    seqweights <- aphid::weight(x, method = "Gerstein", k = 5)
+  }else if(length(seqweights) != nseq){
+    stop("Invalid sequence weights passed to '.partition'")
+  }
   if(nseq == 1) return(NULL)
   tmp <- integer(nseq)
   if(nseq == 2){
@@ -97,7 +97,7 @@
     if(length(allocation) != nseq) stop("Invalid argument given for 'allocation'")
     tmp <- allocation
   }
-  seqweights <- aphid::weight(x, method = "Henikoff", k = 5)
+  #########seqweights <- aphid::weight(x, method = "Henikoff", k = 5)
   res$membership <- integer(0)
   res$init_membership <- tmp
   #res$success <- NA
@@ -166,9 +166,9 @@
       seqweightsj <- seqweights[membership == j]
       ###### seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
       ###### seqweightsj <- seqweightsj * mcn/seq_numbers[j] ########
-      myfac <- max(log(length(seqweightsj), 2)^2, 2)/length(seqweightsj)
-      cat(myfac, "\n")
-      seqweightsj <- seqweightsj * myfac
+      # if(length(seqweightsj) > 4){
+      #   seqweightsj <- seqweightsj * (log(length(seqweightsj), 2)^2)/length(seqweightsj)
+      # }
       if(!quiet & verbose) cat("Training child model", j, "\n")
       ins <- if(finetune) res[[pnms[j]]]$inserts else model$inserts
       if(is.null(ins)) ins <- TRUE # top level only

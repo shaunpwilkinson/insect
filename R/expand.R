@@ -88,8 +88,9 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
     lineages <- get_lineage(taxIDs, db = attr(tree, "taxonomy"), numbers = TRUE)
     lineages <- vapply(lineages, paste0, "", collapse = "; ")
   }
-  #seqweights <- attr(x, "rerep.weights") # length of derep'd set
-  #if(is.null(seqweights)) seqweights <- aphid::weight(x, k = if(is.null(dots$k)) 4 else dots$k)
+  seqweights <- attr(x, "rerep.weights") # length of derep'd set
+  if(is.null(seqweights)) seqweights <- aphid::weight(x, k = if(is.null(dots$k)) 4 else dots$k)
+
   #seqweights <- NULL # assigned to .partition 20181024
 
   ## Establish which parts of the tree to expand
@@ -212,7 +213,7 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
                        index, ", x, lineages, refine = refine, ",
                        "nstart = nstart, iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, retry = retry, resize = resize, ",
-                       "maxsize = maxsize, kmers = kmers, ksize = ksize, ", #seqweights = seqweights, ",
+                       "maxsize = maxsize, kmers = kmers, ksize = ksize, seqweights = seqweights, ",
                        "cores = cores, quiet = quiet, verbose = verbose, ... = ...)")
       eval(parse(text = toeval))
       ss <- FALSE # split success; prevents build note due to lack of visible binding
@@ -239,7 +240,7 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
                                  probs = probs, retry = retry, resize = resize,
                                  maxsize = maxsize,
                                  kmers = kmers, ksize = ksize, # large matrix could cause memory probs
-                                 #seqweights = seqweights,
+                                 seqweights = seqweights,
                                  cores = 1,
                                  quiet = TRUE, ... = ...)
     for(i in seq_along(trees)){
@@ -255,7 +256,7 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
                        indices[i], ", x, lineages, refine = refine, nstart = nstart, ",
                        "iterations = iterations, minK = minK, maxK = maxK, ",
                        "minscore = minscore, probs = probs, retry = retry, resize = resize, ",
-                       "maxsize = maxsize, kmers = kmers, ksize = ksize, ", #seqweights = seqweights, ",
+                       "maxsize = maxsize, kmers = kmers, ksize = ksize, seqweights = seqweights, ",
                        "cores = cores, quiet = quiet, verbose = verbose, ... = ...)")
       eval(parse(text = toeval))
     }

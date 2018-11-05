@@ -278,6 +278,8 @@ learn <- function(x, db = NULL, model = NULL, refine = "Viterbi", iterations = 5
   if(!quiet) cat("Dereplicating sequences")
   tset <- dereplicate(x)
   if(!quiet) cat(", found", length(tset),"unique sequences\n")
+  if(!quiet) cat("Calculating sequence weights\n")
+  attr(tset, "rerep.weights") <- aphid::weight(tset, method = "Henikoff", k = 5)
   #if(!quiet) cat("Clustering OTUs\n")
   #otus <- .otu(tset, threshold = 0.97) # for increased partitioning speed at top levels
   #if(!quiet) cat("Found", max(otus), "OTUs\n")

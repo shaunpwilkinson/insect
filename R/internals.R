@@ -26,20 +26,20 @@
 .forkr <- function(tree, x, lineages, refine = "Viterbi", nstart = 10,
                    iterations = 50, minK = 2, maxK = 2,
                    minscore = 0.9, probs = 0.05, retry = TRUE, resize = TRUE,
-                   maxsize = NULL, kmers = NULL, ksize = NULL,
+                   maxsize = NULL, kmers = NULL, ksize = NULL, seqweights = NULL,
                    cores = 1, quiet = FALSE, ...){
   tree <- .fork(tree, x, lineages, refine = refine, nstart = nstart,
                iterations = iterations, minK = minK,
                maxK = maxK, minscore = minscore, probs = probs,
                retry = retry, resize = resize, maxsize = maxsize,
-               kmers = kmers, ksize = ksize, cores = cores,
+               kmers = kmers, ksize = ksize, seqweights = seqweights, cores = cores,
                quiet = quiet, ... = ...)
   if(is.list(tree)) tree[] <- lapply(tree, .forkr, x = x, lineages = lineages,
                                      refine = refine, nstart = nstart,
                                      iterations = iterations, minK = minK, maxK = maxK,
                                      probs = probs, retry = retry, resize = resize,
                                      maxsize = maxsize, minscore = minscore,
-                                     kmers = kmers, ksize = ksize,
+                                     kmers = kmers, ksize = ksize, seqweights = seqweights,
                                      cores = cores, quiet = quiet, ... = ...)
   return(tree)
 }

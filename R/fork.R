@@ -3,7 +3,7 @@
 .fork <- function(node, x, lineages, refine = "Viterbi", nstart = 20,
                  iterations = 50, minK = 2, maxK = 2, minscore = 0.9,
                  probs = 0.5, retry = TRUE, resize = TRUE, maxsize = NULL,
-                 kmers = NULL, ksize = NULL, #seqweights = "Henikoff",
+                 kmers = NULL, ksize = NULL, seqweights = "Henikoff",
                  cores = 1, quiet = FALSE, verbose = FALSE, ...){
   indices <- attr(node, "sequences")
   nseq <- length(indices)
@@ -16,17 +16,16 @@
     #   return(node)
     # }
     if(nseq < maxK) maxK <- nseq
-
-    # if(is.null(seqweights)){
-    #   seqweights <- rep(1, nseq)
-    # }else if(identical(seqweights, "Henikoff")){
-    #   seqweights <- aphid::weight(x[indices], method = "Henikoff", k = 5)
-    # }else if(identical(seqweights, "Gerstein")){
-    #   seqweights <- aphid::weight(x[indices], method = "Gerstein", k = 5)
-    # }else if(length(seqweights) == length(x)){
-    #   seqweights <- seqweights[indices]
-    #   seqweights <- seqweights/mean(seqweights) ##scale weights to average 1
-    # }else stop("Invalid seqweights argument")
+    if(is.null(seqweights)){
+      seqweights <- rep(1, nseq)
+    }else if(identical(seqweights, "Henikoff")){
+      seqweights <- aphid::weight(x[indices], method = "Henikoff", k = 5)
+    }else if(identical(seqweights, "Gerstein")){
+      seqweights <- aphid::weight(x[indices], method = "Gerstein", k = 5)
+    }else if(length(seqweights) == length(x)){
+      seqweights <- seqweights[indices]
+      #seqweights <- seqweights/mean(seqweights) ##scale weights to average 1
+    }else stop("Invalid seqweights argument")
 
     ## uncommented following 20180828 due to fail at retry line 128
     dots <- list(...)
@@ -99,7 +98,7 @@
       seqsplit <- .partition(x[indices], model = mod, refine = refine, K = nclades,
                             allocation = "cluster", nstart = nstart,
                             iterations = iterations, kmers = kmers, ksize = ksize,
-                            #seqweights = seqweights,
+                            seqweights = seqweights,
                             cores = cores, quiet = quiet,
                             verbose = verbose, ... = ...)
       if(is.null(seqsplit)){
@@ -146,7 +145,7 @@
             seqsplit2 <- .partition(x[indices], model = mod, refine = refine, K = 2,
                                    allocation = alloc2, nstart = nstart,
                                    iterations = iterations, kmers = NULL, ksize = NULL,
-                                   #seqweights = seqweights,
+                                   seqweights = seqweights,
                                    cores = cores,
                                    quiet = quiet, verbose = verbose, ... = ...)
             if(!is.null(seqsplit2)){
