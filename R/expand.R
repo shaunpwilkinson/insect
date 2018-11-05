@@ -89,7 +89,7 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
     lineages <- vapply(lineages, paste0, "", collapse = "; ")
   }
   seqweights <- attr(x, "rerep.weights") # length of derep'd set
-  if(is.null(seqweights)) seqweights <- aphid::weight(x, k = if(is.null(dots$k)) 4 else dots$k)
+  if(is.null(seqweights)) seqweights <- aphid::weight(x, k = if(is.null(attr(tree, "numcode"))) 5 else 2)
 
   #seqweights <- NULL # assigned to .partition 20181024
 
