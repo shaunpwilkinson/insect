@@ -302,7 +302,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       }
     }
   }
-
+  origx <- x
   if(!is.null(attr(tree, "numcode"))){
     if(is.null(attr(tree, "frame"))) stop("Amino classifier missing frame attribute\n")
     if(is.null(attr(tree, "remainder"))) stop("Amino classifier missing remainder attribute\n")
@@ -322,11 +322,9 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     }
   }
 
-
   classify1 <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE){
-    ## takes a single named raw vector with NN and NNhit attrs
+    ## takes a single named raw vector with NN, NNhit, and possibly other attrs
     ## outputs a 1-row dataframe
-    # xhash <- hash(x)
     if(attr(x, "NNhit")){
       out <- data.frame(taxID = attr(x, "NN"),
                         score = NA_real_,
@@ -345,11 +343,18 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                         stringsAsFactors = FALSE)
       return(out)
     }
-    path <- ""
-    scores <- ""
+    if(is.null(attr(x, "path"))){
+      path <- ""
+    }else{
+      path <- attr(x, "path")
+      indices <- gsub("([[:digit:]])", "[[\\1]]", path)
+      eval(parse(text = paste0("tree <- tree", indices)))
+    }
+    scores <- if(is.null(attr(x, "scores"))) "" else attr(x, "scores")
     akw <- 1
-    cakw <- 1
-    tax <- 1L # root (cant use 0L due to get_lineage call below)
+    cakw <- if(is.null(attr(x, "cakw"))) 1 else attr(x, "cakw")
+    tax <- if(is.null(attr(x, "tax"))) 1L else attr(x, "tax")
+    #tax <- 1L # root (cant use 0L due to get_lineage call below)
     threshold_met <- minscore_met <- minlength_met <- maxlength_met <- neighbor_check <- TRUE
     while(is.list(tree)){
       no_mods <- length(tree)
@@ -373,11 +378,8 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
         minlength_met <- length(x) >= attr(tree[[best_model]], "minlength")# - 1
         maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength")# + 1
         neighbor_check <- if(is.na(attr(x, "NN"))){
-          ######### cat("ncfailed\n")
           TRUE
         }else{
-          ###########TRUE
-          ########cat(attr(x, "NN") %in% attr(tree[[best_model]], "sequences"), "\n")
           attr(x, "NN") %in% attr(tree[[best_model]], "sequences")
         }
       }else{
@@ -391,6 +393,15 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       tree <- tree[[best_model]]
       #####attr(tree, "nullscore") <- aphid::logsum(sc[seq_len(no_mods)][-best_model]) #####
       tax <- attr(tree, "taxID")
+      if(!is.null(attr(tree, "aaleaf"))){
+        out <- data.frame(taxID = tax,
+                          score = round(if(decay) cakw else akw, 4),
+                          path = path,
+                          scores = scores,
+                          reason = 100L,
+                          stringsAsFactors = FALSE)
+        return(out)
+      }
     }
     score <- round(if(decay) cakw else akw, 4)
     reason <- if(!threshold_met){
@@ -415,41 +426,62 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     return(out)
   }
 
+  classify2 <- function(cores, x, tree, threshold = 0.9, decay = TRUE, ping = TRUE){
+    ## x is (usually) a DNAbin or AAbin list
+    if(inherits(cores, "cluster")){
+      ###if(doNN) x <- parallel::parLapply(cores, x, classify0, z, m, td, db, key, DNA)
+      res <- parallel::parLapply(cores, x, classify1, tree, threshold, decay, ping)
+    }else if(cores == 1){
+      ###if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
+      res <- lapply(x, classify1, tree, threshold, decay, ping)
+    }else{
+      navailcores <- parallel::detectCores()
+      if(identical(cores, "autodetect")) cores <- navailcores - 1
+      if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
+      if(cores > 1){
+        cl <- parallel::makeCluster(cores)
+        ###if(doNN) x <- parallel::parLapply(cl, x, classify0, z, m, td, db, key, DNA)
+        res <- parallel::parLapply(cl, x, classify1, tree, threshold, decay, ping)
+        parallel::stopCluster(cl)
+      }else{
+        ###if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
+        res <- lapply(x, classify1, tree, threshold, decay, ping)
+      }
+    }
+    res <- do.call("rbind", res)
+    return(res)
+  }
 
   ## next lines are to speed up aa sequence classifications
   hashes2 <- hash(x) # now only finding duplicate aa seqs
   pointers2 <- .point(hashes2)
-  xnames <- names(x) ## need to think about NN attrs?
-  x <- x[!duplicated(hashes2)]
+  #xnames <- names(x) ## need to think about NN attrs?
   gc()
 
-  if(inherits(cores, "cluster")){
-    ###if(doNN) x <- parallel::parLapply(cores, x, classify0, z, m, td, db, key, DNA)
-    res <- parallel::parLapply(cores, x, classify1, tree, threshold, decay, ping)
-  }else if(cores == 1){
-    ###if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
-    res <- lapply(x, classify1, tree, threshold, decay, ping)
-  }else{
-    navailcores <- parallel::detectCores()
-    if(identical(cores, "autodetect")) cores <- navailcores - 1
-    if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores' object")
-    if(cores > 1){
-      cl <- parallel::makeCluster(cores)
-      ###if(doNN) x <- parallel::parLapply(cl, x, classify0, z, m, td, db, key, DNA)
-      res <- parallel::parLapply(cl, x, classify1, tree, threshold, decay, ping)
-      parallel::stopCluster(cl)
-    }else{
-      ###if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
-      res <- lapply(x, classify1, tree, threshold, decay, ping)
-    }
-  }
+  res <- classify2(cores, x[!duplicated(hashes2)], tree, threshold, decay, ping)
+  res <- res[pointers2, ] # rereplicating AA dupes
 
-  res <- res[pointers2] # rereplicating AA dupes
-  res <- do.call("rbind", res) ## changed output to dataframe 20180617
+  if(any(res$reason == 100L)){ #only happens for hybrid trees
+    aaleaf <- which(res$reason == 100L)
+    for(i in aaleaf){
+      tmpattr <- attributes(x[[i]])
+      x[[i]] <- origx[[i]] # change from AA to DNA
+      attributes(x[[i]]) <- tmpattr
+      attr(x[[i]], "path") <- res$path[i]
+      attr(x[[i]], "scores") <- res$scores[i]
+      attr(x[[i]], "cakw") <- res$cakw[i]
+      attr(x[[i]], "tax") <- res$tax[i]
+    }
+    res[aaleaf, ] <- classify2(cores, x[aaleaf], tree, threshold, decay, ping)
+  }
+  ## do DNA classifs hree
+
+
+  #res <- do.call("rbind", res) ## changed output to dataframe 20180617
   lineages <- get_lineage(res$taxID, db, cores = cores,
                           simplify = FALSE, numbers = FALSE)
   tmp <- sapply(lineages, tail, 1)
-  lhcols <- data.frame(representative = xnames,
+  lhcols <- data.frame(representative = names(x),
                      taxID = res$taxID,
                      taxon = tmp,
                      rank = names(tmp),
@@ -457,7 +489,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                      stringsAsFactors = FALSE)
 
   if(!is.null(ranks)){
-    rnkmat <- matrix(NA_character_, nrow = length(xnames), ncol = length(ranks))
+    rnkmat <- matrix(NA_character_, nrow = length(x), ncol = length(ranks))
     rnkmat <- as.data.frame(rnkmat, stringsAsFactors = FALSE)
     colnames(rnkmat) <- ranks
     fun <- function(l, r) if(is.na(l[r])) "" else l[r]

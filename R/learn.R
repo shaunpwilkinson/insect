@@ -361,8 +361,29 @@ learn <- function(x, db = NULL, model = NULL, refine = "Viterbi", iterations = 5
                  probs = probs, retry = retry, resize = resize, maxsize = maxsize,
                  recursive = recursive, cores = cores, quiet = quiet,
                  verbose = verbose, ... = ...)
+
+  if(!is.null(numcode) & recursive){
+    aaleaf <- function(node){
+      if(is.leaf(node)) {
+        cat("setting aaleaf attr\n")
+        attr(node, "aaleaf") <- TRUE
+        }
+      return(node)
+    }
+    tree <- dendrapply(tree, aaleaf)
+    tmpnc <- attr(tree, "numcode")
+    attr(tree, "numcode") <- NULL
+    if(!quiet) cat("Transitioning from AA to DNA models\n")
+    tree <- expand(tree, clades = "", refine = refine, iterations = iterations,
+                   nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
+                   probs = probs, retry = retry, resize = resize, maxsize = maxsize,
+                   recursive = recursive, cores = cores, quiet = quiet,
+                   verbose = verbose, ... = ...)
+    attr(tree, "numcode") <- tmpnc
+  }
   attr(attr(tree, "trainingset"), "lineages") <- NULL # no longer required
   attr(tree, "xaa") <- NULL # no longer required
+  if(!quiet) cat("Done\n")
   return(tree)
 }
 ################################################################################

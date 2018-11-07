@@ -306,7 +306,6 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
   #attr(tree, "kmers") <- kmers # can no longer do this due to temporary AA kmers
   rm(kmers)
   rm(x)
-  if(!quiet) cat("Done\n")
   class(tree) <- c("insect", "dendrogram")
   return(tree)
 }

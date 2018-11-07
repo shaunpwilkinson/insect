@@ -4,10 +4,11 @@
                       refine = "Viterbi", nstart = 20, iterations = 50,
                       kmers = NULL, ksize = NULL, seqweights = "Henikoff",
                       cores = 1, quiet = FALSE, verbose = FALSE, ...){
-  ### x is a DNAbin object
+  ### x is a DNAbin or AAbin object
   # model is a starting model to be trained on each side
   # assumes all seqs are unique
   # allocationis can be integer vector containing the set {1:K} same length as nseq
+  DNA <- .isDNA(x)
   dots <- list(...)
   res <- list()
   nseq <- length(x)
@@ -133,20 +134,18 @@
       stopclustr <- TRUE
     }
   }
-  ### Parent model - better off moving to 'learn' ?
+  ### Parent model taken care of by 'learn' ?
   if(is.null(model)){
     if(!quiet & verbose) cat("Deriving parent model\n")
     ## this should only happen at top level for tree-learning
-    xlengths <- sapply(x, length)
-    seeds <- which(xlengths == max(xlengths))
-    nseeds <- length(seeds)
-    seedmat <- matrix(unlist(x[seeds], use.names = FALSE), nrow = nseeds, byrow = TRUE)
-    model <- aphid::derivePHMM.default(seedmat, seqweights = seqweights[seeds])
-    if(!quiet & verbose) cat("Training parent model\n")
-    model <- aphid::train(model, x, method = refine, seqweights = seqweights,
+    model <- aphid::derivePHMM.list(x, refine = refine, seqweights = seqweights,
                           cores = cores, quiet = !(!quiet & verbose), inserts = "inherited",
-                          alignment = sum(model$inserts)/length(model$inserts) < 0.5,
-                          ... = ...)
+                          alignment = TRUE, ... = ...)
+  }else if(DNA & nrow(model$E) == 20L){ # transition from AA to DNA
+    if(!quiet & verbose) cat("Deriving DNA model\n")
+    model <- aphid::derivePHMM.list(x, refine = refine, seqweights = seqweights,
+                          cores = cores, quiet = !(!quiet & verbose), inserts = "inherited",
+                          alignment = TRUE, ... = ...)
   }
   res[["model0"]] <- model
   for(j in 1:K) res[[pnms[j]]] <- model
