@@ -47,7 +47,7 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
     x <- attr(tree, "trainingset")
     pointers <- attr(x, "rerep.pointers")
     xnames <- attr(x, "rerep.names")
-    lineages <- attr(x, "lineages") # same length as full set, includes full strings. can be nul
+    lineages <- attr(x, "lineages") # same length as full set, includes full strings. can be null
     kmers <- attr(tree, "kmers")
     ksize <- attr(tree, "k")
     if(is.null(kmers) | is.null(ksize)){

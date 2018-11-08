@@ -364,10 +364,7 @@ learn <- function(x, db = NULL, model = NULL, refine = "Viterbi", iterations = 5
 
   if(!is.null(numcode) & recursive){
     aaleaf <- function(node){
-      if(is.leaf(node)) {
-        cat("setting aaleaf attr\n")
-        attr(node, "aaleaf") <- TRUE
-        }
+      if(is.leaf(node)) attr(node, "aaleaf") <- TRUE
       return(node)
     }
     tree <- dendrapply(tree, aaleaf)
