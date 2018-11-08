@@ -372,7 +372,7 @@ learn <- function(x, db = NULL, model = NULL, refine = "Viterbi", iterations = 5
     attr(tree, "numcode") <- NULL
     if(!quiet) cat("Transitioning from AA to DNA models\n")
     tmpf <- tempfile(fileext = ".rds")
-    i(!quiet & verbose) cat("Saving AA classifier as ", tmpf, "\n")
+    if(!quiet & verbose) cat("Saving AA classifier as ", tmpf, "\n")
     saveRDS(tree, file = tmpf)
     tree <- expand(tree, clades = "", refine = refine, iterations = iterations,
                    nstart = nstart, minK = minK, maxK = maxK, minscore = minscore,
