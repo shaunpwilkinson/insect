@@ -159,15 +159,27 @@
     for(j in 1:K) seq_numbers[j] <- sum(membership == j)
     #mcn <- min(seq_numbers)
     #if(mcn < 4) mcn <- 4
+
+    mxcn <- max(seq_numbers)
     for(j in 1:K){
       # if(!quiet) cat("Calculating sequence weights given child model", j, "\n")
       # scale so that weights reflect smallest clade size
       seqweightsj <- seqweights[membership == j]
-      ###### seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
-      ###### seqweightsj <- seqweightsj * mcn/seq_numbers[j] ########
-      if(length(seqweightsj) > 4){
-        seqweightsj <- seqweightsj * (log(length(seqweightsj), 2)^2)/length(seqweightsj)
-      }
+      seqweightsj <- seqweightsj/mean(seqweightsj) # scale so that mean = 1
+      #seqweightsj <- seqweightsj * mcn/seq_numbers[j] ########
+
+
+      seqweightsj <- seqweightsj * mxcn/seq_numbers[j] ########
+
+      #print(seqweightsj)
+
+      # if(length(seqweightsj) > 4){
+      #   seqweightsj <- seqweightsj * (log(length(seqweightsj), 2)^2)/length(seqweightsj)
+      # }
+
+
+      #seqweightsj <- seqweightsj * 2
+
       if(!quiet & verbose) cat("Training child model", j, "\n")
       ins <- if(finetune) res[[pnms[j]]]$inserts else model$inserts
       if(is.null(ins)) ins <- TRUE # top level only

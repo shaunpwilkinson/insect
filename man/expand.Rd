@@ -67,7 +67,7 @@ should be fixed. Defaults to TRUE. Only applicable if
 \code{refine = "Viterbi"}.}
 
 \item{maxsize}{integer giving the upper bound on the number of modules
-in the PHMMs. If NULL (default) no maximum size is enforced.}
+in the PHMMs. If NULL, no maximum size is enforced.}
 
 \item{recursive}{logical indicating whether the splitting process
 should continue recursively until the discrimination criteria

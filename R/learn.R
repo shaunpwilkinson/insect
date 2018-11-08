@@ -71,7 +71,7 @@
 #'   should be fixed. Defaults to TRUE. Only applicable if
 #'   \code{refine = "Viterbi"}.
 #' @param maxsize integer giving the upper bound on the number of modules
-#'   in the PHMMs. If NULL (default), no maximum size is enforced.
+#'   in the PHMMs. If NULL, no maximum size is enforced.
 #' @param recursive logical indicating whether the splitting process
 #'   should continue recursively until the discrimination criteria
 #'   are not met (TRUE; default), or whether a single split should
@@ -153,7 +153,7 @@
 ################################################################################
 learn <- function(x, db = NULL, model = NULL, refine = "Viterbi", iterations = 50,
                   nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
-                  retry = TRUE, resize = TRUE, maxsize = NULL,
+                  retry = TRUE, resize = TRUE, maxsize = 1000,
                   recursive = TRUE, cores = 1, quiet = FALSE, verbose = FALSE,
                   numcode = NULL, frame = NULL, ...){
 
@@ -206,7 +206,7 @@ learn <- function(x, db = NULL, model = NULL, refine = "Viterbi", iterations = 5
     newmat[, 1] <- 1L # taxID for Root
     for(i in seq(2, linlen)){
       taxa[, i] <- paste0(newmat[, i - 1], ";", taxa[, i])
-      newmat[, i] <- insect:::.point(taxa[, i]) + max(newmat[, i - 1])
+      newmat[, i] <- .point(taxa[, i]) + max(newmat[, i - 1])
       taxa[, i] <- paste0(newmat[, i], ";", taxa[, i])
     }
     db <- unique(as.vector(taxa))

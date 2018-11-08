@@ -2,7 +2,7 @@
 ################################################################################
 .fork <- function(node, x, lineages, refine = "Viterbi", nstart = 20,
                  iterations = 50, minK = 2, maxK = 2, minscore = 0.9,
-                 probs = 0.5, retry = TRUE, resize = TRUE, maxsize = NULL,
+                 probs = 0.5, retry = TRUE, resize = TRUE, maxsize = 1000,
                  kmers = NULL, ksize = NULL, seqweights = "Henikoff",
                  cores = 1, quiet = FALSE, verbose = FALSE, ...){
   indices <- attr(node, "sequences")

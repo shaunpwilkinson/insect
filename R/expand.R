@@ -38,7 +38,7 @@
 ################################################################################
 expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
                    nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
-                   retry = TRUE, resize = TRUE, maxsize = NULL,
+                   retry = TRUE, resize = TRUE, maxsize = 1000,
                    recursive = TRUE, cores = 1, quiet = FALSE, verbose = FALSE,
                    ...){
   dots <- list(...)
