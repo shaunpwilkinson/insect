@@ -379,6 +379,7 @@ learn <- function(x, db = NULL, model = NULL, refine = "Viterbi", iterations = 5
                    probs = probs, retry = retry, resize = resize, maxsize = maxsize,
                    recursive = recursive, cores = cores, quiet = quiet,
                    verbose = verbose, ... = ...)
+    if(!quiet & verbose) cat("AA classifier saved as ", tmpf, "\n")
     attr(tree, "numcode") <- tmpnc
   }
   attr(attr(tree, "trainingset"), "lineages") <- NULL # no longer required
