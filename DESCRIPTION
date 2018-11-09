@@ -6,7 +6,7 @@ Authors@R: person("Shaun", "Wilkinson", email = "shaunpwilkinson@gmail.com",
     role = c("aut", "cre"))
 Author: Shaun Wilkinson [aut, cre]
 Maintainer: Shaun Wilkinson <shaunpwilkinson@gmail.com>
-Description: Provides a bioinformatics pipeline for DNA meta-barcoding analysis, including functions for sequence parsing, demultiplexing, quality filtering and probabilistic taxon assignment with informatic sequence classification trees. See Wilkinson et al (2018) <doi:10.7287/peerj.preprints.26812v1>.
+Description: Provides tools for probabilistic taxon assignment with informatic sequence classification trees. See Wilkinson et al (2018) <doi:10.7287/peerj.preprints.26812v1>.
 License: GPL-3
 LazyData: TRUE
 URL: http://github.com/shaunpwilkinson/insect
