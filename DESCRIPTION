@@ -14,7 +14,7 @@ BugReports: http://github.com/shaunpwilkinson/insect/issues
 Encoding: UTF-8
 Imports:
     ape (>= 3.0.0),
-    aphid (>= 1.2.0),
+    aphid (>= 1.3.1),
     kmer (>= 1.1.0),
     openssl, 
     phylogram (>= 2.0.0),
