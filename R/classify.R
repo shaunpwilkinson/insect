@@ -231,16 +231,15 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     if((ping > 0 & ping < 1) | (ping == 1 & is.null(key))){
       ###doNN <- TRUE # do nearest neighbor search
       ##########
-      for(i in seq_along(x)){
-        attr(x[[i]], "idxs") <- neighbors$nn.idx[i, ]
-        attr(x[[i]], "dists") <- neighbors$nn.dists[i, ]
-        attr(x[[i]], "NN") <- nnidxs[i]
-      }
+      # for(i in seq_along(x)){
+      #   attr(x[[i]], "idxs") <- neighbors$nn.idx[i, ]
+      #   attr(x[[i]], "dists") <- neighbors$nn.dists[i, ]
+      #   attr(x[[i]], "NN") <- nnidxs[i]
+      # }
       ###td2 <- 2 * td
-      td2 <- td
       for(i in seq_along(x)){
-        if(neighbors$nn.dists[i, 1] <= td2){
-          idxs <- neighbors$nn.idx[i, neighbors$nn.dists[i,] <= td2]
+        if(neighbors$nn.dists[i, 1] <= td){
+          idxs <- neighbors$nn.idx[i, neighbors$nn.dists[i,] <= td]
           ###alig <- aphid::align(c(x[i], z[idxs]), model = m, quiet = TRUE)
           ###dis <- if(DNA) ape::dist.dna(alig) else ape::dist.aa(alig)/100
           ###dis <- unname(dis[seq_along(idxs)])
@@ -379,11 +378,12 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
         minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore")
         minlength_met <- length(x) >= attr(tree[[best_model]], "minlength")# - 1
         maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength")# + 1
-        neighbor_check <- if(is.na(attr(x, "NN"))){
-          TRUE
-        }else{
-          attr(x, "NN") %in% attr(tree[[best_model]], "sequences")
-        }
+        neighbor_check <- TRUE
+        # neighbor_check <- if(is.na(attr(x, "NN"))){
+        #   TRUE
+        # }else{
+        #   attr(x, "NN") %in% attr(tree[[best_model]], "sequences")
+        # }
       }else{
         minscore_met <- minlength_met <- maxlength_met <- neighbor_check <- FALSE
       }
