@@ -127,6 +127,8 @@ This function requires a pre-computed classification tree
     \item 3 sequence length shorter than minimum length of training sequences at inner node
     \item 4 sequence length exceeded maximum length of training sequences at inner node
     \item 5 nearest neighbor in training set does not belong to selected node (new in v1.2)
+    \item 6 sequence could not be translated (amino acids only)
+    \item 7 translated sequence contains stop codon(s) (amino acids only)
   }
   Additional columns detailing the nearest neighbor search include "NNtaxID", "NNtaxon",
   "NNrank", and "NNdistance".

@@ -65,6 +65,15 @@ the more common metabarcoding primer sets:
 </thead>
 <tbody>
 <tr class="odd">
+<td align="left">12S</td>
+<td align="left">Fish</td>
+<td align="left">MiFishUF/MiFishUR (<a href="https://www.ncbi.nlm.nih.gov/pubmed/26587265">Miya et al 2015</a>)</td>
+<td align="left">GenBank</td>
+<td align="left">1</td>
+<td align="right">20181111</td>
+<td align="left"><a href="https://www.dropbox.com/s/fv3dpvws6zjvtib/classifier.rds?dl=1">RDS (9MB)</a></td>
+</tr>
+<tr class="even">
 <td align="left">16S</td>
 <td align="left">Marine crustaceans</td>
 <td align="left">Crust16S_F/Crust16S_R (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al 2017</a>)</td>
@@ -73,7 +82,7 @@ the more common metabarcoding primer sets:
 <td align="right">20180626</td>
 <td align="left"><a href="https://www.dropbox.com/s/9vl9gj3frw7ng1m/classifier.rds?dl=1">RDS (7.1 MB)</a></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">16S</td>
 <td align="left">Marine fish</td>
 <td align="left">Fish16sF/16s2R (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al 2017</a>; <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1959119/">Deagle et al 2007</a>)</td>
@@ -82,7 +91,7 @@ the more common metabarcoding primer sets:
 <td align="right">20180627</td>
 <td align="left"><a href="https://www.dropbox.com/s/fvfrd46exdah037/classifier.rds?dl=1">RDS (6.8MB)</a></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">18S</td>
 <td align="left">Marine eukaryotes</td>
 <td align="left">18S_1F/18S_400R (<a href="https://www.ncbi.nlm.nih.gov/pubmed/24023913">Pochon et al 2017</a>)</td>
@@ -91,7 +100,7 @@ the more common metabarcoding primer sets:
 <td align="right">20180709</td>
 <td align="left"><a href="https://www.dropbox.com/s/rmhh1g73jtipagu/classifier.rds?dl=1">RDS (11.8 MB)</a></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">18S</td>
 <td align="left">Marine eukaryotes</td>
 <td align="left">18S_V4F/18S_V4R (<a href="https://www.ncbi.nlm.nih.gov/pubmed/28947818">Stat et al 2017</a>)</td>
@@ -99,6 +108,15 @@ the more common metabarcoding primer sets:
 <td align="left">4</td>
 <td align="right">20180525</td>
 <td align="left"><a href="https://www.dropbox.com/s/s315gxuo4p24kx8/classifier.rds?dl=1">RDS (11.5 MB)</a></td>
+</tr>
+<tr class="even">
+<td align="left">18S</td>
+<td align="left">Universal</td>
+<td align="left">1391F/EukBr (<a href="http://doi.org/10.1371/journal.pone.0006372">Amaral-Zettler et al 2009</a>)</td>
+<td align="left">SILVA_132_SSURef_Nr99_tax_silva_trunc</td>
+<td align="left">1</td>
+<td align="right">20181110</td>
+<td align="left"><a href="https://www.dropbox.com/s/66d6x3pc47s8g25/classifier.rds?dl=1">RDS (13.4MB)</a></td>
 </tr>
 <tr class="odd">
 <td align="left">23S</td>
