@@ -214,21 +214,18 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       }
     }else stop("Invalid 'ping' argument\n")
   }else{
-    zk <- .decodekc(attr(tree, "kmers"))
-    zk <- zk/(attr(tree, "seqlengths") - ksize + 1L)
-    attr(tree, "kmers") <- NULL
-    xl <- vapply(x, length, 0L, USE.NAMES = FALSE)
-    xk <- round(kmer::kcount(x, k = ksize))
-    xk <- xk/(xl - ksize + 1L)
-    neighbors <- RANN::nn2(zk, query = xk, k = min(50, nrow(zk) - 1L))
-    # if(DNA){
-    #   denom <- ksize * 0.006
-    # }else{
-    #   denom <- if(ksize == 2) 0.029 else if (ksize == 3) 0.043 else stop("kmer size error\n")
-    # }
-    neighbors$nn.dists <-  xl/(2 * ksize) * neighbors$nn.dists^2 ## linearize with JC69
-    nnidxs <- match(neighbors$nn.idx[, 1], attr(tree, "pointers")) #NN indices in full set
+
     if((ping > 0 & ping < 1) | (ping == 1 & is.null(key))){
+      zk <- .decodekc(attr(tree, "kmers"))
+      zk <- zk/(attr(tree, "seqlengths") - ksize + 1L)
+      attr(tree, "kmers") <- NULL
+      xl <- vapply(x, length, 0L, USE.NAMES = FALSE)
+      xk <- round(kmer::kcount(x, k = ksize))
+      xk <- xk/(xl - ksize + 1L)
+      neighbors <- RANN::nn2(zk, query = xk, k = min(50, nrow(zk) - 1L))
+      neighbors$nn.dists <-  xl/(2 * ksize) * neighbors$nn.dists^2 ## linearize with JC69
+      nnidxs <- match(neighbors$nn.idx[, 1], attr(tree, "pointers")) #NN indices in full set
+
       ###doNN <- TRUE # do nearest neighbor search
       ##########
       # for(i in seq_along(x)){
@@ -277,7 +274,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       for(i in seq_along(x)){
         if(is.na(xmatch[i])){
           ######cat(neighbors$nn.dists[i, 1], "\n")
-          attr(x[[i]], "NN") <-  nnidxs[i] # sequence index
+          attr(x[[i]], "NN") <-  NA_integer_ # sequence index
           attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
         }else{
           attr(x[[i]], "NN") <- xmatch[i]# taxid
@@ -288,7 +285,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     }else{
       ###doNN <- FALSE
       for(i in seq_along(x)){
-        attr(x[[i]], "NN") <- nnidxs[i] #  nnidxs[i]# sequence index
+        attr(x[[i]], "NN") <- NA_integer_  #  nnidxs[i]# sequence index
         attr(x[[i]], "NNhit") <- FALSE # -> do full classification procedure
       }
     }

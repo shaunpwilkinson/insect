@@ -103,6 +103,18 @@
     res <- scanURL(x, retmode = retmode, ... = ...)
     if(!is.null(res)) break else Sys.sleep(5)
   }
+  if(is.null(res)){
+    suppressMessages(tmp <- scan(x, what = "", sep = "\n"))
+    tmp <- gsub("\xAE", "\x20", tmp) ## annoying trademark char in some genbank files
+    tmpf <- tempfile()
+    cat(tmp, file = tmpf, sep = "\n")
+    errfun <- function(er){
+      closeAllConnections()
+      return(NULL)
+    }
+    res <- tryCatch(if(retmode == "xml") xml2::read_xml(tmpf, ... = ...) else
+      scan(file = tmpf, ... = ...), error = errfun, warning = errfun)
+  }
   if(is.null(res)) stop("Unable to reach URL, please check connectivity\n")
   return(res)
 }

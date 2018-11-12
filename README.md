@@ -314,7 +314,7 @@ considered matches).
 <td align="right">116569</td>
 <td align="left">Neocopepoda</td>
 <td align="left">infraclass</td>
-<td align="right">0.9986</td>
+<td align="right">0.9985</td>
 <td align="left">Metazoa</td>
 <td align="left">Arthropoda</td>
 <td align="left">Hexanauplia</td>
