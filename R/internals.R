@@ -101,7 +101,7 @@
   }
   for(l in 1:10){
     res <- scanURL(x, retmode = retmode, ... = ...)
-    if(!is.null(res)) break else Sys.sleep(5)
+    if(!is.null(res)) break else Sys.sleep(1)
   }
   if(is.null(res)){
     suppressMessages(tmp <- scan(x, what = "", sep = "\n"))

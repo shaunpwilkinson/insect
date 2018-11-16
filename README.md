@@ -110,15 +110,6 @@ the more common metabarcoding primer sets:
 <td align="left"><a href="https://www.dropbox.com/s/s315gxuo4p24kx8/classifier.rds?dl=1">RDS (11.5 MB)</a></td>
 </tr>
 <tr class="even">
-<td align="left">18S</td>
-<td align="left">Universal</td>
-<td align="left">1391F/EukBr (<a href="http://doi.org/10.1371/journal.pone.0006372">Amaral-Zettler et al 2009</a>)</td>
-<td align="left">SILVA_132_SSURef_Nr99_tax_silva_trunc</td>
-<td align="left">1</td>
-<td align="right">20181110</td>
-<td align="left"><a href="https://www.dropbox.com/s/66d6x3pc47s8g25/classifier.rds?dl=1">RDS (13.4MB)</a></td>
-</tr>
-<tr class="odd">
 <td align="left">23S</td>
 <td align="left">Algae</td>
 <td align="left">p23SrV_f1/p23SrV_r1 (<a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1529-8817.2007.00341.x">Sherwood &amp; Presting 2007</a>)</td>
@@ -127,7 +118,7 @@ the more common metabarcoding primer sets:
 <td align="right">20180715</td>
 <td align="left"><a href="https://www.dropbox.com/s/6o8cauqrlgnmwp5/classifier.rds?dl=1">RDS (26.9MB)</a></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">COI</td>
 <td align="left">Metazoans (amino)</td>
 <td align="left">mlCOIintF/jgHCO2198 (<a href="https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34">Leray et al 2013</a>)</td>
@@ -136,7 +127,7 @@ the more common metabarcoding primer sets:
 <td align="right">20181009</td>
 <td align="left"><a href="https://www.dropbox.com/s/c987wohded37cxg/classifier.rds?dl=1">RDS (47 MB)</a></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">COI</td>
 <td align="left">Metazoans (marine only)</td>
 <td align="left">mlCOIintF/jgHCO2198 (<a href="https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34">Leray et al 2013</a>)</td>
@@ -145,7 +136,7 @@ the more common metabarcoding primer sets:
 <td align="right">20181009</td>
 <td align="left"><a href="https://www.dropbox.com/s/vn1yit2wkug9f7p/classifier.rds?dl=1">RDS (34.1 MB)</a></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">COI</td>
 <td align="left">Metazoans (no third codon positions)</td>
 <td align="left">mlCOIintF/jgHCO2198 (<a href="https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34">Leray et al 2013</a>)</td>
@@ -154,7 +145,7 @@ the more common metabarcoding primer sets:
 <td align="right">20181009</td>
 <td align="left"><a href="https://www.dropbox.com/s/bfvqnggi4jt591i/classifier.rds?dl=1">RDS (51.9 MB)</a></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">ITS2</td>
 <td align="left">Cnidarians and sponges</td>
 <td align="left">scl58SF/scl28SR (<a href="https://www.dropbox.com/s/6hcs1goju60wqi4/README.txt?dl=1">Wilkinson et al in prep</a>)</td>
