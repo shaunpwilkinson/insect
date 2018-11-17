@@ -386,7 +386,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       }
       if(!(threshold_met & minscore_met & minlength_met & maxlength_met & neighbor_check)) break
       path <- paste0(path, best_model)
-      scores <- paste0(scores, intToUtf8(as.integer(newakw * 100)))
+      scores <- paste0(scores, intToUtf8(round(newakw * 100)))
       akw <- newakw
       cakw <- newcakw
       tree <- tree[[best_model]]

@@ -260,12 +260,14 @@ learn <- function(x, db = NULL, model = NULL, refine = "Viterbi", iterations = 5
     if(!quiet) cat("Translating sequences\n")
     xaa <- ape::as.character.DNAbin(x)
     xaa <- lapply(xaa, seqinr::translate, numcode = numcode, frame = frame)
-    xaa <- ape::as.AAbin(xaa)
-    keeps <- sapply(xaa, function(v) !any(v == as.raw(42)))
-    if(any(!keeps)) warning(sum(!keeps), " translated sequences contain stop codons and will be removed from the trainingset")
-    xaa <- xaa[keeps]
-    x <- x[keeps]
-    lineages <- lineages[keeps]
+    discards <- sapply(xaa, function(s) !all(s %in% LETTERS[-c(2, 10, 15, 21, 24, 26)]))
+    nd <- sum(discards)
+    if(nd > 0) warning(nd, " sequences contain stop codons/ambiguities and will be removed from the trainingset")
+    stopifnot(nd < length(xaa))
+    xaa <- ape::as.AAbin(xaa[!discards])
+    #keeps <- sapply(xaa, function(v) !any(v == as.raw(42)))
+    x <- x[!discards]
+    lineages <- lineages[!discards]
     if(length(x) < 10) stop("Too few training sequences remaining\n")
     attr(tree, "numcode") <- numcode
     attr(tree, "frame") <- frame
