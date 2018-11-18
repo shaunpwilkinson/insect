@@ -83,7 +83,7 @@
         if(!quiet & verbose) cat("Resizing parent model\n")
         alig <- mod$alignment
         if(is.null(alig)) alig <- aphid::align(x[indices], model = mod, cores = cores)
-        mod <- aphid::derivePHMM.default(alig, #seqweights = seqweights,
+        mod <- aphid::derivePHMM.default(alig, seqweights = seqweights,
                                          inserts = if(nseq < 1000) "map" else "threshold",
                                          maxsize = maxsize)
         rm(alig)

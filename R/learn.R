@@ -339,7 +339,7 @@ learn <- function(x, db = NULL, model = NULL, refine = "Viterbi", iterations = 5
                                  maxsize = maxsize,
                                  inserts = "inherited", alignment = FALSE,
                                  quiet = TRUE, cores = cores, maxiter = 20,
-                                 limit = 0.98)
+                                 limit = 0.98, k = if(inherits(x, "DNAbin")) 4 else 2)
     )
 
     ## strip memory intensive elements but not alignment yet
