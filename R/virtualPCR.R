@@ -81,7 +81,7 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
     if(identical(cores, "autodetect")) cores <- navailcores - 1
     if(cores > 1){
       # if(cores > navailcores) stop("Number of cores is more than number available")
-      if(!quiet) cat("Multithreading over", cores, "cores\n")
+      if(!quiet) cat("Multithreading with", cores, "cores\n")
       cores <- parallel::makeCluster(cores)
       para <- TRUE
       stopclustr <- TRUE

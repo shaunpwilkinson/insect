@@ -224,9 +224,9 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
     }
     clades <- names(nmembers)
     indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
+    indices <- indices[.balance(nmembers, ncores)]
     rm(nmembers)
     rm(eligible)
-    #}
     trees <- vector(mode = "list", length = length(clades)) # = length(indices)
     for(i in seq_along(indices)){
       eval(parse(text = paste0("trees[[", i, "]] <- tree", indices[i])))
@@ -246,9 +246,9 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
                                  quiet = TRUE, ... = ...)
     for(i in seq_along(trees)){
       eval(parse(text = paste0("tree", indices[i], "<- trees[[", i, "]]")))
-      trees[[i]] <- NA
-      gc()
     }
+    rm(trees)
+    gc()
   }else{
     indices <- gsub("([[:digit:]])", "[[\\1]]", clades)
     for(i in seq_along(indices)){

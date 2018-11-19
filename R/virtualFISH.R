@@ -152,7 +152,7 @@ virtualFISH <- function(x, probe, minscore = 100, minamplen = 50,
     if(!(mode(cores) %in% c("numeric", "integer"))) stop("Invalid 'cores'")
     # if(cores > navailcores) stop("Number of cores is more than available")
     if(cores > 1){
-      if(!quiet) cat("Multithreading over", cores, "cores\n")
+      if(!quiet) cat("Multithreading with", cores, "cores\n")
       cl <- parallel::makeCluster(cores)
       x <- parallel::parLapply(cl, x, dd1, probe, minscore, minamplen, maxamplen,
                                up, down, minfsc, minrsc)
@@ -172,7 +172,7 @@ virtualFISH <- function(x, probe, minscore = 100, minamplen = 50,
     attributes(x) <- tmpattr
     attr(x, "scores") <- scores
   }else{
-    if(!quiet) cat("None of the sequences met primer specificity criteria. Returning NULL\n")
+    if(!quiet) cat("None of the sequences met primer/probe specificity criteria. Returning NULL\n")
     x <- NULL
   }
   if(!quiet) cat("Filtering ambiguous sequences\n")

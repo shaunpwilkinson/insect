@@ -340,6 +340,8 @@
 }
 
 
+#' @noRd
+# Nearest neighbor OTU search
 .otu <- function(z, k = 4, threshold = 0.97){
   if(is.null(names(z))) names(z) <- paste0("S", seq_along(z))
   stopifnot(!any(duplicated(names(z))))
@@ -421,4 +423,32 @@
   catchnames[centrals] <- paste0(catchnames[centrals], "*")
   names(out) <- catchnames
   return(out)
+}
+
+#' @noRd
+# Load balancing for parallel apply functions
+## x is vector of load sizes
+## ncl is number of clusters
+## returns an index vector e.g:
+## idx <- .balance(x, ncl)
+## x <- x[idx]
+## y <- parLapply(cl, x, ...)
+## y <- y[order(idx)]
+.balance <- function(x, ncl){
+  nx <- length(x)
+  if(ncl >= nx) return(seq_along(x))
+  i <- seq_len(nx)
+  fuzz <- min((nx - 1L)/1000, 0.4 * nx/ncl)
+  breaks <- seq(1 - fuzz, nx + fuzz, length.out = ncl + 1L)
+  tmp <- structure(split(i, cut(i, breaks)), names = NULL)
+  tmplens <- vapply(tmp, length, 0L, USE.NAMES = FALSE)
+  maxlen <- max(vapply(tmp, length, 0L))
+  idx <- vector(mode = "list", length = maxlen)
+  for(i in seq_along(idx)){
+    idx[[i]] <- sapply(tmp, "[", i)
+  }
+  idx <- unlist(idx, use.names = FALSE)
+  idx <- idx[!is.na(idx)]
+  idx <- idx[order(order(x, decreasing = T))]
+  return(idx)
 }
