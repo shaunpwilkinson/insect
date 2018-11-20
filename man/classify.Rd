@@ -5,8 +5,9 @@
 \title{Tree-based sequence classification.}
 \usage{
 classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
-  ranks = c("kingdom", "phylum", "class", "order", "family", "genus",
-  "species"), tabulize = FALSE, metadata = FALSE, cores = 1)
+  mincount = 3L, ranks = c("kingdom", "phylum", "class", "order",
+  "family", "genus", "species"), tabulize = FALSE, metadata = FALSE,
+  cores = 1)
 }
 \arguments{
 \item{x}{a sequence or set of sequences. Can be a
@@ -45,6 +46,9 @@ those in the training set.
 For high values (e.g. \code{ping >= 0.99}) the output will generally
 specify the taxonomic ID to species level,
 but is often to genus/family/etc level for low resolution genetic markers.}
+
+\item{mincount}{integer, the minimum number of training sequences belonging to a
+selected child node for the classification to progress.}
 
 \item{ranks}{character vector giving the taxonomic ranks to be
 included in the output table. Must be a valid rank from the
@@ -126,9 +130,11 @@ This function requires a pre-computed classification tree
     \item 2 failed to meet minimum score of training sequences at inner node
     \item 3 sequence length shorter than minimum length of training sequences at inner node
     \item 4 sequence length exceeded maximum length of training sequences at inner node
-    \item 5 nearest neighbor in training set does not belong to selected node (new in v1.2)
-    \item 6 sequence could not be translated (amino acids only)
-    \item 7 translated sequence contains stop codon(s) (amino acids only)
+    \item 5 nearest neighbor in training set does not belong to selected node (obsolete)
+    \item 6 node is supported by too few sequences
+    \item 7 reserved
+    \item 8 sequence could not be translated (amino acids only)
+    \item 9 translated sequence contains stop codon(s) (amino acids only)
   }
   Additional columns detailing the nearest neighbor search include "NNtaxID", "NNtaxon",
   "NNrank", and "NNdistance".

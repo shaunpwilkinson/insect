@@ -35,6 +35,8 @@
 #'   For high values (e.g. \code{ping >= 0.99}) the output will generally
 #'   specify the taxonomic ID to species level,
 #'   but is often to genus/family/etc level for low resolution genetic markers.
+#' @param mincount integer, the minimum number of training sequences belonging to a
+#'   selected child node for the classification to progress.
 #' @param ranks character vector giving the taxonomic ranks to be
 #'   included in the output table. Must be a valid rank from the
 #'   taxonomy database attributed to the classification tree
@@ -105,9 +107,11 @@
 #'     \item 2 failed to meet minimum score of training sequences at inner node
 #'     \item 3 sequence length shorter than minimum length of training sequences at inner node
 #'     \item 4 sequence length exceeded maximum length of training sequences at inner node
-#'     \item 5 nearest neighbor in training set does not belong to selected node (new in v1.2)
-#'     \item 6 sequence could not be translated (amino acids only)
-#'     \item 7 translated sequence contains stop codon(s) (amino acids only)
+#'     \item 5 nearest neighbor in training set does not belong to selected node (obsolete)
+#'     \item 6 node is supported by too few sequences
+#'     \item 7 reserved
+#'     \item 8 sequence could not be translated (amino acids only)
+#'     \item 9 translated sequence contains stop codon(s) (amino acids only)
 #'   }
 #'   Additional columns detailing the nearest neighbor search include "NNtaxID", "NNtaxon",
 #'   "NNrank", and "NNdistance".
@@ -136,8 +140,8 @@
 #' }
 ################################################################################
 classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
-                     ranks = c("kingdom", "phylum", "class", "order",
-                               "family", "genus", "species"),
+                     mincount = 3L, ranks = c("kingdom", "phylum", "class",
+                                              "order", "family", "genus", "species"),
                      tabulize = FALSE, metadata = FALSE, cores = 1){
   #if(is.null(attr(tree, "nullscore"))) attr(tree, "nullscore") <- -1E08 ###
   if(!is.null(attr(tree, "training_data"))) attr(tree, "training_data") <- NULL
@@ -308,19 +312,19 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       if(!attr(x[[i]], "NNhit")){ # leave DNA hits intact (in DNAbin format -for mixed hashing)
         tmpattr <- attributes(x[[i]])
         if(length(x[[i]]) %% 3 != attr(tree, "remainder")){
-          attr(x[[i]], "CODE6") <- TRUE ## invalid length
+          attr(x[[i]], "CODE8") <- TRUE ## invalid length
         }else{
           x[[i]] <- ape::as.character.DNAbin(x[[i]])
           x[[i]] <- seqinr::translate(x[[i]], numcode = attr(tree, "numcode"), frame = attr(tree, "frame"))
           x[[i]] <- ape::as.AAbin(x[[i]])
           attributes(x[[i]]) <- tmpattr
-          if(any(x[[i]] == as.raw(42))) attr(x[[i]], "CODE7") <- TRUE ## contains stop codon(s)
+          if(any(x[[i]] == as.raw(42))) attr(x[[i]], "CODE9") <- TRUE ## contains stop codon(s)
         }
       }
     }
   }
 
-  classify1 <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE){
+  classify1 <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE, mincount = 3L){
     ## takes a single named raw vector with NN, NNhit, and possibly other attrs
     ## outputs a 1-row dataframe
     if(attr(x, "NNhit")){
@@ -332,12 +336,12 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                         stringsAsFactors = FALSE)
       return(out)
     }
-    if(!is.null(attr(x, "CODE6")) | !is.null(attr(x, "CODE7"))){
+    if(!is.null(attr(x, "CODE8")) | !is.null(attr(x, "CODE9"))){
       out <- data.frame(taxID = 1L,
                         score = NA_real_,
                         path = NA_character_,
                         scores = NA_character_,
-                        reason = if(!is.null(attr(x, "CODE6"))) 6L else 7L,
+                        reason = if(!is.null(attr(x, "CODE8"))) 8L else 9L,
                         stringsAsFactors = FALSE)
       return(out)
     }
@@ -353,7 +357,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     cakw <- if(is.null(attr(x, "cakw"))) 1 else attr(x, "cakw")
     tax <- if(is.null(attr(x, "tax"))) 1L else attr(x, "tax")
     #tax <- 1L # root (cant use 0L due to get_lineage call below)
-    threshold_met <- minscore_met <- minlength_met <- maxlength_met <- neighbor_check <- TRUE
+    threshold_met <- minscore_met <- minlength_met <- maxlength_met <- neighbor_check <- mincount_met <- TRUE
     while(is.list(tree)){
       no_mods <- length(tree)
       sc <- numeric(no_mods)##### + 1L)##### # scores (log probabilities)
@@ -373,18 +377,19 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       # 4 is approx asymtote for single bp change as n training seqs -> inf
       if(threshold_met){
         minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore")
-        minlength_met <- length(x) >= attr(tree[[best_model]], "minlength")# - 1
-        maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength")# + 1
+        minlength_met <- length(x) >= attr(tree[[best_model]], "minlength")
+        maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength")
         neighbor_check <- TRUE
         # neighbor_check <- if(is.na(attr(x, "NN"))){
         #   TRUE
         # }else{
         #   attr(x, "NN") %in% attr(tree[[best_model]], "sequences")
         # }
+        mincount_met <- attr(tree[[best_model]], "ntotal") >= mincount
       }else{
-        minscore_met <- minlength_met <- maxlength_met <- neighbor_check <- FALSE
+        minscore_met <- minlength_met <- maxlength_met <- neighbor_check <- mincount_met <- FALSE
       }
-      if(!(threshold_met & minscore_met & minlength_met & maxlength_met & neighbor_check)) break
+      if(!(threshold_met & minscore_met & minlength_met & maxlength_met & neighbor_check & mincount_met)) break
       path <- paste0(path, best_model)
       scores <- paste0(scores, intToUtf8(round(newakw * 100)))
       akw <- newakw
@@ -413,6 +418,8 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       4L
     }else if (!neighbor_check){
       5L
+    }else if (!mincount_met){
+      6L
     }else{
       0L
     }
@@ -424,15 +431,14 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                       stringsAsFactors = FALSE)
     return(out)
   }
-
-  classify2 <- function(cores, x, tree, threshold = 0.9, decay = TRUE, ping = TRUE){
+  classify2 <- function(cores, x, tree, threshold = 0.9, decay = TRUE, ping = TRUE, mincount = 3L){
     ## x is (usually) a DNAbin or AAbin list
     if(inherits(cores, "cluster")){
       ###if(doNN) x <- parallel::parLapply(cores, x, classify0, z, m, td, db, key, DNA)
-      res <- parallel::parLapply(cores, x, classify1, tree, threshold, decay, ping)
+      res <- parallel::parLapply(cores, x, classify1, tree, threshold, decay, ping, mincount)
     }else if(cores == 1){
       ###if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
-      res <- lapply(x, classify1, tree, threshold, decay, ping)
+      res <- lapply(x, classify1, tree, threshold, decay, ping, mincount)
     }else{
       navailcores <- parallel::detectCores()
       if(identical(cores, "autodetect")) cores <- navailcores - 1
@@ -440,11 +446,11 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       if(cores > 1){
         cl <- parallel::makeCluster(cores)
         ###if(doNN) x <- parallel::parLapply(cl, x, classify0, z, m, td, db, key, DNA)
-        res <- parallel::parLapply(cl, x, classify1, tree, threshold, decay, ping)
+        res <- parallel::parLapply(cl, x, classify1, tree, threshold, decay, ping, mincount)
         parallel::stopCluster(cl)
       }else{
         ###if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
-        res <- lapply(x, classify1, tree, threshold, decay, ping)
+        res <- lapply(x, classify1, tree, threshold, decay, ping, mincount)
       }
     }
     res <- do.call("rbind", res)
@@ -457,7 +463,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   #xnames <- names(x) ## need to think about NN attrs?
   gc()
 
-  res <- classify2(cores, x[!duplicated(hashes2)], tree, threshold, decay, ping)
+  res <- classify2(cores, x[!duplicated(hashes2)], tree, threshold, decay, ping, mincount)
   res <- res[pointers2, ] # rereplicating AA dupes
 
   if(any(res$reason == 100L)){ #only happens for hybrid trees
@@ -471,10 +477,9 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       attr(x[[i]], "cakw") <- res$cakw[i]
       attr(x[[i]], "tax") <- res$tax[i]
     }
-    res[aaleaf, ] <- classify2(cores, x[aaleaf], tree, threshold, decay, ping)
+    res[aaleaf, ] <- classify2(cores, x[aaleaf], tree, threshold, decay, ping, mincount)
   }
   ## do DNA classifs hree
-
 
   #res <- do.call("rbind", res) ## changed output to dataframe 20180617
   lineages <- get_lineage(res$taxID, db, cores = cores,
