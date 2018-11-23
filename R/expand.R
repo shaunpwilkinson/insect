@@ -170,6 +170,7 @@ expand <- function(tree, clades = "0", refine = "Viterbi", iterations = 50,
   ### recursively split nodes
   switchpoint <- max(round((length(x) * 0.8)/ncores), 50L)
   if(switchpoint > 500L) switchpoint <- 500L
+  if(switchpoint < ncores * 3) switchpoint <- ncores * 3
   ## switch from basal to terminal node recursion method
   if(ncores > 1 & recursive){
     #if(length(clades) < ncores){
