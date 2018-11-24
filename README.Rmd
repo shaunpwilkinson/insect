@@ -32,17 +32,17 @@ The package also contains functions for searching and downloading reference
 sequences and taxonomic information from NCBI, 
 a "virtual PCR" tool for sequence trimming, 
 a function for "purging" erroneously labeled reference sequences, 
-and several other handy tools.  
+and several other tools.  
 
 `insect` is designed to be used in conjunction with the 
-[dada2](https://benjjneb.github.io/dada2/index.html) pipeline or any other
-de-noising tool that produces a list of amplicon sequence variants (ASVs). 
+[dada2](https://benjjneb.github.io/dada2/index.html) pipeline or other
+de-noising tools that produce a list of amplicon sequence variants (ASVs). 
 While unfiltered sequences can also be processed with high accuracy, 
 the **insect** classification algorithm is relatively slow, 
 since it uses a computationally intensive dynamic
 programming algorithm to find the likelihood values
 of each sequence given the models at each node of the classification tree. 
-Hence an appropriately filtered input dataset will generally be 
+Hence filtered input datasets are generally be 
 much faster to process.
 
 
@@ -119,57 +119,24 @@ American Samoa (ARMS) using the COI metabarcoding primers mlCOIintF and jgHCO219
 and de-noised, filtered and merged following the 
 [DADA2 tutorial](https://benjjneb.github.io/dada2/tutorial.html).
 
-There are currently three classifiers available for this primer set, 
-a [marine only](https://www.dropbox.com/s/vn1yit2wkug9f7p/classifier.rds?dl=1) version,
-one for DNA sequences with every third codon position removed 
-([nothirds](https://www.dropbox.com/s/bfvqnggi4jt591i/classifier.rds?dl=1)), 
-and one for translated amino acid sequences 
-([amino](https://www.dropbox.com/s/c987wohded37cxg/classifier.rds?dl=1)).
-
-Here we'll use the amino acid version, which was created by translating the 
+The COI classifier was created using the 
 [MIDORI UNIQUE 20180221](http://reference-midori.info/download.php)
-training dataset using the [EBI5](https://www.ebi.ac.uk/ena/browse/translation-tables) 
-invertebrate mitochondrial translation table.
+trainingset, supplemented with around 14,000 non-metazoan 
+COI sequences downloaded from GenBank. 
 
-The 47 MB classifier can be downloaded to the current working directory 
+The large, 140 MB classifier can be downloaded to the current working directory 
 and read into R as follows:
 
 ```{r, eval = FALSE}
-download.file("https://www.dropbox.com/s/c987wohded37cxg/classifier.rds?dl=1", 
+download.file("https://www.dropbox.com/s/dvnrhnfmo727774/classifier.rds?dl=1", 
               destfile = "classifier.rds", mode = "wb")
 classifier <- readRDS("classifier.rds")
 ```
 
 ```{r, echo = FALSE}
-classifier <- readRDS("~/Dropbox/R/insect/trees/COI/metazoan_COI/version_4/amino/classifier.rds")
+classifier <- readRDS("~/Dropbox/R/insect/trees/COI/metazoan_COI/version_5/classifier.rds")
 ```
 
-Now we need to translate the amplicon sequence variants (ASVs) 
-to amino acid sequences using the same number 5 translation table. 
-Before this, any sequences
-whose length is not divisible by three should be discarded. 
-The sequences are then converted to character type for translation 
-with the `translate` function in the 
-[seqinr](https://cran.r-project.org/package=seqinr) package, and
-converted back to binary form object using `ape::as.AAbin`.
-
-```{r}
-keeps <- sapply(x, length) %% 3 == 1L
-x <- x[keeps]
-x <- ape::as.character.DNAbin(x)
-x <- lapply(x, seqinr::translate, numcode = 5, frame = 1)
-x <- ape::as.AAbin(x)
-```
-
-Now we need to check that none of the translated sequences contain stop codons:
-
-```{r}
-keeps <- sapply(x, function(v) !any(v == as.raw(42)))
-x <- x[keeps]
-```
-
-Finally, the amino acid sequences are passed to the classifier for taxon ID
-assignment.
 There is an option to perform a nearest-neighbor search prior to the 
 computationally-expensive recursive model test procedure, which can save 
 time and improve resolution ('recall') at lower taxonomic ranks.
@@ -177,15 +144,15 @@ Note that this can be a double-edged sword; if multiple species share
 an identical or near-identical sequence, and the true taxon of the query sequence
 is missing from the trainingset, the algorithm may over-classify the sequence
 and return a congeneric taxon.
-To perform a nearest-neighbor search with a similarity threshold of say 0.99
+To perform a nearest-neighbor search with a similarity threshold of 0.99
 (meaning any sequence in the trainingset with a similarity greater than or 
-equal to 0.99 is considered a match), set `ping = 0.99`.
+equal to 99% is considered a match), set `ping = 0.99`.
 To stay on the safe side, we will set `ping = 1` 
 (i.e. only sequences with 100% identity are considered matches).
 
 
 ```{r}
-out <- classify(x, classifier, cores = 2, ping = 1)
+out <- classify(x, classifier, ping = 1)
 ```
 
 

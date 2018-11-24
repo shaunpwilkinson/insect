@@ -20,17 +20,17 @@ cost.
 The package also contains functions for searching and downloading
 reference sequences and taxonomic information from NCBI, a "virtual PCR"
 tool for sequence trimming, a function for "purging" erroneously labeled
-reference sequences, and several other handy tools.
+reference sequences, and several other tools.
 
 `insect` is designed to be used in conjunction with the
-[dada2](https://benjjneb.github.io/dada2/index.html) pipeline or any
-other de-noising tool that produces a list of amplicon sequence variants
+[dada2](https://benjjneb.github.io/dada2/index.html) pipeline or other
+de-noising tools that produce a list of amplicon sequence variants
 (ASVs). While unfiltered sequences can also be processed with high
 accuracy, the **insect** classification algorithm is relatively slow,
 since it uses a computationally intensive dynamic programming algorithm
 to find the likelihood values of each sequence given the models at each
-node of the classification tree. Hence an appropriately filtered input
-dataset will generally be much faster to process.
+node of the classification tree. Hence filtered input datasets are
+generally be much faster to process.
 
 ### Installation
 
@@ -58,7 +58,7 @@ the more common metabarcoding primer sets:
 <th align="left">Target</th>
 <th align="left">Primers</th>
 <th align="left">Source</th>
-<th align="left">Version</th>
+<th align="right">Version</th>
 <th align="right">Date</th>
 <th align="left">Download</th>
 </tr>
@@ -69,7 +69,7 @@ the more common metabarcoding primer sets:
 <td align="left">Fish</td>
 <td align="left">MiFishUF/MiFishUR (<a href="https://www.ncbi.nlm.nih.gov/pubmed/26587265">Miya et al 2015</a>)</td>
 <td align="left">GenBank</td>
-<td align="left">1</td>
+<td align="right">1</td>
 <td align="right">20181111</td>
 <td align="left"><a href="https://www.dropbox.com/s/fv3dpvws6zjvtib/classifier.rds?dl=1">RDS (9MB)</a></td>
 </tr>
@@ -78,7 +78,7 @@ the more common metabarcoding primer sets:
 <td align="left">Marine crustaceans</td>
 <td align="left">Crust16S_F/Crust16S_R (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al 2017</a>)</td>
 <td align="left">GenBank</td>
-<td align="left">4</td>
+<td align="right">4</td>
 <td align="right">20180626</td>
 <td align="left"><a href="https://www.dropbox.com/s/9vl9gj3frw7ng1m/classifier.rds?dl=1">RDS (7.1 MB)</a></td>
 </tr>
@@ -87,7 +87,7 @@ the more common metabarcoding primer sets:
 <td align="left">Marine fish</td>
 <td align="left">Fish16sF/16s2R (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al 2017</a>; <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1959119/">Deagle et al 2007</a>)</td>
 <td align="left">GenBank</td>
-<td align="left">4</td>
+<td align="right">4</td>
 <td align="right">20180627</td>
 <td align="left"><a href="https://www.dropbox.com/s/fvfrd46exdah037/classifier.rds?dl=1">RDS (6.8MB)</a></td>
 </tr>
@@ -96,7 +96,7 @@ the more common metabarcoding primer sets:
 <td align="left">Marine eukaryotes</td>
 <td align="left">18S_1F/18S_400R (<a href="https://www.ncbi.nlm.nih.gov/pubmed/24023913">Pochon et al 2017</a>)</td>
 <td align="left">SILVA_132_LSUParc, GenBank</td>
-<td align="left">5</td>
+<td align="right">5</td>
 <td align="right">20180709</td>
 <td align="left"><a href="https://www.dropbox.com/s/rmhh1g73jtipagu/classifier.rds?dl=1">RDS (11.8 MB)</a></td>
 </tr>
@@ -105,7 +105,7 @@ the more common metabarcoding primer sets:
 <td align="left">Marine eukaryotes</td>
 <td align="left">18S_V4F/18S_V4R (<a href="https://www.ncbi.nlm.nih.gov/pubmed/28947818">Stat et al 2017</a>)</td>
 <td align="left">GenBank</td>
-<td align="left">4</td>
+<td align="right">4</td>
 <td align="right">20180525</td>
 <td align="left"><a href="https://www.dropbox.com/s/s315gxuo4p24kx8/classifier.rds?dl=1">RDS (11.5 MB)</a></td>
 </tr>
@@ -114,43 +114,25 @@ the more common metabarcoding primer sets:
 <td align="left">Algae</td>
 <td align="left">p23SrV_f1/p23SrV_r1 (<a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1529-8817.2007.00341.x">Sherwood &amp; Presting 2007</a>)</td>
 <td align="left">SILVA_132_LSUParc</td>
-<td align="left">1</td>
+<td align="right">1</td>
 <td align="right">20180715</td>
 <td align="left"><a href="https://www.dropbox.com/s/6o8cauqrlgnmwp5/classifier.rds?dl=1">RDS (26.9MB)</a></td>
 </tr>
 <tr class="odd">
 <td align="left">COI</td>
-<td align="left">Metazoans (amino)</td>
+<td align="left">Metazoans</td>
 <td align="left">mlCOIintF/jgHCO2198 (<a href="https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34">Leray et al 2013</a>)</td>
 <td align="left">Midori, GenBank</td>
-<td align="left">4aa</td>
-<td align="right">20181009</td>
-<td align="left"><a href="https://www.dropbox.com/s/c987wohded37cxg/classifier.rds?dl=1">RDS (47 MB)</a></td>
-</tr>
-<tr class="even">
-<td align="left">COI</td>
-<td align="left">Metazoans (marine only)</td>
-<td align="left">mlCOIintF/jgHCO2198 (<a href="https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34">Leray et al 2013</a>)</td>
-<td align="left">Midori, GenBank</td>
-<td align="left">4mo</td>
-<td align="right">20181009</td>
-<td align="left"><a href="https://www.dropbox.com/s/vn1yit2wkug9f7p/classifier.rds?dl=1">RDS (34.1 MB)</a></td>
-</tr>
-<tr class="odd">
-<td align="left">COI</td>
-<td align="left">Metazoans (no third codon positions)</td>
-<td align="left">mlCOIintF/jgHCO2198 (<a href="https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34">Leray et al 2013</a>)</td>
-<td align="left">Midori, GenBank</td>
-<td align="left">4nt</td>
-<td align="right">20181009</td>
-<td align="left"><a href="https://www.dropbox.com/s/bfvqnggi4jt591i/classifier.rds?dl=1">RDS (51.9 MB)</a></td>
+<td align="right">5</td>
+<td align="right">20181124</td>
+<td align="left"><a href="https://www.dropbox.com/s/dvnrhnfmo727774/classifier.rds?dl=1">RDS (140 MB)</a></td>
 </tr>
 <tr class="even">
 <td align="left">ITS2</td>
 <td align="left">Cnidarians and sponges</td>
 <td align="left">scl58SF/scl28SR (<a href="https://www.dropbox.com/s/6hcs1goju60wqi4/README.txt?dl=1">Wilkinson et al in prep</a>)</td>
 <td align="left">GenBank</td>
-<td align="left">5</td>
+<td align="right">5</td>
 <td align="right">20180920</td>
 <td align="left"><a href="https://www.dropbox.com/s/f07cka6308ebk2o/classifier.rds?dl=1">RDS (6.6 MB)</a></td>
 </tr>
@@ -182,62 +164,32 @@ generated from autonomous reef monitoring structures in American Samoa
 and de-noised, filtered and merged following the [DADA2
 tutorial](https://benjjneb.github.io/dada2/tutorial.html).
 
-There are currently three classifiers available for this primer set, a
-[marine
-only](https://www.dropbox.com/s/vn1yit2wkug9f7p/classifier.rds?dl=1)
-version, one for DNA sequences with every third codon position removed
-([nothirds](https://www.dropbox.com/s/bfvqnggi4jt591i/classifier.rds?dl=1)),
-and one for translated amino acid sequences
-([amino](https://www.dropbox.com/s/c987wohded37cxg/classifier.rds?dl=1)).
+The COI classifier was created using the [MIDORI UNIQUE
+20180221](http://reference-midori.info/download.php) trainingset,
+supplemented with around 14,000 non-metazoan COI sequences downloaded
+from GenBank.
 
-Here we'll use the amino acid version, which was created by translating
-the [MIDORI UNIQUE 20180221](http://reference-midori.info/download.php)
-training dataset using the
-[EBI5](https://www.ebi.ac.uk/ena/browse/translation-tables) invertebrate
-mitochondrial translation table.
+The large, 140 MB classifier can be downloaded to the current working
+directory and read into R as follows:
 
-The 47 MB classifier can be downloaded to the current working directory
-and read into R as follows:
-
-    download.file("https://www.dropbox.com/s/c987wohded37cxg/classifier.rds?dl=1", 
+    download.file("https://www.dropbox.com/s/dvnrhnfmo727774/classifier.rds?dl=1", 
                   destfile = "classifier.rds", mode = "wb")
     classifier <- readRDS("classifier.rds")
 
-Now we need to translate the amplicon sequence variants (ASVs) to amino
-acid sequences using the same number 5 translation table. Before this,
-any sequences whose length is not divisible by three should be
-discarded. The sequences are then converted to character type for
-translation with the `translate` function in the
-[seqinr](https://cran.r-project.org/package=seqinr) package, and
-converted back to binary form object using `ape::as.AAbin`.
-
-    keeps <- sapply(x, length) %% 3 == 1L
-    x <- x[keeps]
-    x <- ape::as.character.DNAbin(x)
-    x <- lapply(x, seqinr::translate, numcode = 5, frame = 1)
-    x <- ape::as.AAbin(x)
-
-Now we need to check that none of the translated sequences contain stop
-codons:
-
-    keeps <- sapply(x, function(v) !any(v == as.raw(42)))
-    x <- x[keeps]
-
-Finally, the amino acid sequences are passed to the classifier for taxon
-ID assignment. There is an option to perform a nearest-neighbor search
-prior to the computationally-expensive recursive model test procedure,
-which can save time and improve resolution ('recall') at lower taxonomic
-ranks. Note that this can be a double-edged sword; if multiple species
-share an identical or near-identical sequence, and the true taxon of the
-query sequence is missing from the trainingset, the algorithm may
+There is an option to perform a nearest-neighbor search prior to the
+computationally-expensive recursive model test procedure, which can save
+time and improve resolution ('recall') at lower taxonomic ranks. Note
+that this can be a double-edged sword; if multiple species share an
+identical or near-identical sequence, and the true taxon of the query
+sequence is missing from the trainingset, the algorithm may
 over-classify the sequence and return a congeneric taxon. To perform a
-nearest-neighbor search with a similarity threshold of say 0.99 (meaning
-any sequence in the trainingset with a similarity greater than or equal
-to 0.99 is considered a match), set `ping = 0.99`. To stay on the safe
-side, we will set `ping = 1` (i.e. only sequences with 100% identity are
+nearest-neighbor search with a similarity threshold of 0.99 (meaning any
+sequence in the trainingset with a similarity greater than or equal to
+99% is considered a match), set `ping = 0.99`. To stay on the safe side,
+we will set `ping = 1` (i.e. only sequences with 100% identity are
 considered matches).
 
-    out <- classify(x, classifier, cores = 2, ping = 1)
+    out <- classify(x, classifier, ping = 1)
 
 <!-- note newlines needed between html tags and code chunk -->
 <table>
@@ -263,7 +215,7 @@ considered matches).
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
-<td align="right">0.9966</td>
+<td align="right">0.9972</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
@@ -277,7 +229,7 @@ considered matches).
 <td align="right">6379</td>
 <td align="left">Chaetopterus</td>
 <td align="left">genus</td>
-<td align="right">0.9881</td>
+<td align="right">1.0000</td>
 <td align="left">Metazoa</td>
 <td align="left">Annelida</td>
 <td align="left">Polychaeta</td>
@@ -291,7 +243,7 @@ considered matches).
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
-<td align="right">0.9769</td>
+<td align="right">0.9760</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
@@ -302,13 +254,13 @@ considered matches).
 </tr>
 <tr class="even">
 <td align="left">ASV4</td>
-<td align="right">116569</td>
-<td align="left">Neocopepoda</td>
-<td align="left">infraclass</td>
-<td align="right">0.9985</td>
+<td align="right">2172821</td>
+<td align="left">Multicrustacea</td>
+<td align="left">superclass</td>
+<td align="right">0.9999</td>
 <td align="left">Metazoa</td>
 <td align="left">Arthropoda</td>
-<td align="left">Hexanauplia</td>
+<td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -316,11 +268,11 @@ considered matches).
 </tr>
 <tr class="odd">
 <td align="left">ASV5</td>
-<td align="right">33213</td>
-<td align="left">Bilateria</td>
+<td align="right">131567</td>
+<td align="left">cellular organisms</td>
 <td align="left">no rank</td>
-<td align="right">0.9456</td>
-<td align="left">Metazoa</td>
+<td align="right">0.9952</td>
+<td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -333,7 +285,7 @@ considered matches).
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
-<td align="right">0.9973</td>
+<td align="right">0.9975</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
@@ -347,7 +299,7 @@ considered matches).
 <td align="right">39820</td>
 <td align="left">Nereididae</td>
 <td align="left">family</td>
-<td align="right">0.9110</td>
+<td align="right">0.9784</td>
 <td align="left">Metazoa</td>
 <td align="left">Annelida</td>
 <td align="left">Polychaeta</td>
@@ -358,13 +310,13 @@ considered matches).
 </tr>
 <tr class="even">
 <td align="left">ASV8</td>
-<td align="right">1</td>
-<td align="left">root</td>
-<td align="left">no rank</td>
-<td align="right">1.0000</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="right">116571</td>
+<td align="left">Podoplea</td>
+<td align="left">superorder</td>
+<td align="right">0.9442</td>
+<td align="left">Metazoa</td>
+<td align="left">Arthropoda</td>
+<td align="left">Hexanauplia</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -372,23 +324,9 @@ considered matches).
 </tr>
 <tr class="odd">
 <td align="left">ASV9</td>
-<td align="right">2806</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9147</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr class="even">
-<td align="left">ASV11</td>
-<td align="right">2759</td>
-<td align="left">Eukaryota</td>
-<td align="left">superkingdom</td>
+<td align="right">2763</td>
+<td align="left">Rhodophyta</td>
+<td align="left">no rank</td>
 <td align="right">1.0000</td>
 <td align="left"></td>
 <td align="left"></td>
@@ -398,26 +336,12 @@ considered matches).
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
-<td align="left">ASV12</td>
-<td align="right">2806</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9424</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
 <tr class="even">
-<td align="left">ASV13</td>
-<td align="right">2759</td>
-<td align="left">Eukaryota</td>
-<td align="left">superkingdom</td>
-<td align="right">0.9999</td>
+<td align="left">ASV10</td>
+<td align="right">1</td>
+<td align="left">root</td>
+<td align="left">no rank</td>
+<td align="right">NA</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -427,11 +351,11 @@ considered matches).
 <td align="left"></td>
 </tr>
 <tr class="odd">
-<td align="left">ASV14</td>
-<td align="right">33213</td>
-<td align="left">Bilateria</td>
+<td align="left">ASV11</td>
+<td align="right">33317</td>
+<td align="left">Protostomia</td>
 <td align="left">no rank</td>
-<td align="right">0.9456</td>
+<td align="right">0.9156</td>
 <td align="left">Metazoa</td>
 <td align="left"></td>
 <td align="left"></td>
@@ -441,11 +365,11 @@ considered matches).
 <td align="left"></td>
 </tr>
 <tr class="even">
-<td align="left">ASV15</td>
+<td align="left">ASV12</td>
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
-<td align="right">0.9530</td>
+<td align="right">0.9769</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
@@ -455,11 +379,53 @@ considered matches).
 <td align="left"></td>
 </tr>
 <tr class="odd">
+<td align="left">ASV13</td>
+<td align="right">33213</td>
+<td align="left">Bilateria</td>
+<td align="left">no rank</td>
+<td align="right">0.9420</td>
+<td align="left">Metazoa</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">ASV14</td>
+<td align="right">131567</td>
+<td align="left">cellular organisms</td>
+<td align="left">no rank</td>
+<td align="right">0.9952</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">ASV15</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.9692</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left">Florideophyceae</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+<tr class="even">
 <td align="left">ASV16</td>
 <td align="right">39820</td>
 <td align="left">Nereididae</td>
 <td align="left">family</td>
-<td align="right">NA</td>
+<td align="right">0.9821</td>
 <td align="left">Metazoa</td>
 <td align="left">Annelida</td>
 <td align="left">Polychaeta</td>

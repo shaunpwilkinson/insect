@@ -328,9 +328,9 @@ learn <- function(x, db = NULL, model = NULL, refine = "Viterbi", iterations = 5
   if(is.null(model)){
     if(!quiet) cat("Dereplicating sequences\n")
     if(!quiet) cat("Deriving top level model\n")
-    if(length(x) > 1000){
+    if(length(x) > 100){
       # sample model training to avoid excessive memory usage
-      samp <- sample(seq_along(x), size = 1000)
+      samp <- sample(seq_along(x), size = 2 * log(length(x), 2)^2)
       x <- x[samp]
     }
     suppressWarnings(
