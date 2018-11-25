@@ -1,13 +1,13 @@
-# insect version 1.1.1
+# insect version 1.2.0
 
-This is a patch release addressing a bug in the `classify` function
-that was reordering column names in the output table.
+This is a minor release including some new features and functions
+
 
 ## Test environments
 
  * local ubuntu 16.04.4 x86_64-pc-linux-gnu; R version 3.5.1
- * travis-ci ubuntu 14.04.5 x86_64-pc-linux-gnu; R version 3.5.0 (2017-01-27)
- * winbuilder R Under development (2018-07-19 r74981)
+ * travis-ci ubuntu 14.04.5 x86_64-pc-linux-gnu; R version 3.5.1 (2017-01-27)
+ * winbuilder R Under development (2018-11-22 r75649)
 
 ## R CMD check results
 

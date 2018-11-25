@@ -1,3 +1,13 @@
+# insect 1.2.0
+
+Minor release including several new features:
+
+* `learn` now includes option to build hybrid DNA/amino acid classifiers
+* Increased resolution through automatic scaling of sequence weights
+* Sped up `expand` by load balancing allocation of jobs to parSapply
+* Prevented searchGB from crashing when GB files have non-ASCII chars
+
+
 # insect 1.1.1
 
 Patch release addressing a bug in `classify` causing rearrangement
@@ -5,7 +15,6 @@ of columns in the output table. Thanks to Rachel Wade for the report.
 
 Also, the `classify` function no longer returns factors in the output 
 table.
-
 
 
 # insect 1.1.0

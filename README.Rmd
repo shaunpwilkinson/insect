@@ -31,7 +31,7 @@ and offer highly accurate taxon IDs, albeit at a relatively high computational c
 The package also contains functions for searching and downloading reference 
 sequences and taxonomic information from NCBI, 
 a "virtual PCR" tool for sequence trimming, 
-a function for "purging" erroneously labeled reference sequences, 
+a function for purging erroneously labeled reference sequences, 
 and several other tools.  
 
 `insect` is designed to be used in conjunction with the 
@@ -70,7 +70,7 @@ library(insect)
 
 ### Classifying sequences
 
-Classifiers for some of the more common metabarcoding primer
+Classifiers for some of the more commonly used metabarcoding primer
 sets are available here:
 
 <!-- note newlines needed between html tags and code chunk -->
