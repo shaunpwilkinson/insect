@@ -70,9 +70,8 @@ library(insect)
 
 ### Classifying sequences
 
-Training an **insect** classifier will be the subject of another tutorial;
-however, several classifiers are already available for some of the more common metabarcoding primer
-sets:
+Classifiers for some of the more common metabarcoding primer
+sets are available here:
 
 <!-- note newlines needed between html tags and code chunk -->
 
@@ -124,7 +123,7 @@ The COI classifier was created using the
 trainingset, supplemented with around 14,000 non-metazoan 
 COI sequences downloaded from GenBank. 
 
-The large, 140 MB classifier can be downloaded to the current working directory 
+The 140 MB classifier can be downloaded to the current working directory 
 and read into R as follows:
 
 ```{r, eval = FALSE}
@@ -152,7 +151,7 @@ To stay on the safe side, we will set `ping = 1`
 
 
 ```{r}
-out <- classify(x, classifier, ping = 1)
+out <- classify(x, classifier, threshold = 0.8)
 ```
 
 
@@ -166,12 +165,6 @@ knitr::kable(out)
 
 </div>
 
-
-Any sequences that return exact hits (or near matches if `ping = 0.99` or similar) 
-with at least one training sequence are assigned 
-a score of `NA`, as in the final row of the table above. 
-Here, the multiple matching sequences have a Nereid polychaete common ancestor,
-and the query sequence was therefore assigned to the family Nereididae.
 
 
 ### Further reading
@@ -194,6 +187,7 @@ raise it as an issue on [GitHub](http://github.com/shaunpwilkinson/insect/issues
 This software was developed at 
 [Victoria University of Wellington](http://www.victoria.ac.nz/) 
 with funding from a Rutherford Foundation Postdoctoral Research Fellowship 
-award from the Royal Society of New Zealand.
+award from the Royal Society of New Zealand. 
+Unpublished COI data care of Molly Timmers (NOAA).
 
 

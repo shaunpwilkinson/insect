@@ -51,6 +51,7 @@ get_lineage <- function(taxIDs, db, simplify = TRUE, numbers = FALSE, cores = 1)
     ## for backwards compatibility
   }
   gl1 <- function(taxID, db){
+    if(is.na(taxID)) return(NA)
     stopifnot(length(taxID) == 1 & mode(taxID) == "numeric")
     res <- if(numbers) integer(100) else character(100)
     resnames <- character(100)

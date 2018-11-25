@@ -46,9 +46,8 @@ To download the latest development version from GitHub, run:
 
 ### Classifying sequences
 
-Training an **insect** classifier will be the subject of another
-tutorial; however, several classifiers are already available for some of
-the more common metabarcoding primer sets:
+Classifiers for some of the more common metabarcoding primer sets are
+available here:
 
 <!-- note newlines needed between html tags and code chunk -->
 <table>
@@ -169,8 +168,8 @@ The COI classifier was created using the [MIDORI UNIQUE
 supplemented with around 14,000 non-metazoan COI sequences downloaded
 from GenBank.
 
-The large, 140 MB classifier can be downloaded to the current working
-directory and read into R as follows:
+The 140 MB classifier can be downloaded to the current working directory
+and read into R as follows:
 
     download.file("https://www.dropbox.com/s/dvnrhnfmo727774/classifier.rds?dl=1", 
                   destfile = "classifier.rds", mode = "wb")
@@ -189,7 +188,7 @@ sequence in the trainingset with a similarity greater than or equal to
 we will set `ping = 1` (i.e. only sequences with 100% identity are
 considered matches).
 
-    out <- classify(x, classifier, ping = 1)
+    out <- classify(x, classifier, threshold = 0.8)
 
 <!-- note newlines needed between html tags and code chunk -->
 <table>
@@ -324,13 +323,13 @@ considered matches).
 </tr>
 <tr class="odd">
 <td align="left">ASV9</td>
-<td align="right">2763</td>
-<td align="left">Rhodophyta</td>
-<td align="left">no rank</td>
-<td align="right">1.0000</td>
+<td align="right">2806</td>
+<td align="left">Florideophyceae</td>
+<td align="left">class</td>
+<td align="right">0.8400</td>
 <td align="left"></td>
 <td align="left"></td>
-<td align="left"></td>
+<td align="left">Florideophyceae</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
@@ -352,15 +351,15 @@ considered matches).
 </tr>
 <tr class="odd">
 <td align="left">ASV11</td>
-<td align="right">33317</td>
-<td align="left">Protostomia</td>
-<td align="left">no rank</td>
-<td align="right">0.9156</td>
+<td align="right">115834</td>
+<td align="left">Hesionidae</td>
+<td align="left">family</td>
+<td align="right">0.8863</td>
 <td align="left">Metazoa</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td align="left">Annelida</td>
+<td align="left">Polychaeta</td>
+<td align="left">Phyllodocida</td>
+<td align="left">Hesionidae</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
@@ -425,7 +424,7 @@ considered matches).
 <td align="right">39820</td>
 <td align="left">Nereididae</td>
 <td align="left">family</td>
-<td align="right">0.9821</td>
+<td align="right">1.0000</td>
 <td align="left">Metazoa</td>
 <td align="left">Annelida</td>
 <td align="left">Polychaeta</td>
@@ -436,12 +435,6 @@ considered matches).
 </tr>
 </tbody>
 </table>
-
-Any sequences that return exact hits (or near matches if `ping = 0.99`
-or similar) with at least one training sequence are assigned a score of
-`NA`, as in the final row of the table above. Here, the multiple
-matching sequences have a Nereid polychaete common ancestor, and the
-query sequence was therefore assigned to the family Nereididae.
 
 ### Further reading
 
@@ -461,4 +454,4 @@ raise it as an issue on
 This software was developed at [Victoria University of
 Wellington](http://www.victoria.ac.nz/) with funding from a Rutherford
 Foundation Postdoctoral Research Fellowship award from the Royal Society
-of New Zealand.
+of New Zealand. Unpublished COI data care of Molly Timmers (NOAA)
