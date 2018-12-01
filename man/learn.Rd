@@ -98,9 +98,7 @@ should continue recursively until the discrimination criteria
 are not met (TRUE; default), or whether a single split should
 take place at the root node.}
 
-\item{cores}{integer giving the number of CPUs to use
-when training the models (only applicable if
-\code{refine = 'Viterbi'}). Defaults to 1.
+\item{cores}{integer giving the number processors for multithreading. Defaults to 1.
 This argument may alternatively be a 'cluster' object,
 in which case it is the user's responsibility to close the socket
 connection at the conclusion of the operation,
@@ -116,7 +114,7 @@ to the console.}
 printed to the console, including progress at each split.}
 
 \item{numcode, frame}{passed to \code{\link[seqinr]{translate}}.
-Set to NULL (default) unless an amino acid sequence classifier is required.}
+Set to NULL (default) unless learning a hybrid DNA/amino acid sequence classifier.}
 
 \item{...}{further arguments to be passed on to \code{\link[aphid]{train}}).}
 }

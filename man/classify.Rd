@@ -5,9 +5,9 @@
 \title{Tree-based sequence classification.}
 \usage{
 classify(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
-  mincount = 3L, ranks = c("kingdom", "phylum", "class", "order",
-  "family", "genus", "species"), tabulize = FALSE, metadata = FALSE,
-  cores = 1)
+  mincount = 3L, offset = 0, ranks = c("kingdom", "phylum", "class",
+  "order", "family", "genus", "species"), tabulize = FALSE,
+  metadata = FALSE, cores = 1)
 }
 \arguments{
 \item{x}{a sequence or set of sequences. Can be a
@@ -50,6 +50,11 @@ but is often to genus/family/etc level for low resolution genetic markers.}
 \item{mincount}{integer, the minimum number of training sequences belonging to a
 selected child node for the classification to progress.}
 
+\item{offset}{log-odds score offset parameter governing whether
+the minimum score is met at each node. Defaults to 0.
+Values above 0 increase precision (fewer type I errors),
+values below 0 increase recall (fewer type II errors).}
+
 \item{ranks}{character vector giving the taxonomic ranks to be
 included in the output table. Must be a valid rank from the
 taxonomy database attributed to the classification tree
@@ -66,8 +71,7 @@ object; see details below).}
 containing the paths, individual node scores and reasons for termination.
 Defaults to FALSE. Included for advanced use and debugging.}
 
-\item{cores}{integer giving the number of CPUs to parallelize the operation
-over (defaults to 1).
+\item{cores}{integer giving the number of processors for multithreading (defaults to 1).
 This argument may alternatively be a 'cluster' object,
 in which case it is the user's responsibility to close the socket
 connection at the conclusion of the operation,

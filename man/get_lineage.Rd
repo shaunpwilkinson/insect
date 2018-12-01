@@ -21,8 +21,8 @@ Defaults to TRUE.}
 be comprised of the taxonomic ID numbers rather than taxon names.
 Defaults to FALSE.}
 
-\item{cores}{integer giving the number of CPUs to parallelize the operation
-over (Defaults to 1). This argument may alternatively be a 'cluster' object,
+\item{cores}{integer giving the number of processors for multithreading (Defaults to 1).
+This argument may alternatively be a 'cluster' object,
 in which case it is the user's responsibility to close the socket
 connection at the conclusion of the operation,
 for example by running \code{parallel::stopCluster(cores)}.
