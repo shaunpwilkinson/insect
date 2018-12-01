@@ -6,7 +6,7 @@
 #'
 #' @param x a list of sequences in \code{DNAbin} or \code{AAbin} format, or a
 #'   vector of sequences as concatenated upper-case character strings.
-#' @param cores integer giving the number of CPUs to use (defaults to 1).
+#' @param cores integer giving the number of processors for multithreading (defaults to 1).
 #'   This argument may alternatively be a 'cluster' object,
 #'   in which case it is the user's responsibility to close the socket
 #'   connection at the conclusion of the operation,

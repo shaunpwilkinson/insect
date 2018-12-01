@@ -33,8 +33,8 @@
 #'   Defaults to 0.02.
 #' @param partialbind logical indicating whether partial primer matching is
 #'   accepted. Defaults to TRUE.
-#' @param cores integer giving the number of CPUs to parallelize the operation
-#'   over. Defaults to 1, and reverts to 1 if x is not a list.
+#' @param cores integer giving the number of processors for multithreading.
+#'   Defaults to 1, and reverts to 1 if x is not a list.
 #'   This argument may alternatively be a 'cluster' object,
 #'   in which case it is the user's responsibility to close the socket
 #'   connection at the conclusion of the operation,

@@ -37,6 +37,10 @@
 #'   but is often to genus/family/etc level for low resolution genetic markers.
 #' @param mincount integer, the minimum number of training sequences belonging to a
 #'   selected child node for the classification to progress.
+#' @param offset log-odds score offset parameter governing whether
+#'   the minimum score is met at each node. Defaults to 0.
+#'   Values above 0 increase precision (fewer type I errors),
+#'   values below 0 increase recall (fewer type II errors).
 #' @param ranks character vector giving the taxonomic ranks to be
 #'   included in the output table. Must be a valid rank from the
 #'   taxonomy database attributed to the classification tree
@@ -50,8 +54,7 @@
 #' @param metadata logical indicating whether to include additional columns
 #'   containing the paths, individual node scores and reasons for termination.
 #'   Defaults to FALSE. Included for advanced use and debugging.
-#' @param cores integer giving the number of CPUs to parallelize the operation
-#'   over (defaults to 1).
+#' @param cores integer giving the number of processors for multithreading (defaults to 1).
 #'   This argument may alternatively be a 'cluster' object,
 #'   in which case it is the user's responsibility to close the socket
 #'   connection at the conclusion of the operation,
@@ -140,8 +143,8 @@
 #' }
 ################################################################################
 classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
-                     mincount = 3L, ranks = c("kingdom", "phylum", "class",
-                                              "order", "family", "genus", "species"),
+                     mincount = 3L, offset = 0,
+                     ranks = c("kingdom", "phylum", "class", "order", "family", "genus", "species"),
                      tabulize = FALSE, metadata = FALSE, cores = 1){
   #if(is.null(attr(tree, "nullscore"))) attr(tree, "nullscore") <- -1E08 ###
   if(!is.null(attr(tree, "training_data"))) attr(tree, "training_data") <- NULL
@@ -324,7 +327,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
     }
   }
 
-  classify1 <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE, mincount = 3L){
+  classify1 <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE, mincount = 3L, offset = 0){
     ## takes a single named raw vector with NN, NNhit, and possibly other attrs
     ## outputs a 1-row dataframe
     if(attr(x, "NNhit")){
@@ -376,7 +379,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       #####if(best_model == no_mods + 1L) threshold_met <- FALSE ###### null model selected
       # 4 is approx asymtote for single bp change as n training seqs -> inf
       if(threshold_met){
-        minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore")
+        minscore_met <- sc[best_model] >= attr(tree[[best_model]], "minscore") + offset
         minlength_met <- length(x) >= attr(tree[[best_model]], "minlength")
         maxlength_met <- length(x) <= attr(tree[[best_model]], "maxlength")
         neighbor_check <- TRUE
@@ -431,14 +434,14 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
                       stringsAsFactors = FALSE)
     return(out)
   }
-  classify2 <- function(cores, x, tree, threshold = 0.9, decay = TRUE, ping = TRUE, mincount = 3L){
+  classify2 <- function(cores, x, tree, threshold = 0.9, decay = TRUE, ping = TRUE, mincount = 3L, offset = 0){
     ## x is (usually) a DNAbin or AAbin list
     if(inherits(cores, "cluster")){
       ###if(doNN) x <- parallel::parLapply(cores, x, classify0, z, m, td, db, key, DNA)
-      res <- parallel::parLapply(cores, x, classify1, tree, threshold, decay, ping, mincount)
+      res <- parallel::parLapply(cores, x, classify1, tree, threshold, decay, ping, mincount, offset)
     }else if(cores == 1){
       ###if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
-      res <- lapply(x, classify1, tree, threshold, decay, ping, mincount)
+      res <- lapply(x, classify1, tree, threshold, decay, ping, mincount, offset)
     }else{
       navailcores <- parallel::detectCores()
       if(identical(cores, "autodetect")) cores <- navailcores - 1
@@ -446,11 +449,11 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       if(cores > 1){
         cl <- parallel::makeCluster(cores)
         ###if(doNN) x <- parallel::parLapply(cl, x, classify0, z, m, td, db, key, DNA)
-        res <- parallel::parLapply(cl, x, classify1, tree, threshold, decay, ping, mincount)
+        res <- parallel::parLapply(cl, x, classify1, tree, threshold, decay, ping, mincount, offset)
         parallel::stopCluster(cl)
       }else{
         ###if(doNN) x <- lapply(x, classify0, z, m, td, db, key, DNA)
-        res <- lapply(x, classify1, tree, threshold, decay, ping, mincount)
+        res <- lapply(x, classify1, tree, threshold, decay, ping, mincount, offset)
       }
     }
     res <- do.call("rbind", res)
@@ -463,7 +466,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   #xnames <- names(x) ## need to think about NN attrs?
   gc()
 
-  res <- classify2(cores, x[!duplicated(hashes2)], tree, threshold, decay, ping, mincount)
+  res <- classify2(cores, x[!duplicated(hashes2)], tree, threshold, decay, ping, mincount, offset)
   res <- res[pointers2, ] # rereplicating AA dupes
 
   if(any(res$reason == 100L)){ #only happens for hybrid trees
@@ -477,7 +480,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
       attr(x[[i]], "cakw") <- res$cakw[i]
       attr(x[[i]], "tax") <- res$tax[i]
     }
-    res[aaleaf, ] <- classify2(cores, x[aaleaf], tree, threshold, decay, ping, mincount)
+    res[aaleaf, ] <- classify2(cores, x[aaleaf], tree, threshold, decay, ping, mincount, offset)
   }
   ## do DNA classifs hree
 

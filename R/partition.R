@@ -103,11 +103,11 @@
   #res$success <- NA
   res$scores <- numeric(0)   # just so they're in the right order
   if(!quiet & verbose){
-    if(length(tmp) > 50){
-      cat("Initial membership: ", paste0(head(tmp, 50), collapse = ""), ".......\n")
-    }else{
-      cat("Initial membership: ", paste0(tmp, collapse = ""), "\n")
-    }
+    # if(length(tmp) > 50){
+    #   cat("Initial membership: ", paste0(head(tmp, 50), collapse = ""), ".......\n")
+    # }else{
+    #   cat("Initial membership: ", paste0(tmp, collapse = ""), "\n")
+    # }
     cat("Group sizes: ")
     for(i in 1:K) cat(i, "=", sum(tmp == i), " ")
     cat("\n")
@@ -196,11 +196,11 @@
     finetune <- sum(tmp == membership)/nseq > 0.95
     if(finetune & !quiet & verbose) cat("Fine-tune mode active\n")
     if(!quiet & verbose){
-      if(length(tmp) > 50){
-        cat("Membership: ", paste0(head(tmp, 50), collapse = ""), ".......\n")
-      }else{
-        cat("Membership: ", paste0(tmp, collapse = ""), "\n")
-      }
+      # if(length(tmp) > 50){
+      #   cat("Membership: ", paste0(head(tmp, 50), collapse = ""), ".......\n")
+      # }else{
+      #   cat("Membership: ", paste0(tmp, collapse = ""), "\n")
+      # }
       cat("Group sizes ")
       for(i in 1:K) cat(i, ":", sum(tmp == i), " ")
       cat("\n")

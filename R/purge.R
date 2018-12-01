@@ -16,8 +16,7 @@
 #'   For example, if \code{confidence = 0.8} (the default value) a sequence will only be
 #'   purged if its taxonomy differs from at least four other independent sequences
 #'   in its cluster.
-#' @param cores integer giving the number of CPUs to parallelize the operation
-#'   over. Defaults to 1.
+#' @param cores integer giving the number of processors for multithreading. Defaults to 1.
 #'   This argument may alternatively be a 'cluster' object,
 #'   in which case it is the user's responsibility to close the socket
 #'   connection at the conclusion of the operation,

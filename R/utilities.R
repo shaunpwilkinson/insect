@@ -55,8 +55,8 @@ join <- function(...){
 #'   the direction of the shave. Options are "forward" (shaves everything to
 #'   the right of the motif), "backward" (shaves everything to the left of
 #'   the motif) or "both" (retains the motif region only).
-#' @param cores integer giving the number of CPUs to parallelize the operation
-#'   over. Defaults to 1, and reverts to 1 if \code{x} is not a list.
+#' @param cores integer giving the number of processors for multithreading.
+#'   Defaults to 1, and reverts to 1 if \code{x} is not a list.
 #'   This argument may alternatively be a 'cluster' object,
 #'   in which case it is the user's responsibility to close the socket
 #'   connection at the conclusion of the operation,

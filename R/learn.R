@@ -76,9 +76,7 @@
 #'   should continue recursively until the discrimination criteria
 #'   are not met (TRUE; default), or whether a single split should
 #'   take place at the root node.
-#' @param cores integer giving the number of CPUs to use
-#'   when training the models (only applicable if
-#'   \code{refine = 'Viterbi'}). Defaults to 1.
+#' @param cores integer giving the number processors for multithreading. Defaults to 1.
 #'   This argument may alternatively be a 'cluster' object,
 #'   in which case it is the user's responsibility to close the socket
 #'   connection at the conclusion of the operation,
@@ -91,7 +89,7 @@
 #' @param verbose logical indicating whether extra feedback should be
 #'   printed to the console, including progress at each split.
 #' @param numcode,frame passed to \code{\link[seqinr]{translate}}.
-#'   Set to NULL (default) unless an amino acid sequence classifier is required.
+#'   Set to NULL (default) unless learning a hybrid DNA/amino acid sequence classifier.
 #' @param ... further arguments to be passed on to \code{\link[aphid]{train}}).
 #' @return an object of class \code{"insect"}.
 #' @details The "insect" object type is a dendrogram

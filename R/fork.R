@@ -191,7 +191,7 @@
         split_node <- TRUE
         break
       }else if(nclades == maxK){
-        if(!quiet & verbose) cat("Minimum performance criteria not reached, unable to split clade\n")
+        if(!quiet & verbose) cat("Minimum performance criteria not reached, unable to split clade\n\n")
         split_node <- FALSE
         break
       }else{
