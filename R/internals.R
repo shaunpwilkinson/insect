@@ -25,7 +25,7 @@
 ## x is a DNAbin object - should not contain duplicates, must have lineage attrs
 .forkr <- function(tree, x, lineages, refine = "Viterbi", nstart = 10,
                    iterations = 50, minK = 2, maxK = 2,
-                   minscore = 0.9, probs = 0.05, retry = TRUE, resize = TRUE,
+                   minscore = 0.95, probs = 0.05, retry = FALSE, resize = TRUE,
                    maxsize = NULL, kmers = NULL, ksize = NULL, seqweights = NULL,
                    cores = 1, quiet = FALSE, ...){
   tree <- .fork(tree, x, lineages, refine = refine, nstart = nstart,
