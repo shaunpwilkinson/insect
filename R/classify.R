@@ -446,7 +446,7 @@ classify <- function(x, tree, threshold = 0.9, decay = TRUE, ping = TRUE,
   if(species %in% c("ping", "none")){
     lowrank <- db$rank == tail(ranks, 1)
     dblr <- db$name[lowrank] # lowest rank in db
-    hasspp <- sum(grepl("[[:lower:]] [[:lower:]]", dblr))/length(dblr) > 0.5
+    hasspp <- sum(grepl("[[:lower:]][ _][[:lower:]]", dblr))/length(dblr) > 0.5
     if(hasspp){
       whichspp <- res$taxID %in% db$taxID[lowrank]
       if(species == "ping") whichspp[is.na(res$score)] <- FALSE # leave pinged spps as is
