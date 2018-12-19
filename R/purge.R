@@ -50,6 +50,7 @@ purge <- function(x, db, level = "order", confidence = 0.8,
                   cores = 1, quiet = FALSE, ...){
   db$rank <- tolower(db$rank)
   level <- tolower(level)
+  stopifnot(level %in% db$rank)
   if(is.null(attr(x, "OTU"))){
     if(!quiet) cat("Clustering OTUs\n")
     otus <- kmer::otu(x, nstart = 20, ... = ...)
