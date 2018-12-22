@@ -19,7 +19,7 @@ cost.
 
 The package also contains functions for searching and downloading
 reference sequences and taxonomic information from NCBI, a "virtual PCR"
-tool for sequence trimming, a function for "purging" erroneously labeled
+tool for sequence trimming, a function for purging erroneously labeled
 reference sequences, and several other tools.
 
 `insect` is designed to be used in conjunction with the
@@ -46,8 +46,8 @@ To download the latest development version from GitHub, run:
 
 ### Classifying sequences
 
-Classifiers for some of the more common metabarcoding primer sets are
-available here:
+Classifiers for some of the more commonly used metabarcoding primer sets
+are available here:
 
 <!-- note newlines needed between html tags and code chunk -->
 <table>
@@ -214,7 +214,7 @@ considered matches).
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
-<td align="right">0.9972</td>
+<td align="right">0.9981</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
@@ -242,7 +242,7 @@ considered matches).
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
-<td align="right">0.9760</td>
+<td align="right">0.9989</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
@@ -256,7 +256,7 @@ considered matches).
 <td align="right">2172821</td>
 <td align="left">Multicrustacea</td>
 <td align="left">superclass</td>
-<td align="right">0.9999</td>
+<td align="right">1.0000</td>
 <td align="left">Metazoa</td>
 <td align="left">Arthropoda</td>
 <td align="left"></td>
@@ -284,7 +284,7 @@ considered matches).
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
-<td align="right">0.9975</td>
+<td align="right">0.9981</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
@@ -298,7 +298,7 @@ considered matches).
 <td align="right">39820</td>
 <td align="left">Nereididae</td>
 <td align="left">family</td>
-<td align="right">0.9784</td>
+<td align="right">1.0000</td>
 <td align="left">Metazoa</td>
 <td align="left">Annelida</td>
 <td align="left">Polychaeta</td>
@@ -312,7 +312,7 @@ considered matches).
 <td align="right">116571</td>
 <td align="left">Podoplea</td>
 <td align="left">superorder</td>
-<td align="right">0.9442</td>
+<td align="right">0.9995</td>
 <td align="left">Metazoa</td>
 <td align="left">Arthropoda</td>
 <td align="left">Hexanauplia</td>
@@ -326,7 +326,7 @@ considered matches).
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
-<td align="right">0.8400</td>
+<td align="right">0.9482</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
@@ -354,7 +354,7 @@ considered matches).
 <td align="right">115834</td>
 <td align="left">Hesionidae</td>
 <td align="left">family</td>
-<td align="right">0.8863</td>
+<td align="right">1.0000</td>
 <td align="left">Metazoa</td>
 <td align="left">Annelida</td>
 <td align="left">Polychaeta</td>
@@ -365,10 +365,10 @@ considered matches).
 </tr>
 <tr class="even">
 <td align="left">ASV12</td>
-<td align="right">2806</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9769</td>
+<td align="right">1443949</td>
+<td align="left">Corallinophycidae</td>
+<td align="left">subclass</td>
+<td align="right">0.9910</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
@@ -382,7 +382,7 @@ considered matches).
 <td align="right">33213</td>
 <td align="left">Bilateria</td>
 <td align="left">no rank</td>
-<td align="right">0.9420</td>
+<td align="right">1.0000</td>
 <td align="left">Metazoa</td>
 <td align="left"></td>
 <td align="left"></td>
@@ -410,7 +410,7 @@ considered matches).
 <td align="right">2806</td>
 <td align="left">Florideophyceae</td>
 <td align="left">class</td>
-<td align="right">0.9692</td>
+<td align="right">0.9993</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left">Florideophyceae</td>
@@ -454,4 +454,4 @@ raise it as an issue on
 This software was developed at [Victoria University of
 Wellington](http://www.victoria.ac.nz/) with funding from a Rutherford
 Foundation Postdoctoral Research Fellowship award from the Royal Society
-of New Zealand. Unpublished COI data care of Molly Timmers (NOAA)
+of New Zealand. Unpublished COI data care of Molly Timmers (NOAA).
