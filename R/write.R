@@ -51,9 +51,9 @@ writeFASTQ <- function(x, file = "", compress = FALSE){
   reslen <- length(x) * 4
   res <- character(reslen)
   res[seq(1, reslen, by = 4)] <- paste0("@", names(x))
-  res[seq(2, reslen, by = 4)]  <- x
-  res[seq(3, reslen, by = 4)]  <- rep("+", length(x))
-  res[seq(4, reslen, by = 4)]  <- attr(x, "quality")
+  res[seq(2, reslen, by = 4)] <- x
+  res[seq(3, reslen, by = 4)] <- rep("+", length(x))
+  res[seq(4, reslen, by = 4)] <- attr(x, "quality")
   f <- if(compress) gzfile(file, "w") else file(file, "w")
   writeLines(res, f)
   close(f)

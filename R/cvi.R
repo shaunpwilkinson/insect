@@ -2,10 +2,9 @@
 #'
 #' This function takes a reference sequence database and allocates each sequence to either
 #'   a query set (a.k.a. test set) or a training set, in order to cross validate a
-#'   supervised taxon classifier. The method is based on that of Edgar (2018), but modified
-#'   for large reference datasets using fast k-mer counting and divisive clustering rather than
-#'   computing a full distance matrix. In this implementation we also do not discard any sequences;
-#'   rather, highly divergent singleton sequences are generally assigned to the training set.
+#'   supervised taxon classifier. The method is based on that of Edgar (2018), but uses
+#'   recursive divisive clustering and retains all sequences rather than discarding those that
+#'   violate the top-hit identity constraint.
 #'
 #' @param x a set of reference sequences. Can be a
 #'   "DNAbin" object or a named vector of upper-case DNA character strings.

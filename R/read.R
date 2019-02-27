@@ -101,6 +101,7 @@ readFASTA <- function(file = file.choose(), bin = TRUE, residues = "DNA",
   resnames <- gsub("^>", "", resnames)
   # resnames <- gsub("\\|.+", "", resnames)
   res <- toupper(sapply(res, function(s) paste0(s[-1], collapse = "")))
+  res <- gsub("\\.", "-", res)
   names(res) <- resnames
   if(bin){
     residues <- toupper(residues)
