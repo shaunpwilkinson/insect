@@ -71,22 +71,27 @@
 readFASTQ <- function(file = file.choose(), bin = TRUE){
   x <- scan(file = file, what = "", sep = "\n", quiet = TRUE)
   if(!grepl("^@", x[1])) stop("Not a valid fastq file\n")
-  seqs <- toupper(x[seq(2, length(x), by = 4)])
-  seqnames <- gsub("^@", "", x[seq(1, length(x), by = 4)])
-  quals <- x[seq(4, length(x), by = 4)]
+  seqname_lines <- grepl("^@", x)
+  f <- cumsum(seqname_lines)
+  seqs <- split(x, f)
+  discards <- vapply(seqs, length, 0L) != 4
+  seqs <- seqs[!discards]
+  quals <- vapply(seqs, "[", "", 4, USE.NAMES = FALSE)
+  seqnames <- sub("^@", "", vapply(seqs, "[", "", 1, USE.NAMES = FALSE))
+  seqs <- vapply(seqs, "[", "", 2, USE.NAMES = FALSE)
   if(bin){
-    seqs2 <- char2dna(seqs)
-    quals2 <- lapply(quals, .char2qual) #510 mb total
-    res <- mapply(function(x, y) structure(x, quality = y), seqs2, quals2, SIMPLIFY = FALSE)
-    names(res) <- seqnames
-    class(res) <- "DNAbin"
-    return(res)
+    quals <- lapply(quals, insect:::.char2qual) #510 mb total
+    seqs <- char2dna(seqs)
+    seqs <- mapply(function(x, y) structure(x, quality = y), seqs, quals, SIMPLIFY = FALSE)
+    names(seqs) <- seqnames
+    class(seqs) <- "DNAbin"
   }else{
     attr(seqs, "quality") <- quals
     names(seqs) <- seqnames
-    return(seqs)
   }
+  return(seqs)
 }
+
 ################################################################################
 #' @rdname read
 ################################################################################

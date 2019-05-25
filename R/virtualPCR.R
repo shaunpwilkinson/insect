@@ -132,7 +132,7 @@ virtualPCR <- function(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
     attributes(x) <- tmpattr
     attr(x, "forscores") <- forscores
   }else{
-    cat("None of the sequences met forward primer specificity criteria\n")
+    if(!quiet) cat("None of the sequences met forward primer specificity criteria\n")
     x <- NULL # cant return yet since cluster is still open
   }
   # trim all nucleotides to right of reverse primer bind site, including primer if specified
