@@ -37,12 +37,12 @@ demultiplex <- function(R1, R2 = NULL, tags, up, down, destdir = "demux"){
   counter <- 0
   ncup <- nchar(up)
   ncdn <- nchar(down)
-  up <- insect::disambiguate(up)
-  rcdown <- insect::disambiguate(insect::rc(down))
-  down <- insect::disambiguate(down)
+  up <- disambiguate(up)
+  rcdown <- disambiguate(rc(down))
+  down <- disambiguate(down)
   fregexs <- paste0("^", ftags, up)
   if(is.null(R2)){ # single-end reads
-    rregexs <- paste0(rcdown, insect::rc(rtags))
+    rregexs <- paste0(rcdown, rc(rtags))
     repeat{
       counter <- counter + 1
       tmp <- scan(R1, nlines = 1E07, skip = 0, what = "", sep = "\n", quiet = TRUE)

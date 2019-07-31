@@ -48,7 +48,7 @@ specify the taxonomic ID to species or genus level;
 however a higher rank may be returned for low-resolution genetic markers.}
 
 \item{mincount}{integer, the minimum number of training sequences belonging to a
-selected child node for the classification to progress.}
+selected child node for the classification to progress. Defaults to 5.}
 
 \item{offset}{log-odds score offset parameter governing whether
 the minimum score is met at each node. Defaults to 0.

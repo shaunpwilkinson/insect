@@ -80,7 +80,7 @@ readFASTQ <- function(file = file.choose(), bin = TRUE){
   seqnames <- sub("^@", "", vapply(seqs, "[", "", 1, USE.NAMES = FALSE))
   seqs <- vapply(seqs, "[", "", 2, USE.NAMES = FALSE)
   if(bin){
-    quals <- lapply(quals, insect:::.char2qual) #510 mb total
+    quals <- lapply(quals, .char2qual) #510 mb total
     seqs <- char2dna(seqs)
     seqs <- mapply(function(x, y) structure(x, quality = y), seqs, quals, SIMPLIFY = FALSE)
     names(seqs) <- seqnames
