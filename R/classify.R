@@ -36,7 +36,7 @@
 #'   specify the taxonomic ID to species or genus level;
 #'   however a higher rank may be returned for low-resolution genetic markers.
 #' @param mincount integer, the minimum number of training sequences belonging to a
-#'   selected child node for the classification to progress.
+#'   selected child node for the classification to progress. Defaults to 5.
 #' @param offset log-odds score offset parameter governing whether
 #'   the minimum score is met at each node. Defaults to 0.
 #'   Values above 0 increase precision (fewer type I errors),
@@ -464,7 +464,7 @@ classify <- function(x, tree, threshold = 0.8, decay = FALSE, ping = 0.98,
       }
       if(sum(whichspp) > 0){
         lins <- get_lineage(res$taxID[whichspp], db, simplify = FALSE, numbers = TRUE)
-        genids <- vapply(lins, function(l) head(tail(l, 2), 1), 0L, USE.NAMES = FALSE)
+        genids <- unname(sapply(lins, function(l) head(tail(l, 2), 1)))
         res$taxID[whichspp] <- genids
       }
     }
