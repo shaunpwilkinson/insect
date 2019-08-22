@@ -81,7 +81,7 @@ searchGB <- function(query = NULL, accession = NULL, sequences = TRUE,
     QueryKey <- xml2::xml_text(xml2::xml_find_first(X, "QueryKey"))
     if(N == 0){
       if(!quiet) warning("No sequences found matching query\n")
-      if(sequences & bin) raw(0) else character(0)
+      if(sequences & bin) return(list()) else return(character(0))
     }
   }else if(!is.null(accession)){
     if(!sequences) stop("Accession numbers both provided and required\n")
