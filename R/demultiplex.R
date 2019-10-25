@@ -45,9 +45,10 @@ demultiplex <- function(R1, R2 = NULL, tags, up, down, destdir = "demux"){
     rregexs <- paste0(rcdown, rc(rtags))
     repeat{
       counter <- counter + 1
-      tmp <- scan(R1, nlines = 1E07, skip = 0, what = "", sep = "\n", quiet = TRUE)
+      tmp <- scan(R1, nlines = 1E07, skip = skip, what = "", sep = "\n", quiet = TRUE)
       nlines <- length(tmp)
-      if(length(tmp) < 1E07) breakme <- TRUE
+      if(nlines == 0) break
+      if(nlines < 1E07) breakme <- TRUE
       skip <- skip + 1E07
       seqs <- tmp[seq(2, nlines, by = 4)]
       names(seqs) <- tmp[seq(1, nlines, by = 4)]
@@ -103,7 +104,8 @@ demultiplex <- function(R1, R2 = NULL, tags, up, down, destdir = "demux"){
       tmp1 <- scan(R1, nlines = 1E07, skip = skip, what = "", sep = "\n", quiet = TRUE)
       tmp2 <- scan(R2, nlines = 1E07, skip = skip, what = "", sep = "\n", quiet = TRUE)
       nlines <- length(tmp1)
-      if(length(tmp1) < 1E07) breakme <- TRUE
+      if(nlines == 0) break # unlikely but could happen
+      if(nlines < 1E07) breakme <- TRUE
       skip <- skip + 1E07
       seqs1 <- tmp1[seq(2, nlines, by = 4)]
       names(seqs1) <- tmp1[seq(1, nlines, by = 4)]
