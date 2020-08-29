@@ -15,10 +15,14 @@
 #' @param up,down upper case character strings giving the forward and reverse primer sequences.
 #' @param destdir character string giving the path to the directory where
 #'   the new FASTQ files should be written.
+#' @param adapter1 the forward flowcell adapter sequence to check and trim (set NULL to ignore).
+#'   For standard Illumina MiSeq forward adapter set to "AATGATACGGCGACCACCGAGATCTACAC" (paired end sequencing only).
+#' @param adapter2 the reverse flowcell adapter sequence to check and trim (set NULL to ignore).
+#'   For standard Illumina MiSeq reverse adapter set to "CAAGCAGAAGACGGCATACGAGAT" (single or paired end sequencing).
 #' @return NULL (invisibly)
 #' @author Shaun Wilkinson
 ################################################################################
-demultiplex <- function(R1, R2 = NULL, tags, up, down, destdir = "demux"){
+demultiplex <- function(R1, R2 = NULL, tags, up, down, destdir = "demux", adapter1 = NULL, adapter2 = NULL){
   if(is.null(names(tags))) names(tags) <- paste0("sample_", seq_along(tags))
   if(!dir.exists(destdir)) dir.create(destdir)
   #for(i in names(tags)) file.create(paste0(destdir, "/", i, ".fastq"))
@@ -40,7 +44,8 @@ demultiplex <- function(R1, R2 = NULL, tags, up, down, destdir = "demux"){
   up <- disambiguate(up)
   rcdown <- disambiguate(rc(down))
   down <- disambiguate(down)
-  fregexs <- paste0("^", ftags, up)
+  #fregexs <- paste0("^", ftags, up)
+  fregexs <- paste0(ftags, up)
   if(is.null(R2)){ # single-end reads
     rregexs <- paste0(rcdown, rc(rtags))
     repeat{
@@ -53,6 +58,11 @@ demultiplex <- function(R1, R2 = NULL, tags, up, down, destdir = "demux"){
       seqs <- tmp[seq(2, nlines, by = 4)]
       names(seqs) <- tmp[seq(1, nlines, by = 4)]
       quals <- tmp[seq(4, nlines, by = 4)]
+      if(!is.null(adapter2)){
+        oks <- grepl(rc(adapter2), seqs)
+        seqs <- seqs[oks]
+        quals <- quals[oks]
+      }
       oks <- grepl(paste0(".+", up, ".+", rcdown, ".+"), seqs)
       seqs <- seqs[oks]
       quals <- quals[oks]
@@ -113,6 +123,23 @@ demultiplex <- function(R1, R2 = NULL, tags, up, down, destdir = "demux"){
       seqs2 <- tmp2[seq(2, nlines, by = 4)]
       names(seqs2) <- tmp2[seq(1, nlines, by = 4)]
       quals2 <- tmp2[seq(4, nlines, by = 4)]
+
+      if(!is.null(adapter2)){
+        oks <- grepl(rc(adapter2), seqs1)
+        seqs1 <- seqs1[oks]
+        seqs2 <- seqs2[oks]
+        quals1 <- quals1[oks]
+        quals2 <- quals2[oks]
+      }
+
+      if(!is.null(adapter1)){
+        oks <- grepl(rc(adapter1), seqs2)
+        seqs1 <- seqs1[oks]
+        seqs2 <- seqs2[oks]
+        quals1 <- quals1[oks]
+        quals2 <- quals2[oks]
+      }
+
       oks <- grepl(paste0(".+", up, ".+"), seqs1) & grepl(paste0(".+", down, ".+"), seqs2)
       seqs1 <- seqs1[oks]
       seqs2 <- seqs2[oks]
