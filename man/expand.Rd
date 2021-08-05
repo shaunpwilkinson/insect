@@ -4,10 +4,25 @@
 \alias{expand}
 \title{Expand an existing classification tree.}
 \usage{
-expand(tree, clades = "0", refine = "Viterbi", iterations = 50,
-  nstart = 20, minK = 2, maxK = 2, minscore = 0.9, probs = 0.5,
-  retry = TRUE, resize = TRUE, maxsize = 1000, recursive = TRUE,
-  cores = 1, quiet = FALSE, verbose = FALSE, ...)
+expand(
+  tree,
+  clades = "0",
+  refine = "Viterbi",
+  iterations = 50,
+  nstart = 20,
+  minK = 2,
+  maxK = 2,
+  minscore = 0.9,
+  probs = 0.5,
+  retry = TRUE,
+  resize = TRUE,
+  maxsize = 1000,
+  recursive = TRUE,
+  cores = 1,
+  quiet = FALSE,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{tree}{an object of class \code{"insect"}.}

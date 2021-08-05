@@ -4,11 +4,28 @@
 \alias{learn}
 \title{Informatic sequence classification tree learning.}
 \usage{
-learn(x, db = NULL, model = NULL, refine = "Viterbi",
-  iterations = 50, nstart = 20, minK = 2, maxK = 2,
-  minscore = 0.95, probs = 0.5, retry = FALSE, resize = TRUE,
-  maxsize = 1000, recursive = TRUE, cores = 1, quiet = FALSE,
-  verbose = FALSE, numcode = NULL, frame = NULL, ...)
+learn(
+  x,
+  db = NULL,
+  model = NULL,
+  refine = "Viterbi",
+  iterations = 50,
+  nstart = 20,
+  minK = 2,
+  maxK = 2,
+  minscore = 0.95,
+  probs = 0.5,
+  retry = FALSE,
+  resize = TRUE,
+  maxsize = 1000,
+  recursive = TRUE,
+  cores = 1,
+  quiet = FALSE,
+  verbose = FALSE,
+  numcode = NULL,
+  frame = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{a reference database of class\code{"DNAbin"} representing a list of

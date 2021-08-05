@@ -16,6 +16,8 @@
 #'   console.
 #' @param compress logical indicating whether the output file should be gzipped.
 #' @param append logical indicating whether the output should be appended to the file.
+#' @param wrap integer giving the maximum number of characters on each sequence line.
+#'   Defaults to NULL (no wrapping).
 #' @return NULL (invisibly).
 #' @author Shaun Wilkinson
 #' @references
@@ -64,7 +66,7 @@ writeFASTQ <- function(x, file = "", compress = FALSE, append = FALSE){
 ################################################################################
 #' @rdname write
 ################################################################################
-writeFASTA <- function(x, file = "", compress = FALSE, append = FALSE){
+writeFASTA <- function(x, file = "", compress = FALSE, append = FALSE, wrap = NULL){
   isDNA <- .isDNA(x)
   isAA <- .isAA(x)
   if(!is.null(dim(x))){ # convert from matrix to list while retaining gaps
@@ -85,6 +87,23 @@ writeFASTA <- function(x, file = "", compress = FALSE, append = FALSE){
   res <- character(reslen)
   res[seq(1, reslen, by = 2)] <- paste0(">", names(tmp))
   res[seq(2, reslen, by = 2)] <- tmp
+  if(!is.null(wrap)){
+    if(mode(wrap) == "integer") stop("wrap must be an integer")
+    if(wrap == 0) stop("wrap must be more than zero")
+
+    wrapfun <- function(s, wrap){ # character vector length 1
+      nrows <- ceiling(nchar(s)/wrap)
+      if(nrows == 1L) return(s)
+      f <- rep(1:nrows, each = wrap)
+      f <- f[seq_len(nchar(s))]
+      spl <- split(strsplit(s, split = "")[[1]], f)
+      spl <- vapply(spl, paste0, "", collapse = "", USE.NAMES = F)
+      return(spl)
+    }
+    res <- as.list(res)
+    res[seq(2, reslen, by = 2)] <- lapply(res[seq(2, reslen, by = 2)], wrapfun, wrap = wrap)
+    res <- unlist(res, recursive = TRUE, use.names = FALSE)
+  }
   #f <- if(compress) gzfile(file, "w") else file(file, "w")
   f <- if(compress) gzfile(file, if(append) "a" else "w") else file(file, if(append) "a" else "w")
   write(res, f, append = append)

@@ -3,7 +3,6 @@
 \docType{package}
 \name{insect}
 \alias{insect}
-\alias{insect-package}
 \title{Informatic sequence classification trees.}
 \description{
 R package 'insect' contains functions to create and use

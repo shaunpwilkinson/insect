@@ -4,11 +4,13 @@
 \name{samoa}
 \alias{samoa}
 \title{Table of marine COI amplicon sequence variants from American Samoa}
-\format{a 2 x 16 integer matrix containing abundance counts of 16 ASVs from
+\format{
+a 2 x 16 integer matrix containing abundance counts of 16 ASVs from
   two sites. This table contains the first 16 rows of the 'seqtab.nochim' output from
   the DADA2 pipeline (\url{https://benjjneb.github.io/dada2/tutorial.html}).
   The column names contain the DNA sequences of the ASVs, and row names
-  correspond with site codes.}
+  correspond with site codes.
+}
 \usage{
 samoa
 }

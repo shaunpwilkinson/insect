@@ -4,10 +4,20 @@
 \alias{classify}
 \title{Tree-based sequence classification.}
 \usage{
-classify(x, tree, threshold = 0.8, decay = FALSE, ping = 0.98,
-  mincount = 5, offset = 0, ranks = c("kingdom", "phylum", "class",
-  "order", "family", "genus", "species"), species = "ping100",
-  tabulize = FALSE, metadata = FALSE, cores = 1)
+classify(
+  x,
+  tree,
+  threshold = 0.8,
+  decay = FALSE,
+  ping = 0.98,
+  mincount = 5,
+  offset = 0,
+  ranks = c("kingdom", "phylum", "class", "order", "family", "genus", "species"),
+  species = "ping100",
+  tabulize = FALSE,
+  metadata = FALSE,
+  cores = 1
+)
 }
 \arguments{
 \item{x}{a sequence or set of sequences. Can be a

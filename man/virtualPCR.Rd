@@ -4,9 +4,21 @@
 \alias{virtualPCR}
 \title{Virtual PCR.}
 \usage{
-virtualPCR(x, up, down = NULL, rcdown = TRUE, trimprimers = FALSE,
-  minfsc = 50, minrsc = 50, minamplen = 50, maxamplen = 2000,
-  maxNs = 0.02, partialbind = TRUE, cores = 1, quiet = FALSE)
+virtualPCR(
+  x,
+  up,
+  down = NULL,
+  rcdown = TRUE,
+  trimprimers = FALSE,
+  minfsc = 50,
+  minrsc = 50,
+  minamplen = 50,
+  maxamplen = 2000,
+  maxNs = 0.02,
+  partialbind = TRUE,
+  cores = 1,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{x}{a list of DNA sequences in \code{DNAbin} format.}

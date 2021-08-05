@@ -24,7 +24,6 @@
 
     dlf <- function(u, destfile, quiet = TRUE){
       errfun <- function(er){
-        closeAllConnections()
         warning("error 745")
         return(NULL)
       }
@@ -146,7 +145,6 @@
 .scanURL <- function(x, retmode = "xml", ...){
   scanURL <- function(z, retmode = "xml", ...){
     errfun <- function(er){
-      closeAllConnections()
       return(NULL)
     }
     res <- tryCatch(if(retmode == "xml") xml2::read_xml(z, ... = ...) else
@@ -163,7 +161,6 @@
     tmpf <- tempfile()
     cat(tmp, file = tmpf, sep = "\n")
     errfun <- function(er){
-      closeAllConnections()
       return(NULL)
     }
     res <- tryCatch(if(retmode == "xml") xml2::read_xml(tmpf, ... = ...) else

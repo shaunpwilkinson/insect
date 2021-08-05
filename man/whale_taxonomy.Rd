@@ -4,7 +4,8 @@
 \name{whale_taxonomy}
 \alias{whale_taxonomy}
 \title{Cetacean section of NCBI taxonomy database.}
-\format{A data.frame object with 72 rows and four columns, labeled as follows:
+\format{
+A data.frame object with 72 rows and four columns, labeled as follows:
 \describe{
   \item{taxID}{the NCBI unique taxon identifier (integer).}
   \item{parent_taxID}{the NCBI unique taxon identifier
@@ -16,7 +17,8 @@ The database was accessed from
 \url{ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz} on 17 June 2018
 using the \code{\link{taxonomy}} function, and pruned using
 \code{\link{prune_taxonomy}} with
-\code{taxIDs = as.integer(gsub(".+\\|", "", names(whales)))}.}
+\code{taxIDs = as.integer(gsub(".+\\|", "", names(whales)))}.
+}
 \source{
 \url{https://www.ncbi.nlm.nih.gov/taxonomy/}
 }

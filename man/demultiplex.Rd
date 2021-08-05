@@ -4,7 +4,16 @@
 \alias{demultiplex}
 \title{Demultiplex merged FASTQ}
 \usage{
-demultiplex(R1, R2 = NULL, tags, up, down, destdir = "demux")
+demultiplex(
+  R1,
+  R2 = NULL,
+  tags,
+  up,
+  down,
+  destdir = "demux",
+  adapter1 = NULL,
+  adapter2 = NULL
+)
 }
 \arguments{
 \item{R1}{character string giving the path to the first FASTQ file}
@@ -21,6 +30,12 @@ Each tag combination should be entered as an upper case character string delimit
 
 \item{destdir}{character string giving the path to the directory where
 the new FASTQ files should be written.}
+
+\item{adapter1}{the forward flowcell adapter sequence to check and trim (set NULL to ignore).
+For standard Illumina MiSeq forward adapter set to "AATGATACGGCGACCACCGAGATCTACAC" (paired end sequencing only).}
+
+\item{adapter2}{the reverse flowcell adapter sequence to check and trim (set NULL to ignore).
+For standard Illumina MiSeq reverse adapter set to "CAAGCAGAAGACGGCATACGAGAT" (single or paired end sequencing).}
 }
 \value{
 NULL (invisibly)

@@ -4,7 +4,8 @@
 \name{whales}
 \alias{whales}
 \title{Cetacean 16S rDNA sequences.}
-\format{A "DNAbin" list object containing 19 cetacean mitochondrial sequences
+\format{
+A "DNAbin" list object containing 19 cetacean mitochondrial sequences
 in raw-byte format,
 averaging 130 nucleotides in length. The sequences are named with the GenBank
 accession numbers followed by a "|" symbol, followed by their NCBI taxonomy ID
@@ -13,7 +14,8 @@ The sequences were downloaded using the
 \code{\link{searchGB}} function on 17 June 2018
 (query term: "cetacea[ORGN]+AND+16S+rRNA[GENE]"), and trimmed using the
 \code{\link{virtualPCR}} function with the primers 16Smam1 and 16Smam2
-(CGGTTGGGGTGACCTCGGA and GCTGTTATCCCTAGGGTAACT, respectively; Taylor 1996).}
+(CGGTTGGGGTGACCTCGGA and GCTGTTATCCCTAGGGTAACT, respectively; Taylor 1996).
+}
 \source{
 \url{https://www.ncbi.nlm.nih.gov/genbank/}
 }

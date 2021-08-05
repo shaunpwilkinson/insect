@@ -4,8 +4,7 @@
 \alias{purge}
 \title{Identify and remove erroneous reference sequences.}
 \usage{
-purge(x, db, level = "order", confidence = 0.8, cores = 1,
-  quiet = FALSE, ...)
+purge(x, db, level = "order", confidence = 0.8, cores = 1, quiet = FALSE, ...)
 }
 \arguments{
 \item{x}{a DNAbin list object whose names include taxonomic identification numbers

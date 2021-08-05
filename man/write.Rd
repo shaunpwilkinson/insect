@@ -8,7 +8,7 @@
 \usage{
 writeFASTQ(x, file = "", compress = FALSE, append = FALSE)
 
-writeFASTA(x, file = "", compress = FALSE, append = FALSE)
+writeFASTA(x, file = "", compress = FALSE, append = FALSE, wrap = NULL)
 }
 \arguments{
 \item{x}{a list of sequences in \code{DNAbin} or \code{AAbin} format, or a
@@ -26,6 +26,9 @@ console.}
 \item{compress}{logical indicating whether the output file should be gzipped.}
 
 \item{append}{logical indicating whether the output should be appended to the file.}
+
+\item{wrap}{integer giving the maximum number of characters on each sequence line.
+Defaults to NULL (no wrapping).}
 }
 \value{
 NULL (invisibly).
