@@ -1,3 +1,8 @@
+# insect 1.4.0
+
+Minor release including a new demultiplex function for illumina iSeq and MiSeq fastq output
+
+
 # insect 1.2.0
 
 Minor release including several new features:
