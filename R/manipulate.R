@@ -18,7 +18,7 @@
 #'   metadata that need to be retained following the duplicate analysis.
 #' @param drop logical; indicates whether the input matrix (assuming one is
 #'   passed) should be reduced to a vector if subset to a single sequence.
-#'   Defaults to FALSE in keeping with the style of the \code{\link{ape}}
+#'   Defaults to FALSE in keeping with the style of the \code{\link[ape]{ape}}
 #'   package functions.
 #' @param subset logical vector giving the elements or rows to be kept.
 #' @param ... further arguments to be passed between methods.
@@ -34,7 +34,6 @@
 #'
 #'   Paradis E (2012) Analysis of Phylogenetics and Evolution with R
 #'   (Second Edition). Springer, New York.
-#' @seealso \code{\link[ape]{DNAbin}}
 #' @examples
 #'   data(whales)
 #'   duplicates <- duplicated.DNAbin(whales, point = TRUE)
