@@ -1,4 +1,4 @@
-# insect version 1.4.3
+# insect version 1.4.4
 
 Minor release correcting Rd files with Rd link targets missing package anchors and updating moved URLs
 
