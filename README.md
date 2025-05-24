@@ -82,7 +82,7 @@ href="https://www.dropbox.com/s/fv3dpvws6zjvtib/classifier.rds?dl=1">RDS
 <td style="text-align: left;">16S</td>
 <td style="text-align: left;">Marine crustaceans</td>
 <td style="text-align: left;">Crust16S_F/Crust16S_R (<a
-href="https://pubmed.ncbi.nlm.nih.gov/26587265/">Berry et al
+href="https://onlinelibrary.wiley.com/doi/10.1002/ece3.3123">Berry et al
 2017</a>)</td>
 <td style="text-align: left;">GenBank</td>
 <td style="text-align: right;">4</td>
@@ -95,10 +95,10 @@ href="https://www.dropbox.com/s/9vl9gj3frw7ng1m/classifier.rds?dl=1">RDS
 <td style="text-align: left;">16S</td>
 <td style="text-align: left;">Marine fish</td>
 <td style="text-align: left;">Fish16sF/16s2R (<a
-href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al
+href="https://onlinelibrary.wiley.com/doi/10.1002/ece3.3123">Berry et al
 2017</a>; <a
-href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1959119/">Deagle et
-al 2007</a>)</td>
+href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0000831">Deagle
+et al 2007</a>)</td>
 <td style="text-align: left;">GenBank</td>
 <td style="text-align: right;">4</td>
 <td style="text-align: right;">20180627</td>
