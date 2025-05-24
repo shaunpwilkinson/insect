@@ -1,9 +1,19 @@
 language: r
-
 cache: packages
+warnings_are_errors: false
 
-addons:
-  apt:
-    update: true
+r_check_args: "--as-cran"
+
+# Only run builds on pushes to main and PRs
+branches:
+  only:
+    - main
+    - master
+
+# Notifications (optional)
+notifications:
+  email:
+    on_success: change
+    on_failure: change
 
 
