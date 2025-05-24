@@ -117,18 +117,17 @@ The COI classifier was created using the
 trainingset, supplemented with around 14,000 non-metazoan 
 COI sequences downloaded from GenBank. 
 
-The 140 MB classifier can be downloaded to the current working directory 
+The 140 MB classifier can be downloaded 
 and read into R as follows:
 
-```{r, eval = FALSE}
+```{r}
+tmpf <- tempfile()
 download.file("https://www.dropbox.com/s/dvnrhnfmo727774/classifier.rds?dl=1", 
-              destfile = "classifier.rds", mode = "wb")
-classifier <- readRDS("classifier.rds")
+              destfile = tmpf, mode = "wb")
+classifier <- readRDS(tmpf)
 ```
 
-```{r, echo = FALSE}
-classifier <- readRDS("~/Dropbox/R/insect/trees/COI/metazoan_COI/version_5/classifier.rds")
-```
+
 
 There is an option to perform a nearest-neighbor search prior to the 
 computationally-expensive recursive model test procedure, which can save 

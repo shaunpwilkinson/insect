@@ -1,10 +1,3 @@
-[![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/insect)](https://cran.r-project.org/package=insect)
-[![CRAN\_Downloads\_Badge](http://cranlogs.r-pkg.org/badges/grand-total/insect)](https://cran.r-project.org/package=insect)
-[![DOI](https://zenodo.org/badge/87808693.svg)](https://zenodo.org/badge/latestdoi/87808693)
-[![ORCiD](https://img.shields.io/badge/ORCiD-0000--0002--7332--7931-brightgreen.svg)](http://orcid.org/0000-0002-7332-7931)
-[![Project\_Status](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0)
-
 ------------------------------------------------------------------------
 
 ### Informatic sequence classification trees
@@ -17,7 +10,7 @@ highly accurate taxon IDs, albeit at a relatively high computational
 cost.
 
 The package also contains functions for searching and downloading
-reference sequences and taxonomic information from NCBI, a "virtual PCR"
+reference sequences and taxonomic information from NCBI, a “virtual PCR”
 tool for sequence trimming, a function for purging erroneously labeled
 reference sequences, and several other tools.
 
@@ -49,96 +42,140 @@ Classifiers for some of the more commonly used metabarcoding primer sets
 are available here:
 
 <!-- note newlines needed between html tags and code chunk -->
+
 <table>
+<colgroup>
+<col style="width: 4%" />
+<col style="width: 16%" />
+<col style="width: 37%" />
+<col style="width: 19%" />
+<col style="width: 5%" />
+<col style="width: 6%" />
+<col style="width: 9%" />
+</colgroup>
 <thead>
 <tr class="header">
-<th align="left">Marker</th>
-<th align="left">Target</th>
-<th align="left">Primers</th>
-<th align="left">Source</th>
-<th align="right">Version</th>
-<th align="right">Date</th>
-<th align="left">Download</th>
+<th style="text-align: left;">Marker</th>
+<th style="text-align: left;">Target</th>
+<th style="text-align: left;">Primers</th>
+<th style="text-align: left;">Source</th>
+<th style="text-align: right;">Version</th>
+<th style="text-align: right;">Date</th>
+<th style="text-align: left;">Download</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">12S</td>
-<td align="left">Fish</td>
-<td align="left">MiFishUF/MiFishUR (<a href="https://www.ncbi.nlm.nih.gov/pubmed/26587265">Miya et al 2015</a>)</td>
-<td align="left">GenBank</td>
-<td align="right">1</td>
-<td align="right">20181111</td>
-<td align="left"><a href="https://www.dropbox.com/s/fv3dpvws6zjvtib/classifier.rds?dl=1">RDS (9MB)</a></td>
+<td style="text-align: left;">12S</td>
+<td style="text-align: left;">Fish</td>
+<td style="text-align: left;">MiFishUF/MiFishUR (<a
+href="https://pubmed.ncbi.nlm.nih.gov/26587265/">Miya et al
+2015</a>)</td>
+<td style="text-align: left;">GenBank</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">20181111</td>
+<td style="text-align: left;"><a
+href="https://www.dropbox.com/s/fv3dpvws6zjvtib/classifier.rds?dl=1">RDS
+(9MB)</a></td>
 </tr>
 <tr class="even">
-<td align="left">16S</td>
-<td align="left">Marine crustaceans</td>
-<td align="left">Crust16S_F/Crust16S_R (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al 2017</a>)</td>
-<td align="left">GenBank</td>
-<td align="right">4</td>
-<td align="right">20180626</td>
-<td align="left"><a href="https://www.dropbox.com/s/9vl9gj3frw7ng1m/classifier.rds?dl=1">RDS (7.1 MB)</a></td>
+<td style="text-align: left;">16S</td>
+<td style="text-align: left;">Marine crustaceans</td>
+<td style="text-align: left;">Crust16S_F/Crust16S_R (<a
+href="https://pubmed.ncbi.nlm.nih.gov/26587265/">Berry et al
+2017</a>)</td>
+<td style="text-align: left;">GenBank</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">20180626</td>
+<td style="text-align: left;"><a
+href="https://www.dropbox.com/s/9vl9gj3frw7ng1m/classifier.rds?dl=1">RDS
+(7.1 MB)</a></td>
 </tr>
 <tr class="odd">
-<td align="left">16S</td>
-<td align="left">Marine fish</td>
-<td align="left">Fish16sF/16s2R (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al 2017</a>; <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1959119/">Deagle et al 2007</a>)</td>
-<td align="left">GenBank</td>
-<td align="right">4</td>
-<td align="right">20180627</td>
-<td align="left"><a href="https://www.dropbox.com/s/fvfrd46exdah037/classifier.rds?dl=1">RDS (6.8MB)</a></td>
+<td style="text-align: left;">16S</td>
+<td style="text-align: left;">Marine fish</td>
+<td style="text-align: left;">Fish16sF/16s2R (<a
+href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al
+2017</a>; <a
+href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1959119/">Deagle et
+al 2007</a>)</td>
+<td style="text-align: left;">GenBank</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">20180627</td>
+<td style="text-align: left;"><a
+href="https://www.dropbox.com/s/fvfrd46exdah037/classifier.rds?dl=1">RDS
+(6.8MB)</a></td>
 </tr>
 <tr class="even">
-<td align="left">18S</td>
-<td align="left">Marine eukaryotes</td>
-<td align="left">18S_1F/18S_400R (<a href="https://www.ncbi.nlm.nih.gov/pubmed/24023913">Pochon et al 2017</a>)</td>
-<td align="left">SILVA_132_LSUParc, GenBank</td>
-<td align="right">5</td>
-<td align="right">20180709</td>
-<td align="left"><a href="https://www.dropbox.com/s/rmhh1g73jtipagu/classifier.rds?dl=1">RDS (11.8 MB)</a></td>
+<td style="text-align: left;">18S</td>
+<td style="text-align: left;">Marine eukaryotes</td>
+<td style="text-align: left;">18S_1F/18S_400R (<a
+href="https://pubmed.ncbi.nlm.nih.gov/24023913/">Pochon et al
+2017</a>)</td>
+<td style="text-align: left;">SILVA_132_LSUParc, GenBank</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">20180709</td>
+<td style="text-align: left;"><a
+href="https://www.dropbox.com/s/rmhh1g73jtipagu/classifier.rds?dl=1">RDS
+(11.8 MB)</a></td>
 </tr>
 <tr class="odd">
-<td align="left">18S</td>
-<td align="left">Marine eukaryotes</td>
-<td align="left">18S_V4F/18S_V4R (<a href="https://www.ncbi.nlm.nih.gov/pubmed/28947818">Stat et al 2017</a>)</td>
-<td align="left">GenBank</td>
-<td align="right">4</td>
-<td align="right">20180525</td>
-<td align="left"><a href="https://www.dropbox.com/s/s315gxuo4p24kx8/classifier.rds?dl=1">RDS (11.5 MB)</a></td>
+<td style="text-align: left;">18S</td>
+<td style="text-align: left;">Marine eukaryotes</td>
+<td style="text-align: left;">18S_V4F/18S_V4R (<a
+href="https://pubmed.ncbi.nlm.nih.gov/28947818/">Stat et al
+2017</a>)</td>
+<td style="text-align: left;">GenBank</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">20180525</td>
+<td style="text-align: left;"><a
+href="https://www.dropbox.com/s/s315gxuo4p24kx8/classifier.rds?dl=1">RDS
+(11.5 MB)</a></td>
 </tr>
 <tr class="even">
-<td align="left">23S</td>
-<td align="left">Algae</td>
-<td align="left">p23SrV_f1/p23SrV_r1 (<a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1529-8817.2007.00341.x">Sherwood &amp; Presting 2007</a>)</td>
-<td align="left">SILVA_132_LSUParc</td>
-<td align="right">1</td>
-<td align="right">20180715</td>
-<td align="left"><a href="https://www.dropbox.com/s/6o8cauqrlgnmwp5/classifier.rds?dl=1">RDS (26.9MB)</a></td>
+<td style="text-align: left;">23S</td>
+<td style="text-align: left;">Algae</td>
+<td style="text-align: left;">p23SrV_f1/p23SrV_r1 (<a
+href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1529-8817.2007.00341.x">Sherwood
+&amp; Presting 2007</a>)</td>
+<td style="text-align: left;">SILVA_132_LSUParc</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">20180715</td>
+<td style="text-align: left;"><a
+href="https://www.dropbox.com/s/6o8cauqrlgnmwp5/classifier.rds?dl=1">RDS
+(26.9MB)</a></td>
 </tr>
 <tr class="odd">
-<td align="left">COI</td>
-<td align="left">Metazoans</td>
-<td align="left">mlCOIintF/jgHCO2198 (<a href="https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34">Leray et al 2013</a>)</td>
-<td align="left">Midori, GenBank</td>
-<td align="right">5</td>
-<td align="right">20181124</td>
-<td align="left"><a href="https://www.dropbox.com/s/dvnrhnfmo727774/classifier.rds?dl=1">RDS (140 MB)</a></td>
+<td style="text-align: left;">COI</td>
+<td style="text-align: left;">Metazoans</td>
+<td style="text-align: left;">mlCOIintF/jgHCO2198 (<a
+href="https://frontiersinzoology.biomedcentral.com/articles/10.1186/1742-9994-10-34">Leray
+et al 2013</a>)</td>
+<td style="text-align: left;">Midori, GenBank</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">20181124</td>
+<td style="text-align: left;"><a
+href="https://www.dropbox.com/s/dvnrhnfmo727774/classifier.rds?dl=1">RDS
+(140 MB)</a></td>
 </tr>
 <tr class="even">
-<td align="left">ITS2</td>
-<td align="left">Cnidarians and sponges</td>
-<td align="left">scl58SF/scl28SR (<a href="https://www.dropbox.com/s/6hcs1goju60wqi4/README.txt?dl=1">Wilkinson et al in prep</a>)</td>
-<td align="left">GenBank</td>
-<td align="right">5</td>
-<td align="right">20180920</td>
-<td align="left"><a href="https://www.dropbox.com/s/f07cka6308ebk2o/classifier.rds?dl=1">RDS (6.6 MB)</a></td>
+<td style="text-align: left;">ITS2</td>
+<td style="text-align: left;">Cnidarians and sponges</td>
+<td style="text-align: left;">scl58SF/scl28SR (<a
+href="https://www.dropbox.com/s/6hcs1goju60wqi4/README.txt?dl=1">Wilkinson
+et al in prep</a>)</td>
+<td style="text-align: left;">GenBank</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">20180920</td>
+<td style="text-align: left;"><a
+href="https://www.dropbox.com/s/f07cka6308ebk2o/classifier.rds?dl=1">RDS
+(6.6 MB)</a></td>
 </tr>
 </tbody>
 </table>
 
 To classify a sequence or set of sequences, first read them into R as a
-"DNAbin" list object. FASTA files can be parsed as follows:
+“DNAbin” list object. FASTA files can be parsed as follows:
 
     x <- readFASTA("<path-to-file>.fasta")
 
@@ -163,20 +200,20 @@ and de-noised, filtered and merged following the [DADA2
 tutorial](https://benjjneb.github.io/dada2/tutorial.html).
 
 The COI classifier was created using the [MIDORI UNIQUE
-20180221](http://reference-midori.info/download.php) trainingset,
+20180221](https://reference-midori.info/download.php) trainingset,
 supplemented with around 14,000 non-metazoan COI sequences downloaded
 from GenBank.
 
-The 140 MB classifier can be downloaded to the current working directory
-and read into R as follows:
+The 140 MB classifier can be downloaded and read into R as follows:
 
+    tmpf <- tempfile()
     download.file("https://www.dropbox.com/s/dvnrhnfmo727774/classifier.rds?dl=1", 
-                  destfile = "classifier.rds", mode = "wb")
-    classifier <- readRDS("classifier.rds")
+                  destfile = tmpf, mode = "wb")
+    classifier <- readRDS(tmpf)
 
 There is an option to perform a nearest-neighbor search prior to the
 computationally-expensive recursive model test procedure, which can save
-time and improve resolution ('recall') at lower taxonomic ranks. Note
+time and improve resolution (‘recall’) at lower taxonomic ranks. Note
 that this can be a double-edged sword; if multiple species share an
 identical or near-identical sequence, and the true taxon of the query
 sequence is missing from the trainingset, the algorithm may
@@ -184,253 +221,268 @@ over-classify the sequence and return a congeneric taxon. To perform a
 nearest-neighbor search with a similarity threshold of 0.99 (meaning any
 sequence in the trainingset with a similarity greater than or equal to
 99% is considered a match), set `ping = 0.99`. To stay on the safe side,
-we will set `ping = 1` (i.e. only sequences with 100% identity are
+we will set `ping = 1` (i.e. only sequences with 100% identity are
 considered matches).
 
     out <- classify(x, classifier, threshold = 0.8)
 
 <!-- note newlines needed between html tags and code chunk -->
+
 <table>
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 5%" />
+<col style="width: 13%" />
+<col style="width: 7%" />
+<col style="width: 4%" />
+<col style="width: 5%" />
+<col style="width: 7%" />
+<col style="width: 11%" />
+<col style="width: 9%" />
+<col style="width: 10%" />
+<col style="width: 9%" />
+<col style="width: 5%" />
+</colgroup>
 <thead>
 <tr class="header">
-<th align="left">representative</th>
-<th align="right">taxID</th>
-<th align="left">taxon</th>
-<th align="left">rank</th>
-<th align="right">score</th>
-<th align="left">kingdom</th>
-<th align="left">phylum</th>
-<th align="left">class</th>
-<th align="left">order</th>
-<th align="left">family</th>
-<th align="left">genus</th>
-<th align="left">species</th>
+<th style="text-align: left;">representative</th>
+<th style="text-align: right;">taxID</th>
+<th style="text-align: left;">taxon</th>
+<th style="text-align: left;">rank</th>
+<th style="text-align: right;">score</th>
+<th style="text-align: left;">kingdom</th>
+<th style="text-align: left;">phylum</th>
+<th style="text-align: left;">class</th>
+<th style="text-align: left;">order</th>
+<th style="text-align: left;">family</th>
+<th style="text-align: left;">genus</th>
+<th style="text-align: left;">species</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">ASV1</td>
-<td align="right">2806</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9981</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV1</td>
+<td style="text-align: right;">2806</td>
+<td style="text-align: left;">Florideophyceae</td>
+<td style="text-align: left;">class</td>
+<td style="text-align: right;">0.9981</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Florideophyceae</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="even">
-<td align="left">ASV2</td>
-<td align="right">6379</td>
-<td align="left">Chaetopterus</td>
-<td align="left">genus</td>
-<td align="right">1.0000</td>
-<td align="left">Metazoa</td>
-<td align="left">Annelida</td>
-<td align="left">Polychaeta</td>
-<td align="left">Spionida</td>
-<td align="left">Chaetopteridae</td>
-<td align="left">Chaetopterus</td>
-<td align="left"></td>
+<td style="text-align: left;">ASV2</td>
+<td style="text-align: right;">6379</td>
+<td style="text-align: left;">Chaetopterus</td>
+<td style="text-align: left;">genus</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: left;">Metazoa</td>
+<td style="text-align: left;">Annelida</td>
+<td style="text-align: left;">Polychaeta</td>
+<td style="text-align: left;">Spionida</td>
+<td style="text-align: left;">Chaetopteridae</td>
+<td style="text-align: left;">Chaetopterus</td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="odd">
-<td align="left">ASV3</td>
-<td align="right">2806</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9989</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV3</td>
+<td style="text-align: right;">2806</td>
+<td style="text-align: left;">Florideophyceae</td>
+<td style="text-align: left;">class</td>
+<td style="text-align: right;">0.9989</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Florideophyceae</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="even">
-<td align="left">ASV4</td>
-<td align="right">2172821</td>
-<td align="left">Multicrustacea</td>
-<td align="left">superclass</td>
-<td align="right">1.0000</td>
-<td align="left">Metazoa</td>
-<td align="left">Arthropoda</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV4</td>
+<td style="text-align: right;">2172821</td>
+<td style="text-align: left;">Multicrustacea</td>
+<td style="text-align: left;">superclass</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: left;">Metazoa</td>
+<td style="text-align: left;">Arthropoda</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="odd">
-<td align="left">ASV5</td>
-<td align="right">131567</td>
-<td align="left">cellular organisms</td>
-<td align="left">no rank</td>
-<td align="right">0.9952</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV5</td>
+<td style="text-align: right;">131567</td>
+<td style="text-align: left;">cellular organisms</td>
+<td style="text-align: left;">no rank</td>
+<td style="text-align: right;">0.9952</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="even">
-<td align="left">ASV6</td>
-<td align="right">2806</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9981</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV6</td>
+<td style="text-align: right;">2806</td>
+<td style="text-align: left;">Florideophyceae</td>
+<td style="text-align: left;">class</td>
+<td style="text-align: right;">0.9981</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Florideophyceae</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="odd">
-<td align="left">ASV7</td>
-<td align="right">39820</td>
-<td align="left">Nereididae</td>
-<td align="left">family</td>
-<td align="right">1.0000</td>
-<td align="left">Metazoa</td>
-<td align="left">Annelida</td>
-<td align="left">Polychaeta</td>
-<td align="left">Phyllodocida</td>
-<td align="left">Nereididae</td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV7</td>
+<td style="text-align: right;">39820</td>
+<td style="text-align: left;">Nereididae</td>
+<td style="text-align: left;">family</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: left;">Metazoa</td>
+<td style="text-align: left;">Annelida</td>
+<td style="text-align: left;">Polychaeta</td>
+<td style="text-align: left;">Phyllodocida</td>
+<td style="text-align: left;">Nereididae</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="even">
-<td align="left">ASV8</td>
-<td align="right">116571</td>
-<td align="left">Podoplea</td>
-<td align="left">superorder</td>
-<td align="right">0.9995</td>
-<td align="left">Metazoa</td>
-<td align="left">Arthropoda</td>
-<td align="left">Hexanauplia</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV8</td>
+<td style="text-align: right;">116571</td>
+<td style="text-align: left;">Podoplea</td>
+<td style="text-align: left;">superorder</td>
+<td style="text-align: right;">0.9995</td>
+<td style="text-align: left;">Metazoa</td>
+<td style="text-align: left;">Arthropoda</td>
+<td style="text-align: left;">Hexanauplia</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="odd">
-<td align="left">ASV9</td>
-<td align="right">2806</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9482</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV9</td>
+<td style="text-align: right;">2806</td>
+<td style="text-align: left;">Florideophyceae</td>
+<td style="text-align: left;">class</td>
+<td style="text-align: right;">0.9482</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Florideophyceae</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="even">
-<td align="left">ASV10</td>
-<td align="right">1</td>
-<td align="left">root</td>
-<td align="left">no rank</td>
-<td align="right">NA</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV10</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">root</td>
+<td style="text-align: left;">no rank</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="odd">
-<td align="left">ASV11</td>
-<td align="right">115834</td>
-<td align="left">Hesionidae</td>
-<td align="left">family</td>
-<td align="right">1.0000</td>
-<td align="left">Metazoa</td>
-<td align="left">Annelida</td>
-<td align="left">Polychaeta</td>
-<td align="left">Phyllodocida</td>
-<td align="left">Hesionidae</td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV11</td>
+<td style="text-align: right;">115834</td>
+<td style="text-align: left;">Hesionidae</td>
+<td style="text-align: left;">family</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: left;">Metazoa</td>
+<td style="text-align: left;">Annelida</td>
+<td style="text-align: left;">Polychaeta</td>
+<td style="text-align: left;">Phyllodocida</td>
+<td style="text-align: left;">Hesionidae</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="even">
-<td align="left">ASV12</td>
-<td align="right">1443949</td>
-<td align="left">Corallinophycidae</td>
-<td align="left">subclass</td>
-<td align="right">0.9910</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV12</td>
+<td style="text-align: right;">1443949</td>
+<td style="text-align: left;">Corallinophycidae</td>
+<td style="text-align: left;">subclass</td>
+<td style="text-align: right;">0.9910</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Florideophyceae</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="odd">
-<td align="left">ASV13</td>
-<td align="right">33213</td>
-<td align="left">Bilateria</td>
-<td align="left">no rank</td>
-<td align="right">1.0000</td>
-<td align="left">Metazoa</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV13</td>
+<td style="text-align: right;">33213</td>
+<td style="text-align: left;">Bilateria</td>
+<td style="text-align: left;">no rank</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: left;">Metazoa</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="even">
-<td align="left">ASV14</td>
-<td align="right">131567</td>
-<td align="left">cellular organisms</td>
-<td align="left">no rank</td>
-<td align="right">0.9952</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV14</td>
+<td style="text-align: right;">131567</td>
+<td style="text-align: left;">cellular organisms</td>
+<td style="text-align: left;">no rank</td>
+<td style="text-align: right;">0.9952</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="odd">
-<td align="left">ASV15</td>
-<td align="right">2806</td>
-<td align="left">Florideophyceae</td>
-<td align="left">class</td>
-<td align="right">0.9993</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">Florideophyceae</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV15</td>
+<td style="text-align: right;">2806</td>
+<td style="text-align: left;">Florideophyceae</td>
+<td style="text-align: left;">class</td>
+<td style="text-align: right;">0.9993</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Florideophyceae</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 <tr class="even">
-<td align="left">ASV16</td>
-<td align="right">39820</td>
-<td align="left">Nereididae</td>
-<td align="left">family</td>
-<td align="right">1.0000</td>
-<td align="left">Metazoa</td>
-<td align="left">Annelida</td>
-<td align="left">Polychaeta</td>
-<td align="left">Phyllodocida</td>
-<td align="left">Nereididae</td>
-<td align="left"></td>
-<td align="left"></td>
+<td style="text-align: left;">ASV16</td>
+<td style="text-align: right;">39820</td>
+<td style="text-align: left;">Nereididae</td>
+<td style="text-align: left;">family</td>
+<td style="text-align: right;">1.0000</td>
+<td style="text-align: left;">Metazoa</td>
+<td style="text-align: left;">Annelida</td>
+<td style="text-align: left;">Polychaeta</td>
+<td style="text-align: left;">Phyllodocida</td>
+<td style="text-align: left;">Nereididae</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -446,11 +498,11 @@ A more detailed overview of the package and its functions can be found
 
 If you experience a problem using this software please feel free to
 raise it as an issue on
-[GitHub](http://github.com/shaunpwilkinson/insect/issues).
+[GitHub](https://github.com/shaunpwilkinson/insect/issues).
 
 ### Acknowledgements
 
 This software was developed at [Victoria University of
-Wellington](http://www.victoria.ac.nz/) with funding from a Rutherford
+Wellington](https://www.wgtn.ac.nz/) with funding from a Rutherford
 Foundation Postdoctoral Research Fellowship award from the Royal Society
 of New Zealand. Unpublished COI data care of Molly Timmers (NOAA).
