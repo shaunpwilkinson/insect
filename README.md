@@ -199,10 +199,9 @@ generated from autonomous reef monitoring structures in American Samoa
 and de-noised, filtered and merged following the [DADA2
 tutorial](https://benjjneb.github.io/dada2/tutorial.html).
 
-The COI classifier was created using the [MIDORI UNIQUE
-20180221](https://reference-midori.info/download.php) trainingset,
-supplemented with around 14,000 non-metazoan COI sequences downloaded
-from GenBank.
+The COI classifier was created using the MIDORI UNIQUE 20180221
+(<https://reference-midori.info/download.php>) trainingset, supplemented
+with around 14,000 non-metazoan COI sequences downloaded from GenBank.
 
 The 140 MB classifier can be downloaded and read into R as follows:
 
@@ -505,4 +504,4 @@ raise it as an issue on
 This software was developed at [Victoria University of
 Wellington](https://www.wgtn.ac.nz/) with funding from a Rutherford
 Foundation Postdoctoral Research Fellowship award from the Royal Society
-of New Zealand. Unpublished COI data care of Molly Timmers (NOAA).
+of New Zealand.

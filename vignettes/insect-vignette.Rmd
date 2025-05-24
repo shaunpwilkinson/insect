@@ -39,8 +39,8 @@ sequences.
 
 The most time-consuming and memory-intensive stage of the **insect**
 work-flow generally involves training the classifier. For example, the
-COI classifier used in this tutorial, which was built from the [MIDORI
-UNIQUE](http://reference-midori.info/download.php) reference trainingset
+COI classifier used in this tutorial, which was built from the MIDORI
+UNIQUE (https://reference-midori.info/download.php) reference trainingset
 consisting of nearly a million COI barcode sequences, took around three
 days to run on a 24 x multithread. The **insect** classification trees
 are amplicon specific, so a unique tree is generally required for each
@@ -75,7 +75,7 @@ commonly used barcoding primers here:
 <tr class="even">
 <td align="left">16S</td>
 <td align="left">Marine crustaceans</td>
-<td align="left">Crust16S_F/Crust16S_R (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5528208/">Berry et al 2017</a>)</td>
+<td align="left">Crust16S_F/Crust16S_R (<a href="https://onlinelibrary.wiley.com/doi/10.1002/ece3.3123">Berry et al 2017</a>)</td>
 <td align="left">GenBank</td>
 <td align="right">4</td>
 <td align="right">20180626</td>
@@ -84,7 +84,7 @@ commonly used barcoding primers here:
 <tr class="odd">
 <td align="left">16S</td>
 <td align="left">Marine fish</td>
-<td align="left">Fish16sF/16s2R (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5528208/">Berry et al 2017</a>; <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC1959119/">Deagle et al 2007</a>)</td>
+<td align="left">Fish16sF/16s2R (<a href="https://onlinelibrary.wiley.com/doi/10.1002/ece3.3123">Berry et al 2017</a>; <a href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0000831">Deagle et al 2007</a>)</td>
 <td align="left">GenBank</td>
 <td align="right">4</td>
 <td align="right">20180627</td>
@@ -223,8 +223,8 @@ development version of the **insect** package from GitHub as follows:
     devtools::install_github("shaunpwilkinson/insect")
     library(insect)
 
-The COI classifier was trained on the [MIDORI UNIQUE
-20180221](https://reference-midori.info/download.php) dataset, and uses
+The COI classifier was trained on the MIDORI UNIQUE
+20180221 (https://reference-midori.info/download.php) dataset, and uses
 information from both the DNA read and the translated amino acid
 sequence ([EBI5](https://www.ebi.ac.uk/ena/browser/guides)
 invertebrate mitochondrial translation table) to assign taxonomy to

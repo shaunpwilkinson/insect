@@ -1,3 +1,9 @@
+
+# insect 1.4.4
+
+Minor release correcting Rd files with Rd link targets missing package anchors and updating moved URLs
+
+
 # insect 1.4.0
 
 Minor release including a new demultiplex function for illumina iSeq and MiSeq fastq output
