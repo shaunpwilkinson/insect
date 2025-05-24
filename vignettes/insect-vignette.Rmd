@@ -66,7 +66,7 @@ commonly used barcoding primers here:
 <tr class="odd">
 <td align="left">12S</td>
 <td align="left">Fish</td>
-<td align="left">MiFishUF/MiFishUR (<a href="https://www.ncbi.nlm.nih.gov/pubmed/26587265">Miya et al 2015</a>)</td>
+<td align="left">MiFishUF/MiFishUR (<a href="https://pubmed.ncbi.nlm.nih.gov/26587265/">Miya et al 2015</a>)</td>
 <td align="left">GenBank</td>
 <td align="right">1</td>
 <td align="right">20181111</td>
@@ -75,7 +75,7 @@ commonly used barcoding primers here:
 <tr class="even">
 <td align="left">16S</td>
 <td align="left">Marine crustaceans</td>
-<td align="left">Crust16S_F/Crust16S_R (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al 2017</a>)</td>
+<td align="left">Crust16S_F/Crust16S_R (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5528208/">Berry et al 2017</a>)</td>
 <td align="left">GenBank</td>
 <td align="right">4</td>
 <td align="right">20180626</td>
@@ -84,7 +84,7 @@ commonly used barcoding primers here:
 <tr class="odd">
 <td align="left">16S</td>
 <td align="left">Marine fish</td>
-<td align="left">Fish16sF/16s2R (<a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5528208/">Berry et al 2017</a>; <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1959119/">Deagle et al 2007</a>)</td>
+<td align="left">Fish16sF/16s2R (<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5528208/">Berry et al 2017</a>; <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC1959119/">Deagle et al 2007</a>)</td>
 <td align="left">GenBank</td>
 <td align="right">4</td>
 <td align="right">20180627</td>
@@ -93,7 +93,7 @@ commonly used barcoding primers here:
 <tr class="even">
 <td align="left">18S</td>
 <td align="left">Marine eukaryotes</td>
-<td align="left">18S_1F/18S_400R (<a href="https://www.ncbi.nlm.nih.gov/pubmed/24023913">Pochon et al 2017</a>)</td>
+<td align="left">18S_1F/18S_400R (<a href="https://pubmed.ncbi.nlm.nih.gov/24023913/">Pochon et al 2017</a>)</td>
 <td align="left">SILVA_132_LSUParc, GenBank</td>
 <td align="right">5</td>
 <td align="right">20180709</td>
@@ -102,7 +102,7 @@ commonly used barcoding primers here:
 <tr class="odd">
 <td align="left">18S</td>
 <td align="left">Marine eukaryotes</td>
-<td align="left">18S_V4F/18S_V4R (<a href="https://www.ncbi.nlm.nih.gov/pubmed/28947818">Stat et al 2017</a>)</td>
+<td align="left">18S_V4F/18S_V4R (<a href="https://pubmed.ncbi.nlm.nih.gov/28947818/">Stat et al 2017</a>)</td>
 <td align="left">GenBank</td>
 <td align="right">4</td>
 <td align="right">20180525</td>
@@ -224,9 +224,9 @@ development version of the **insect** package from GitHub as follows:
     library(insect)
 
 The COI classifier was trained on the [MIDORI UNIQUE
-20180221](http://reference-midori.info/download.php) dataset, and uses
+20180221](https://reference-midori.info/download.php) dataset, and uses
 information from both the DNA read and the translated amino acid
-sequence ([EBI5](https://www.ebi.ac.uk/ena/browse/translation-tables)
+sequence ([EBI5](https://www.ebi.ac.uk/ena/browser/guides)
 invertebrate mitochondrial translation table) to assign taxonomy to
 query sequences. You can download the classifier from the link in the
 table above; the file is quite large (~ 140 MB), so make sure there is a
@@ -828,7 +828,7 @@ database and using it to build a classification tree.
 Please feel free to email the author directly with any feedback or
 questions at shaunpwilkinson AT gmail DOT com. Bug reports can also be
 directed to the [GitHub issues
-page](http://github.com/shaunpwilkinson/insect/issues).
+page](https://github.com/shaunpwilkinson/insect/issues).
 
 Acknowledgements
 ----------------

@@ -113,7 +113,7 @@ and de-noised, filtered and merged following the
 [DADA2 tutorial](https://benjjneb.github.io/dada2/tutorial.html).
 
 The COI classifier was created using the 
-[MIDORI UNIQUE 20180221](http://reference-midori.info/download.php)
+[MIDORI UNIQUE 20180221](https://reference-midori.info/download.php)
 trainingset, supplemented with around 14,000 non-metazoan 
 COI sequences downloaded from GenBank. 
 
@@ -173,13 +173,13 @@ vignette("insect-vignette")
 ### Issues
 
 If you experience a problem using this software please feel free to
-raise it as an issue on [GitHub](http://github.com/shaunpwilkinson/insect/issues).
+raise it as an issue on [GitHub](https://github.com/shaunpwilkinson/insect/issues).
 
 
 ### Acknowledgements
 
 This software was developed at 
-[Victoria University of Wellington](http://www.victoria.ac.nz/) 
+[Victoria University of Wellington](https://www.wgtn.ac.nz/) 
 with funding from a Rutherford Foundation Postdoctoral Research Fellowship 
 award from the Royal Society of New Zealand. 
 Unpublished COI data care of Molly Timmers (NOAA).

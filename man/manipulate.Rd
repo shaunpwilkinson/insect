@@ -73,7 +73,7 @@ Paradis E, Claude J, Strimmer K, (2004) APE: analyses of phylogenetics
   and evolution in R language. \emph{Bioinformatics} \strong{20}, 289-290.
 
   Paradis E (2007) A bit-level coding scheme for nucleotides. \url{
-  http://ape-package.ird.fr/misc/BitLevelCodingScheme.html}.
+  https://emmanuelparadis.github.io/misc/BitLevelCodingScheme_20April2007.pdf}.
 
   Paradis E (2012) Analysis of Phylogenetics and Evolution with R
   (Second Edition). Springer, New York.

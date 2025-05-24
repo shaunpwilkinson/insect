@@ -1,12 +1,12 @@
 citHeader("To cite insect in publications use:")
 
-citEntry(entry = "article",
+bibentry(entry = "article",
    title = "Taxonomic identification of environmental DNA with informatic sequence classification trees.",
-   author = personList(as.person("Shaun P. Wilkinson"),
+   author = c(as.person("Shaun P. Wilkinson"),
                        as.person("Michael Stat"),
                        as.person("Michael Bunce"),
                        as.person("Simon K. Davy")),
-   url = "https://peerj.com/preprints/26812",
+   url = "https://peerj.com/preprints/26812/",
    year   = "2018",
    journal = "PeerJ Preprints",
    volume = "6",
