@@ -72,7 +72,7 @@ This function uses the Entrez e-utilities API to search and download
   and appears to be related to database records being updated in GenBank.
   This can generally be remedied by re-running the function. If problems
   persist please feel free to raise an issue on the package bug-reports page at
-  <http://github.com/shaunpwilkinson/insect/issues>.
+  <https://github.com/shaunpwilkinson/insect/issues>.
 }
 \examples{
   ## Query the GenBank database for Eukaryote mitochondrial 16S DNA sequences

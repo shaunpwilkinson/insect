@@ -37,7 +37,7 @@ the cluster.}
 
 \item{quiet}{logical indicating whether progress should be printed to the console.}
 
-\item{...}{further arguments to pass to \code{\link[kmer]{otu}} (not including
+\item{...}{further arguments to pass to the \code{otu} function in the kmer package (not including
 \code{nstart}).}
 }
 \value{
@@ -50,9 +50,7 @@ This function evaluates a DNA reference database (a "DNAbin" object)
 }
 \details{
 This function first clusters the sequence dataset into operational
-  taxonomic units (OTUs) based on a given genetic similarity threshold
-  using the \code{\link[kmer]{otu}} function from the \code{\link{kmer}}
-  package.
+  taxonomic units (OTUs) based on a given genetic similarity threshold.
   Each cluster is then checked for taxonomic homogeneity at a given rank,
   and any sequences that appear out of place are removed.
   The criteria for sequence removal are that at least two other independent

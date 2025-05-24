@@ -1,6 +1,6 @@
 citHeader("To cite insect in publications use:")
 
-bibentry(entry = "article",
+bibentry(bibtype = "article",
    title = "Taxonomic identification of environmental DNA with informatic sequence classification trees.",
    author = c(as.person("Shaun P. Wilkinson"),
                        as.person("Michael Stat"),
